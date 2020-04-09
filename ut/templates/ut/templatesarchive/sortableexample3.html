@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>jQuery UI Sortable</title>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+    <style type="text/css">
+        ul
+        {
+            list-style-type: none;
+        }
+        ul, li
+        {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #333;
+            min-height: 20px;
+            float : inline;
+        }
+        ul
+        {
+            background-color: #ccd;
+        }
+        li
+        {
+            background-color: #eef;
+        }
+        li.new
+        {
+            background-color: #fff;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            $("ul").sortable({
+                placeholder: "new",
+                connectWith: "ul"
+            });
+        });
+    </script>
+</head>
+<body>
+    <ul>
+        <li><span>Component 1</span></li>
+        <li><span>Raw 2</span>
+            <ul>
+                <li><span>Component 4</span></li>
+                <li><span>Component 5</span></li>
+                <li><span>Component 6</span></li>
+            </ul>
+        </li>
+        <li><span>Component 3</span></li>
+        <li>
+            <span>Raw 1</span>
+            <ul>
+                <li><span>Component 7</span></li>
+                <li><span>Component 8</span></li>
+                <li><span>Component 9</span></li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

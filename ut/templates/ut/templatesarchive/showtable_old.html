@@ -1,0 +1,62 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+ {% load render_table from django_tables2 %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<style>
+</style>
+
+<title>Universal Tracker</title>
+</head>
+<body>
+<header>
+<form action="{% url 'instances' Class_id %}" method="get">
+{% csrf_token %}
+<div class="col-md-12">
+<div class="d-flex flex-wrap">
+<div class="d-inline-flex p-2 bd-highlight">
+    <div class="container rounded" style="border:1px solid #cecece;">
+    <div class="form-group">
+        <label>Code</label>
+        <input class="form-control form-control-sm" type="text" name="CODE">
+    </div>
+</div>
+</div>
+{% if fieldlist %}
+  {% for f in fieldlist %}
+            {{f.ControlFilter | safe}}
+  {% endfor %}
+{% else %}
+  <p>No fieldlist</p>
+{% endif %}
+</div>
+<div class="d-inline-flex p-2 bd-highlight" >
+    <input class="btn btn-primary" type="submit" value="Filter">
+</div>
+</div>
+</form>
+
+{% if filterform %}
+{{filterform | safe}}
+{% endif %}
+
+
+</header>
+
+{% csrf_token %}
+Table {{tablename}}
+{% if table %}
+   {% render_table table  %}
+{% else %}
+   'no such table'
+{% endif %}
+
+{% if Class_id %}
+<input type="button" onclick="location.href='{% url 'edit_instance' Class_id 0 %}'" value="New Instance" />
+{% endif %}
+
+</body>
+</html>

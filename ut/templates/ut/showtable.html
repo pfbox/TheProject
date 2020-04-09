@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% load render_table from django_tables2 %}
+
+{% block content %}
+
+<div class="container-fluid">
+<form action="{% url 'instances' Class_id %}" method="get">
+<div class="col-md-12">
+<div class="d-flex flex-wrap">
+    {% if filterform %}
+        {{filterform | safe}}
+    {% endif %}
+</div>
+<div class="d-inline-flex p-2 bd-highlight" >
+
+        <button class="btn btn-primary" type="submit">Filter</button>
+        <button class="btn btn-primary" type="submit" formaction="{% url 'instances' Class_id 1 %}">Save to xls</button>
+</div>
+</div>
+</form>
+</div>
+
+<div class="container-fluid">
+<div class="col-md-12">
+
+{% csrf_token %}
+Table {{tablename}}
+{% if table %}
+   {% render_table table  %}
+{% else %}
+   'no such table'
+{% endif %}
+
+{% if Class_id %}
+<input type="button" onclick="location.href='{% url 'edit_instance' Class_id 0 %}'" value="New Instance" />
+<input type="button" onclick="location.href='{% url 'loadinstances' Class_id %}'" value="Load from File" />
+{% endif %}
+</div>
+</div>
+
+{% endblock %}

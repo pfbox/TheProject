@@ -1,0 +1,49 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal Tracker</title>
+</head>
+<body>
+<header>
+    <h1>Empty form for a class</h1>
+    <h3>Less important heading here</h3>
+    <p>Some additional information here</p>
+</header>
+
+Instance_id {{Instance_id}} Class_id {{Class_id}}
+<div class="container-fluid">
+    <form action="{% url 'save_instance' Class_id Instance_id %}" method="post">
+        {% csrf_token %}
+            <div class="row">
+                <div class="form-group col-lg-6">
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input class="form-control" type="text" value="{{Code}}" name="Code">
+                    </div>
+                    {% if col1 %}
+                        {% for f in col1 %}
+                        <div class="form-group">
+                            <label>{{f.Attribute}}</label>
+                            {{f.Control | safe }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="form-group col-lg-6">
+                    {% if col2 %}
+                        {% for f in col2 %}
+                        <div class="form-group">
+                            <label>{{f.Attribute}}</label>
+                            {{f.Control | safe }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        <input class="btn btn-primary" type="submit" value="Save">
+    </form>
+</div>
+</body>
+</html>

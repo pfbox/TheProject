@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="jumbotron">
+  <h1 class="display-3">Welcome to Ultimate Tracker!</h1>
+  <p class="lead">This tool is built for tracking anything.</p>
+  <hr class="my-4">
+  <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
+  <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
+</div>
+
+<div class="album py-5 bg-light">
+    <div class="container">
+    <div class="row">
+    {% if classes%}
+    {% for c in classes%}
+            <div class="col-4">
+              <div class="card mb-4 box-shadow">
+                <div class="card-body">
+                  <h5 class="card-title">{{c.Class}}</h5>
+                  <p class="card-text">{{c.Description}}</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" >View</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'edit_class' c.id %}'">Edit</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'attributes_view' c.id %}'">Attributes</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'instances' c.id %}'">Intances</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'change_formtemplate' c.id %}'">Templates</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+    {% endfor %}
+    {% else %}
+        <br> No Classes <br>
+    {% endif %}
+     </div>
+     </div>
+
+</div>
+
+
+{% endblock%}

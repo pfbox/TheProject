@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% load render_table from django_tables2 %}
+
+{% block content %}
+
+    <body>
+        {% if filter %}
+            <form method="get">
+                {{ filter.form.as_p }}
+                <button type="submit">Search</button>
+            </form>
+        {% endif%}
+        {% if table %}
+            {% render_table table %}
+        {% else %}
+            {% render_table object_list %}
+        {% endif %}
+        <input type="button"
+        onclick="location.href='{% url 'add_class' %}'"
+        value="New Class">
+    </body>
+
+{% endblock %}
+

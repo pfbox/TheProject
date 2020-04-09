@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% load render_table from django_tables2 %}
+
+{% block content %}
+        {% render_table table %}
+<input type="button"
+       onclick="location.href='{% url 'add_attribute' Class_id %}'"
+       value="New Attribute">
+
+{% endblock %}

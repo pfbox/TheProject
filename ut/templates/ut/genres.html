@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Sortable - Connect lists</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="/resources/demos/style.css">
+    <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+  <style>
+  #sortablerow{
+   border: 3px solid #eee;
+  }
+  #sortable1{
+    border: 1px solid #eee;
+    width: 142px;
+    min-height: 200px;
+    list-style-type: none;
+    margin: 0;
+    padding: 5px 0 0 0;
+    float: left;
+    margin-right: 10px;
+  }
+  #sortable2,#sortable3{
+    border: 1px solid #eee;
+    min-height: 50px;
+    min-width: 200px;
+    list-style-type: none;
+    margin: 5px;
+    padding: 5px 0 0 0;
+    float: left;
+    margin-right: 10px;
+    display : inline;
+  }
+  #sortable1 li {
+    margin: 0 5px 5px 5px;
+    padding: 5px;
+    font-size: 1.2em;
+    width: 120px;
+  }
+  #sortable2 li,#sortable3 li {
+    margin: 0 5px 5px 5px;
+    padding: 5px;
+    font-size: 1.2em;
+    width: 120px;
+    display : inline;
+  }
+  </style>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script>
+  $( function() {
+    $( "#sortable1, #sortable2,#sortable3" ).sortable({
+      connectWith: ".connectedSortable"
+    }).disableSelection();
+  } );
+  </script>
+</head>
+<body>
+
+<div class="contained-fluid h-100%">
+<ul id="sortable1" class="list-group connectedSortable">
+  <li class="list-group-item ">Lion</li>
+  <li class="list-group-item">Dog</li>
+  <li class="list-group-item">Cat</li>
+  <li class="list-group-item">Tiger</li>
+</ul>
+</div>
+
+<div class="row contained-fluid">
+<ul id="sortable2" class="list-group connectedSortable">
+  <li class="list-group-item active">Fish</li>
+  <li class="list-group-item">Bird</li>
+  <li class="list-group-item">Falcon</li>
+  <li class="list-group-item">Mouse</li>
+</ul>
+</div>
+
+<div class="row contained-fluid">
+<ul id="sortable3" class="list-group connectedSortable">
+  <li class="list-group-item active">Monkey</li>
+  <li class="list-group-item">Rat</li>
+  <li class="list-group-item">Bunny</li>
+  <li class="list-group-item">Fish</li>
+</ul>
+</div>
+
+</body>
+</html>

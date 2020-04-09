@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+body.dragging, body.dragging * {
+  cursor: move !important;
+}
+
+.dragged {
+  position: absolute;
+  opacity: 0.5;
+  z-index: 2000;
+}
+
+ol.example li.placeholder {
+  position: relative;
+  /** More li styles **/
+}
+ol.example li.placeholder:before {
+  position: absolute;
+  /** Define arrose jquewhead **/
+}
+</style>
+
+  <script>
+    $(function  () {
+      $("ol.example").sortable();
+    });
+  </script>
+</head>
+<body>
+    <ol class='example'>
+      <li>First</li>
+      <li>Second</li>
+      <li>Third</li>
+    </ol>
+    <script src='http://johnny.github.io/jquery-sortable/js/jquery-sortable.js'></script>
+
+</body>
+</html>

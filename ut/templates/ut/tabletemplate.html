@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+   <head>
+      <title>Ultimate Tracker - Form builder</title>
+      <link href = "https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css"
+         rel = "stylesheet">
+
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+      <script src = "https://code.jquery.com/jquery-1.10.2.js"></script>
+      <script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+
+      <style>
+         #sortable-1, #sortable-2, #sortable-3 {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            float:left;
+         }
+         #sortable-2, #sortable-3 {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+         }
+         #sortable-1 li, #sortable-2 li,#sortable-3 li {
+            margin: 0 3px 3px 3px; padding: 0.4em;
+            padding-left: 1.5em;
+            font-size: 17px;
+            float:left;
+         }
+         .default {
+            background: #cedc98;
+            border: 1px solid #DDDDDD;
+            color: #333333;
+         }
+         .static {
+            background: #cedc98;
+            border: 1px solid 	#AAAAAA;
+            color: #333333;
+         }
+      </style>
+
+      <script>
+          $(document).ready(function() {
+                 $("#sortable-2 li.static").each(function () {
+                 $(this).attr("id", "" + $(this).index());
+                });
+          });
+         $(function() {
+            $( "#sortable-1, #sortable-2, #sortable-3" ).sortable({
+               connectWith: "#sortable-1, #sortable-2, #sortable-3"
+            });
+         });
+         $(function() {
+            $('#sortable-1').sortable({
+               update: function(event, ui) {
+                  var productOrder = $(this).sortable('toArray').toString();
+                  $("#lab").val (productOrder);
+               }
+            });
+            $('#sortable-2').sortable({
+               cancel:"li.static",
+               update: function(event, ui) {
+               $("#sortable-2 li.static").each(function() {
+                   var desiredLocation = $(this).attr("id").replace("static-","");
+                   var currentLocation = $(this).index();
+                   while(currentLocation < desiredLocation) {
+                     $(this).next().insertBefore(this);
+                      currentLocation++;
+                   }
+                    while(currentLocation > desiredLocation) {
+                     $(this).prev().insertAfter(this);
+                      currentLocation--;
+                   }
+               });
+                  var productOrder = $(this).sortable('toArray').toString();
+                  $("#lab2").val (productOrder);
+               }
+            });
+            $('#sortable-3').sortable({
+               cancel:"li.static",
+               update: function(event, ui) {
+               $("#sortable-2 li.static").each(function() {
+                   var desiredLocation = $(this).attr("id").replace("static-","");
+                   var currentLocation = $(this).index();
+                   while(currentLocation < desiredLocation) {
+                     $(this).next().insertBefore(this);
+                      currentLocation++;
+                   }
+                    while(currentLocation > desiredLocation) {
+                     $(this).prev().insertAfter(this);
+                      currentLocation--;
+                   }
+               });
+                  var productOrder = $(this).sortable('toArray').toString();
+                  $("#lab3").val (productOrder);
+               }
+            });
+         });
+      </script>
+   </head>
+
+<body>
+<h3>FormTemplate</h3>
+<form method="post" action="{% url 'change_tabletemplate' Class_id %}">
+{% csrf_token %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-4"><h3>Unused Fields</h3></div>
+        <div class="col-sm-4"><h3>Column 1</h3></div>
+        <div class="col-sm-4"><h3>Column 2</h3></div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-2" id="sortable-1">
+            {% for f in unused %}
+               <li id="{{f.id}}" class = "default">
+                   <label>{{f.Attribute}}</label>
+               </li>
+            {% endfor %}
+        </div>
+        <div class="col-md-10">
+                <div class="container" id="sortable-2">
+                       <li id="0" class = "static">
+                            <label>Code</label>
+                       </li>
+                    {% for f in row1 %}
+                       <li id="{{f.id}}" class = "default">
+                           <label>{{f.Attribute}}</label>
+                       </li>
+                    {% endfor %}
+                </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+          <input class="btn btn-primary" value="Save" type="submit" >
+          <input name="un" type="text" id="lab">
+          <input name="crow1" type="text" id="lab2" value="{{list1}}">
+          <input name="column2" type="text" id="lab3" value="{{list2}}">
+          </div>
+   </div>
+</div>
+</form>
+</body>
+</html>
