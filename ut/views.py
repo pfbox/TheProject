@@ -119,7 +119,7 @@ def instances(request,Class_id,SaveToExl=False):
             #template_name="django_tables2/semantic.html"
             model=Instances
 
-    h_link = tables.LinkColumn('edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
+    h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
     existing_columns=[f.name for f in Instances._meta.get_fields()]
 
     extra=[]
@@ -134,11 +134,10 @@ def instances(request,Class_id,SaveToExl=False):
 
     table=mytable(qs,extra_columns=extra_columns ,template_name="django_tables2/bootstrap4.html"
                   )
-
     RequestConfig(request).configure(table)
     table.paginate(page=request.GET.get("page", 1), per_page=10)
     context = {'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform}
-    return render(request, 'ut/showtable.html', context)
+    return render(request, 'ut/showtable.html',  context)
 
 def filters(request,Class_id):
     fl = fieldlist(Class_id)

@@ -3,11 +3,13 @@ from django.urls import path
 
 from . import views
 
+app_name='ut'
+
 urlpatterns = [
     path('', views.index, name='index'),
     path('Classes/',                        views.classes_view,                 name='classes_view'),
     path('Classes2/',                       views.classes_view2,                name='classes_view2'),
-    path('Classestree/',                    views.classestree_view,             name='classestree_view'),
+    path('Classestree/',                    views.classestree_view,             name='classestree_v iew'),
     path('Attributes/<int:Class_id>/',      views.attributes_view,              name='attributes_view'),
     path('Classes/edit/<slug:pk>/',         views.ClassesUpdateView.as_view(),  name='edit_class'),
     path('Classes/add/',                    views.ClassesCreateView.as_view(),  name='add_class'),

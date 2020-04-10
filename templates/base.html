@@ -37,10 +37,10 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="{% url 'index' %}">Home <span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="{% url 'ut:index' %}">Home <span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'classes_view' %}">Classes</a>
+              <a class="nav-link" href="{% url 'ut:classes_view' %}">Classes</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#">Templates</a>
@@ -56,7 +56,7 @@
                 Bookmarks
               </a>
               <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="{% url 'classes_view' %}">Classes</a>
+                <a class="dropdown-item" href="{% url 'ut:classes_view' %}">Classes</a>
                 <a class="dropdown-item" href="#">Templates</a>
                 <a class="dropdown-item" href="#">Attributes</a>
                 <a class="dropdown-item" href="#">Export/Import</a>
