@@ -1,5 +1,5 @@
 from django.urls import path
-
+from django.views.generic import TemplateView
 
 from . import views
 
@@ -25,4 +25,6 @@ urlpatterns = [
     path('Template/Form/<int:Class_id>/',                  views.change_formtemplate,name='change_formtemplate'),
     path('Template/Table/<int:Class_id>/',                 views.change_tabletemplate, name='change_tabletemplate'),
     path('Load/<int:Class_id>/', views.load_instances, name='loadinstances'),
+    path('needlogin/',views.ProtectView.as_view(),name='needlogin'),
+    path('test/',views.FormTemlateView.as_view(),name='testformtemplate'),
 ]

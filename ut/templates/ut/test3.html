@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TEST3</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!-- JQuery css -->
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+
+    .sortablerow {width : 1200px; min-height : 50px}
+    .inner { background:#eee;height: 100%; border : 1px solid#000}
+    .draggable {margin:0;padding:0;border:0;position:abosute !important;}
+     #sortable1 {min-height:200px; border : border : 1px solid#000}
+
+
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="container">
+                <button id="addrow" name="ar">Add Row</button>
+                <button id="savetodb">Save</button>
+                <div id="sortable1" class="connectedSortable">
+                    <div class="draggable">
+                        <div class="inner">Contact Us</div>
+                    </div>
+                    <div class="draggable">
+                        <div class="inner">FAQs</div>
+                    </div>
+                    <div class="draggable">
+                        <div class="inner">Phone</div>
+                    </div>
+                    <div class="draggable">
+                        <div class="inner">Address1</div>
+                    </div>
+                    <div class="draggable">
+                        <div class="inner">Address2</div>
+                    </div>
+                    <div class="draggable">
+                        <div class="inner">Home</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-10">
+            <div class="container">
+                <div id="sortablerow1" class="row sortablerow connectedSortable bg-primary">
+
+                </div>
+
+                <div id="sortablerow2" class="row sortablerow connectedSortable bg-secondary">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- JQuery starts -->
+<script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+        crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
+        integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+// Change JQueryUI plugin names to fix name collision with Bootstrap:
+$.widget.bridge('uitooltip', $.ui.tooltip);
+$.widget.bridge('uibutton', $.ui.button);
+</script>
+<!-- JQuery ends -->
+<!-- Boostrap -->
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+<!-- end Boostrap -->
+<script type="text/javascript">
+  $(function() {
+     counter=3;
+     gridwidth = $('#sortablerow1').width()/12;
+     halfgridwidth = gridwidth/2;
+     newgrid = [gridwidth,halfgridwidth]
+     $('.sortablerow').resizable({
+        grid : newgrid,
+        handles: 's'
+     });
+     $('.draggable','#sortable1').draggable({
+        grid : newgrid,
+     });
+     $('#sortablerow1').droppable({
+        accept : '#sortable1 > .draggable',
+        classes : {
+            "ui-droppable-active": "ui-state-highlight"
+        },
+        drop : function (evt,ui) {
+            var droppedItem = $(ui.draggable)
+            $(this).append(droppedItem);
+            droppedItem.width(gridwidth);
+            droppedItem.height(halfgridwidth);
+            droppedItem.draggable({
+                containment : "#sortablerow1"
+            });
+            droppedItem.resizable({
+                grid : newgrid,
+                //handles: 'e,s'
+            });
+            console.log (typeof ui);
+            console.log (ui);
+
+        }
+     });
+  });
+
+</script>
+</body>
+</html>
+

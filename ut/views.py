@@ -336,3 +336,35 @@ def load_instances(request,Class_id=0):
     else:
         form = UploadInstances()
     return render(request, 'ut/loadinstances.html', {'form': form,'Class_id':Class_id})
+
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+class ProtectView(LoginRequiredMixin, View) :
+    def get(self, request):
+        print ('im here')
+        return render(request, 'ut/index.html')
+
+class FormTemlateView(View):
+    template = 'ut/formtemplate.html'
+    def __init__(self,Class_id,*args,**kwargs):
+        super(FormTemlateView).__init__(*args,**kwargs)
+        self.Class_id=Class_id
+
+    def get(self, request,class_id):
+        table=Attributes.objects.filter(Class_id=self.Class_id)
+        context={'table':table}
+        return render(request, self.template, context)
+
+    def post(self, request,class_id) :
+        if request.POST:
+            layout=json.loads(request.POST['layout'])
+            print (layout)
+            print(sorted(layout['layout'],key=lambda k: (k['top'],k['left'])))
+        return HttpResponseRedirect(reverse('ut:testformtemplate'))
+
+
+
+
+
+
+

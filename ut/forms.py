@@ -41,7 +41,6 @@ class ClassesForm(forms.ModelForm):
         self.helper.add_input(Submit('submit', 'Save'))
 
 class UploadInstances(forms.Form):
-    title = forms.CharField(max_length=50)
     file = forms.FileField()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -104,8 +103,6 @@ def create_form_field(Attribute_id):
         raise Exception('Datatype {} does not exists.'.format(dt))
     return field
 
-
-
 class InstanceForm(forms.Form):
 #    class Meta:
 #        model=Instances
@@ -143,6 +140,8 @@ class InstanceForm(forms.Form):
 
         self.helper.add_input(Submit('submit','Save'))
 
+class FilterForm(forms.Form):
+    pass
 
 
 

@@ -4,15 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>jQuery UI Sortable - Connect lists</title>
-  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-  <link rel="stylesheet" href="/resources/demos/style.css">
     <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!-- Jquery css -->
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
   <style>
-  #sortablerow{
-   border: 3px solid #eee;
-  }
   #sortable1{
     border: 1px solid #eee;
     width: 142px;
@@ -23,69 +20,170 @@
     float: left;
     margin-right: 10px;
   }
-  #sortable2,#sortable3{
-    border: 1px solid #eee;
+  .sortablerow {
+    border: 0px solid #eee;
     min-height: 50px;
-    min-width: 200px;
+    min-width: 100%;
     list-style-type: none;
     margin: 5px;
     padding: 5px 0 0 0;
     float: left;
     margin-right: 10px;
-    display : inline;
+    placeholder :
   }
   #sortable1 li {
     margin: 0 5px 5px 5px;
     padding: 5px;
     font-size: 1.2em;
-    width: 120px;
   }
-  #sortable2 li,#sortable3 li {
+  .sortablerow li {
     margin: 0 5px 5px 5px;
     padding: 5px;
     font-size: 1.2em;
     width: 120px;
     display : inline;
   }
+ .list-group-horizontal {
+  margin : 0;
+  padding : 0;
+ }
+.list-group-horizontal .list-group-item {
+    display: inline-block;
+    min-height : 50;
+    margin-bottom: 0;
+    margin-left:  0;
+    margin-right: 0;
+    border-right-width: 0;
+    padding : 0;
+    border : 0;
+    height : 50%
+}
+.list-group-horizontal .list-group-item:first-child {
+    border-top-right-radius:0;
+    border-bottom-left-radius:4px;
+}
+.list-group-horizontal .list-group-item:last-child {
+    border-top-right-radius:4px;
+    border-bottom-left-radius:0;
+    border-right-width: 1px;
+}
+  .inneritem {
+    padding : 0;
+    margin : 0;
+    border: 1px solid #eee;
+    height : 100%;
+  }
+  .list-group-item{
+  height : 50px;
+  }
+  .ui-sortable-placeholder{
+    display: inline-block;
+    height : 1px;
+  }
+
+
   </style>
-  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  <script>
-  $( function() {
-    $( "#sortable1, #sortable2,#sortable3" ).sortable({
-      connectWith: ".connectedSortable"
-    }).disableSelection();
-  } );
-  </script>
 </head>
 <body>
 
-<div class="contained-fluid h-100%">
-<ul id="sortable1" class="list-group connectedSortable">
-  <li class="list-group-item ">Lion</li>
-  <li class="list-group-item">Dog</li>
-  <li class="list-group-item">Cat</li>
-  <li class="list-group-item">Tiger</li>
-</ul>
+<div class="side-nav sn-bg-4 mdb-sidenav fixed">
+    <button id="addrow" name="ar">Add Row</button>
+    <button id="savetodb">Save</button>
+      <div id="sortable1" class="connectedSortable">
+        <div class="list-group-item"><div class="inneritem">Lion</div></div>
+        <div class="list-group-item"><div class="inneritem">Dog</div></div>
+        <div class="list-group-item"><div class="inneritem">Cat</div></div>
+        <div class="list-group-item"><div class="inneritem">Tiger</div></div>
+        <div class="list-group-item">Fish</div>
+      </div>
 </div>
 
-<div class="row contained-fluid">
-<ul id="sortable2" class="list-group connectedSortable">
-  <li class="list-group-item active">Fish</li>
-  <li class="list-group-item">Bird</li>
-  <li class="list-group-item">Falcon</li>
-  <li class="list-group-item">Mouse</li>
-</ul>
+<div class="container" id="rows">
+      <div id="sortablelist1" class="list-group-horizontal sortablerow connectedSortable bg-danger" >
+
+      </div>
+      <div id="sortablelist2" class="list-group-horizontal sortablerow connectedSortable bg-primary">
+
+      </div>
 </div>
 
-<div class="row contained-fluid">
-<ul id="sortable3" class="list-group connectedSortable">
-  <li class="list-group-item active">Monkey</li>
-  <li class="list-group-item">Rat</li>
-  <li class="list-group-item">Bunny</li>
-  <li class="list-group-item">Fish</li>
-</ul>
-</div>
+<form id="myform">
+    <input type="text" id="inp" name="inp" value="mytext">
+    <input type="button" id="btn" name="btn" value="serialize"/>
+</form>
+
+<div id="output">OUTPUT</div>
+
+
+
+<!-- JS starts -->
+<script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+// Change JQueryUI plugin names to fix name collision with Bootstrap:
+$.widget.bridge('uitooltip', $.ui.tooltip);
+$.widget.bridge('uibutton', $.ui.button);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+<script>
+  $(function() {
+    counter=3;
+    //$("#row1").css('width',1200);
+    gridwidth = $("#sortablelist1").width()/12;
+    $( "#sortable1, .sortablerow" ).sortable({
+      connectWith: '.connectedSortable',
+      start: function(evt, ui){
+          console.log('old parent='+ui.item.parent().attr('id'))
+      },
+      stop: function(evt, ui){
+          var newcon = '#'+ui.item.parent().parent().attr('id');
+          console.log('new parent='+ui.item.parent().attr('id')+',item text='+ui.item.attr('html'))
+          if (ui.item.parent().attr('id')=='sortable1'){
+              if (ui.item.is('.ui-resizable')) {
+                ui.item.resizable('destroy');
+                ui.item.removeAttr('style');
+              }
+          } else {
+            console.log('start resize');
+            if (!ui.item.is('.ui-resizable')){
+              ui.item.resizable({
+                 containment : '#'+ui.item.parent().parent().attr('id'),
+                 handles: 'e, w',
+                 grid : gridwidth
+              });
+              ui.item.css("width", gridwidth);
+              ui.item.css("height", 50);
+            } else {
+              ui.item.attr({
+                "containment" : '#'+ui.item.parent().attr('id')
+              });
+            }
+          }
+      }
+    }).disableSelection();
+    $("#addrow").on('click',function(){
+              $("#rows").append('<div class="row bg-secondary" id="row'+counter+'" ><ul id=sortablelist'+counter+' class="list-group-horizontal sortablerow connectedSortable"></ul></div>');
+              $("#sortablelist"+counter).sortable({
+                connectWith: '.connectedSortable',
+                revert : true
+              });
+              counter++;
+    });
+    $('#savetodb').on('click',function(){
+       var form= $(".sortablerow").sortable('toArray').toString();
+       $('#output').html('output'+form);
+       $(".sortablerow").each(function(key,value){
+          console.log(value);
+          console.log('object #'+value.id);
+          console.log($('#'+value.id).width());
+       });
+
+    });
+  });
+</script>
+<!-- JS ends -->
 
 </body>
+
 </html>

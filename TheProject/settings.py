@@ -31,13 +31,17 @@ ALLOWED_HOSTS = ['*','18.191.183.175','']
 # Application definition
 
 INSTALLED_APPS = [
-    'ut.apps.UtConfig',
+    #django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    #myapps
+    'ut.apps.UtConfig',
+#    'utlogin.apps.UtloginConfig',
+    #extentions
     'django_tables2',
     'bootstrap3',
     'bootstrap4',
