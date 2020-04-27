@@ -1,4 +1,5 @@
 from django import forms
+from django import forms
 from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
@@ -103,6 +104,8 @@ def create_form_field(Attribute_id):
         raise Exception('Datatype {} does not exists.'.format(dt))
     return field
 
+from .formtemplate import *
+
 class InstanceForm(forms.Form):
 #    class Meta:
 #        model=Instances
@@ -127,18 +130,43 @@ class InstanceForm(forms.Form):
         #add Save Button
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.layout=Layout()
-        ro=df_formlayouts[df_formlayouts.Class_id==self.Class_id].groupby('Row').size()
-        for r,count in ro.items():
-            layout_row=Row(cssclass='form-row')
-            co=df_formlayouts[(df_formlayouts.Class_id==self.Class_id)&(df_formlayouts.Row==r)]
-            for i,c in co.iterrows():
-                att=Attributes.objects.get(pk=c.Attribute_id)
-                layout_col=Column("{}".format(att.Attribute),css_class=self.fieldclass[count])
-                layout_row.append(layout_col)
-            self.helper.layout.append(layout_row)
-
+        try:
+            rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)['layout']
+            master = container(mel={'top': 0, 'left': 0, 'width': 1200, 'height': 1200}, rawlayout=rawlayout)
+            master.split_by_con()
+            layout=master.print_elements()
+        except:
+            print ("layout for the class "+ str(self.Class_id) + " was not found")
+            #raise
+        try:
+            self.helper.layout= get_layout(layout,'Layout')
+        except:
+            print ("layout for the class "+ str(self.Class_id) + " didn't work")
+            #raise
+        #self.helper.layout.append(lo)
+        a=""""""
+            #self.helper.layout.append(layout_row)
+        b=""""""
         self.helper.add_input(Submit('submit','Save'))
+
+def get_layout(layout,mastertype='Row',level=0):
+    master=globals()[mastertype]()
+    for k,v in layout.items():
+        setts=k.split(':')
+        clname=setts[0]
+        cssclass=setts[3]
+        cls = globals()[clname]
+        if type(v)==dict:
+            master.append(get_layout(v,clname,level+1))
+        else:
+            if clname=='Column':
+                master.append(cls(v,css_class=cssclass))
+            else:
+                r=cls()
+                c=Column(v,css_class=cssclass)
+                r.append(c)
+                master.append(r)
+    return master
 
 class FilterForm(forms.Form):
     pass

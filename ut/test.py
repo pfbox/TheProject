@@ -1,5 +1,4 @@
-import pandas as pd
-
+a="""
 class container():
     def __init__(self,parent=None,el={'top':0,'left':0,'width':0,'height':0},rawlayout=[]):
         if pd.isnull(parent):
@@ -82,19 +81,9 @@ class column(container):
         self.split2='left'
         self.type='column'
 
-layout=[{'name': 'wrapper1', 'top': 0, 'height': 50, 'left': 0, 'width': 100},
-        {'name': 'wrapper2', 'top': 0, 'height': 100, 'left': 300, 'width': 100},
-        {'name': 'wrapper3', 'top': 0, 'height': 50, 'left': 500, 'width': 100},
-        {'name': 'wrapper4', 'top': 0, 'height': 50, 'left': 600, 'width': 100},
-        {'name': 'wrapper5', 'top': 50, 'height': 50, 'left': 0, 'width': 100},
-        {'name': 'wrapper6', 'top': 150, 'height': 50, 'left': 0, 'width': 100},
-        {'name': 'wrapper7', 'top': 150, 'height': 50, 'left': 100, 'width': 100},
-        {'name': 'wrapper8', 'top': 150, 'height': 50, 'left': 200, 'width': 100},
-        {'name': 'wrapper9', 'top': 200, 'height': 50, 'left': 0, 'width': 100},
-        {'name': 'wrapper10', 'top': 200, 'height': 150, 'left': 300, 'width': 100},
-        {'name': 'wrapper12', 'top': 200, 'height': 200, 'left': 400, 'width': 100},
-        {'name': 'wrapper11', 'top': 400, 'height': 50, 'left': 1000, 'width': 100}
-        ]
+layout=[{'name': 'att2', 'top': 0, 'height': 50, 'left': 0, 'width': 100}, {'name': 'att3', 'top': 0, 'height': 50, 'left': 100, 'width': 100}, {'name': 'att4', 'top': 0, 'height': 50, 'left': 200, 'width': 100}, {'name': 'att5', 'top': 0, 'height': 50, 'left': 300, 'width': 100}, {'name': 'att11', 'top': 0, 'height': 50, 'left': 300, 'width': 100}, {'name': 'att6', 'top': 50, 'height': 50, 'left': 0, 'width': 100}, {'name': 'att12', 'top': 50, 'height': 50, 'left': 100, 'width': 100}, {'name': 'att10', 'top': 50, 'height': 50, 'left': 200, 'width': 100}, {'name': 'att13', 'top': 50, 'height': 50, 'left': 300, 'width': 100}, {'name': 'att7', 'top': 100, 'height': 50, 'left': 0, 'width': 100}]
+
 master=container(el={'top':0,'left':0,'width':1200,'height':1200},rawlayout=layout)
 master.split_by_con()
 master.print_elements()
+"""

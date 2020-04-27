@@ -58,6 +58,17 @@
 </form>
         </div>
         <ul id="sourcelist" class="">
+
+            {% for att in table  %}
+                <li  class="sourceitem list-group-item">
+                    <div id="att{{f.id}}"  name="name{{f.id}}" class="draggableHelper" style="">
+                      <div id="{{t.Attribute}}" class="resizable" > Image1
+                          <button class="deletedraggable">X</button>
+                      </div>
+                    </div>
+                </li>
+            {% endfor %}
+
             <li  class="sourceitem list-group-item">
             <div id="wrapper1" class="draggableHelper" style="">
               <div id="image1" class="resizable" > Image1

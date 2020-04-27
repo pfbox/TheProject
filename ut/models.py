@@ -62,7 +62,9 @@ class Classes(models.Model):
     def editlist(self):
         atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
         return pd.DataFrame([x.__dict__ for x in atts if not x.Calculated])
-
+    @property
+    def editattributes(self):
+        return Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
     @property
     def fulllist(self):
         atts=Attributes.objects.filter(Class_id=self.id)

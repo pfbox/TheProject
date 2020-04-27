@@ -1,6 +1,6 @@
 from django.views.generic import UpdateView,CreateView,ListView
 from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
+from django.urls import reverse,reverse_lazy
 from django.shortcuts import render
 from .tables import *
 from .forms import *
@@ -50,7 +50,7 @@ def edit_instance(request,Class_id,Instance_id):
         form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id)
         if form.is_valid():
             save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
-            return HttpResponseRedirect(reverse('instances', args=(Class_id,)))
+            return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
     form=InstanceForm(Class_id=Class_id,Instance_id=Instance_id)
     context = {'form': form}
     return render(request,'ut/edit_instance.html',context)
@@ -159,11 +159,12 @@ def edit_attribute(request,Attribute_id):
 
 class AttributeCreateView(CreateView):
     model = Attributes
-    template_name = 'ut\edit_attribute.html'
+    template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
 
     def get_success_url(self):
-        return "/ut/Attributes/{}".format(self.Class_id)
+        print ('im here')
+        return reverse_lazy('ut:attributes_view', args = (self.Class_id,))
 
     def get_initial(self):
         initial = super().get_initial()
@@ -179,11 +180,11 @@ class AttributeCreateView(CreateView):
 
 class AttributeUpdateView(UpdateView):
     model = Attributes
-    template_name = 'ut\edit_attribute.html'
+    template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
 
     def get_success_url(self):
-        return "/ut/Attributes/{}".format(self.object.Class.id)
+        return reverse_lazy('ut:attributes_view',args=(self.object.Class.id,))
 
 
 
@@ -193,7 +194,7 @@ class ClassesUpdateView(UpdateView):
     form_class = ClassesForm
 
     def get_success_url(self):
-        return "/ut/Classes"
+        return reverse_lazy('ut:classes_view')
 
 class ClassesCreateView(CreateView):
     model = Classes
@@ -201,8 +202,9 @@ class ClassesCreateView(CreateView):
     form_class = ClassesForm
 
     def get_success_url(self):
-        return "/ut/Classes"
+        return reverse_lazy('ut:classes_view')
 
+a="""
 def change_formtemplate(request,Class_id=0):
     if request.method=='POST':
         formlo={}
@@ -236,6 +238,7 @@ def change_formtemplate(request,Class_id=0):
         context['list2']=formlo['Column2']
 
     return render(request,'ut/formtemplate.html',context)
+"""
 
 def change_tabletemplate(request,Class_id=0):
     if request.method=='POST':
@@ -312,7 +315,6 @@ def export_instances_xls_2(request,raw_qs):
     # Sheet body, remaining rows
     font_style = xlwt.XFStyle()
     rows = raw_queryset_as_values_list(raw_qs)
-    print (raw_queryset_as_values_list(raw_qs))
     for row in rows:
         row_num += 1
         for col_num in range(len(columns)):
@@ -341,26 +343,32 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 class ProtectView(LoginRequiredMixin, View) :
     def get(self, request):
-        print ('im here')
         return render(request, 'ut/index.html')
+
 
 class FormTemlateView(View):
     template = 'ut/formtemplate.html'
-    def __init__(self,Class_id,*args,**kwargs):
-        super(FormTemlateView).__init__(*args,**kwargs)
-        self.Class_id=Class_id
-
-    def get(self, request,class_id):
-        table=Attributes.objects.filter(Class_id=self.Class_id)
-        context={'table':table}
+    def get(self, request,Class_id):
+        table=Classes.objects.get(pk=Class_id).editattributes
+        context={}
+        if Layouts.objects.filter(Class=Class_id).exists():
+            context['layout']=Layouts.objects.get(Class=Class_id).FormLayout
+        context['table']=table
+        context['Class_id']=Class_id
         return render(request, self.template, context)
 
-    def post(self, request,class_id) :
+    def post(self, request,Class_id) :
         if request.POST:
-            layout=json.loads(request.POST['layout'])
-            print (layout)
-            print(sorted(layout['layout'],key=lambda k: (k['top'],k['left'])))
-        return HttpResponseRedirect(reverse('ut:testformtemplate'))
+            #layout=json.loads(request.POST['layout'])
+            lo_to_save=request.POST['layout']
+            if Layouts.objects.filter(Class=Class_id).exists():
+                rec=Layouts.objects.get(Class=Class_id)
+                rec.FormLayout=lo_to_save
+            else:
+                rec=Layouts(FormLayout=lo_to_save,Class=Class_id)
+            rec.save()
+
+        return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
 
 
 
