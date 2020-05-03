@@ -124,7 +124,6 @@ def instances(request,Class_id,SaveToExl=False):
     existing_columns=[f.name for f in Instances._meta.get_fields()]
 
     tl=get_tablelayout(Class_id)
-    print ('tl=',tl)
     try:
         atts=json.loads(tl)['layout']
     except:
@@ -163,7 +162,6 @@ class AttributeCreateView(CreateView):
     form_class = AttributeForm
 
     def get_success_url(self):
-        print ('im here')
         return reverse_lazy('ut:attributes_view', args = (self.Class_id,))
 
     def get_initial(self):
@@ -348,23 +346,19 @@ class FormTemplateView(View):
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
     def get(self, request,Class_id):
-        print ('im here')
         table=Classes.objects.get(pk=Class_id).editattributes
         context={}
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=Layouts.objects.get(Class=Class_id).TableLayout
         context['table']=table
-        print (table)
         context['Class_id']=Class_id
         return render(request, self.template, context)
 
     def post(self, request,Class_id) :
-        print ('im in post')
         if request.POST:
             print()
             #layout=json.loads(request.POST['layout'])
             lo_to_save=request.POST['layout']
-            print (request.POST)
             if Layouts.objects.filter(Class=Class_id).exists():
                 rec=Layouts.objects.get(Class=Class_id)
                 rec.TableLayout=lo_to_save

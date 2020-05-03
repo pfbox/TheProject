@@ -133,8 +133,9 @@ class InstanceForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         try:
-            rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)['layout']
-            master = container(mel={'top': 0, 'left': 0, 'width': 1200, 'height': 1200}, rawlayout=rawlayout)
+            rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
+            NinRow = rawlayout['settings']['NinRow']
+            master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=rawlayout['layout'])
             master.split_by_con()
             layout=master.print_elements()
         except:

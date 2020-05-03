@@ -68,6 +68,7 @@ class container():
             for con in self.containers:
 #                print (' '*shift+str(level*100+i)+' '+con.type+':'+str(con.elids))
                 lodict[con.type+':'+str(level*100+i)+':'+str(con.width)+':col-md-'+str(int(12/(self.width/con.width)))]=con.print_elements(level*100+i,shift+1)
+                print (self.width,con.width,':col-md-'+str(int(12/(self.width/con.width))),int(12/(self.width/con.width)))
                 i=i+1
             return lodict
         else:
