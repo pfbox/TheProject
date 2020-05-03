@@ -23,8 +23,8 @@ urlpatterns = [
 #    path('Classes/save/<int:Class_id>/<int:Instance_id>/', views.save_instance, name='save_instance'),
     path('Classes/edit/<int:Class_id>/<int:Instance_id>/', views.edit_instance, name='edit_instance'),
 #    path('Template/Form/<int:Class_id>/',                  views.change_formtemplate,name='change_formtemplate'),
-    path('Template/Table/<int:Class_id>/',                 views.change_tabletemplate, name='change_tabletemplate'),
     path('Load/<int:Class_id>/', views.load_instances, name='loadinstances'),
     path('needlogin/',views.ProtectView.as_view(),name='needlogin'),
-    path('Template/Form/<int:Class_id>/',views.FormTemlateView.as_view(),name='change_formtemplate'),
+    path('Template/Form/<int:Class_id>/',views.FormTemplateView.as_view(),name='change_formtemplate'),
+    path('Template/Table/<int:Class_id>/', views.TableTemplateView.as_view(), name='change_tabletemplate'),
 ]

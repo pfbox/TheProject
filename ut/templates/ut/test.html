@@ -1,230 +1,36 @@
-<!doctype html>
-<html lang="en">
+<html>
 <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TEST4</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <!-- JQuery css -->
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <style>
-        .area {
-            width : 1200px;
-            height: 500px;
-            background : #eee;
-            padding : 0;
-            margin :0;
-        }
-        .resizable{
-          border : 0px solid #000;
-          min-width : 100px;
-          min-height: 50px;
-          margin : 0;
-          padding : 0;
-        }
-        .draggableHelper {
-          //position : absolute !important;
-          background : #800000;
-          min-width : 100px;
-          min-height: 50px;
-          z-index:500;
-          padding : 0 !important;
-          margin : 0 !important;
-        }
-        .sourcelist {
-         width : 200;
-        }
+<link href="https://unpkg.com/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.css" rel="stylesheet">
+<link href="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css" rel="stylesheet">
 
-    </style>
+<script src="https://unpkg.com/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.16.0/dist/extensions/resizable/bootstrap-table-resizable.min.js"></script>
+
 </head>
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <p style="align:center;">i'm here</p>
-    </div>
-</div>
-<div class="row">
 
-    <div class="col-lg-2 area bg-secondary" id="source">
-        <div class="container fluid">
-            <button id = "saveform" style="">Save</button>
-            <button id = "Load" style="">Load</button>
-            <button id = "Validate" style="">Validate</button>
-        </div>
-        <ul id="sourcelist" class="">
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper1" class="draggableHelper" style="">
-              <div id="image1" class="resizable" > Image1
-                  <button class="deletedraggable">X</button>
-              </div>
-            </div>
-             </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper2" class="draggableHelper" style="">
-              <div id="image2" class="resizable"> Image2
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper3" class="draggableHelper" style="display:inline-block;">
-              <div id="image3" class="resizable"> Image3
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper4" class="draggableHelper" style="display:inline-block;">
-              <div id="image4" class="resizable"> Image4
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper5" class="draggableHelper" style="display:inline-block;">
-              <div id="image5" class="resizable"> Image5
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-        </ul>
-    </div>
-    <div class="col-lg-10" style="margin:0;padding:0;">
-        <div class="area" id="drz">
-        </div>
-    </div>
-</div>
-<!-- JQuery starts -->
-<script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
-        crossorigin="anonymous"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
-        integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30=" crossorigin="anonymous"></script>
-<script type="text/javascript">
-// Change JQueryUI plugin names to fix name collision with Bootstrap:
-$.widget.bridge('uitooltip', $.ui.tooltip);
-$.widget.bridge('uibutton', $.ui.button);
+<table id="table"
+  data-show-columns="true"
+  data-search="true"
+  data-show-toggle="true"
+  data-pagination="true"
+  data-url="json/data1.json"
+  data-resizable="true">
+  <thead>
+    <tr>
+      <th data-field="id" data-sortable="true">ID</th>
+      <th data-field="name" data-sortable="true">Item Name</th>
+      <th data-field="price" data-sortable="true">Item Price</th>
+    </tr>
+  </thead>
+</table>
+
+<script>
+  $(function() {
+    $('#table').bootstrapTable()
+  })
 </script>
-<!-- JQuery ends -->
-<!-- Boostrap -->
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-        crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
-        crossorigin="anonymous"></script>
-<!-- end Boostrap -->
-    <script>
-        $(function() {
-             var layrout={};
-             drz=$('#drz');
-             var gridwidth=100;// drz.width()/12;
-             var gridheight=50;//gridwidth/2;
-             drz.width(gridwidth*12);
-             x1=$('#drz').offset().left
-             y1=$('#drz').offset().top
-             x2=$('#drz').offset().left + 12*gridwidth;
-             y2=$('#drz').offset().top + 12*gridheight;
-             cont=[x1,y1,x2,y2]
-             $('.draggableHelper').css({
-                width : gridwidth,
-                height : gridheight,
-                position : 'absolute',
-             })
-             .draggable({ revert: 'invalid' });
-             $('.deletedraggable').on('click',function(){
-                 var dr = $(this).parent().parent();
-                 if (dr.parent().attr('id') == 'drz') {
-                    dr.removeAttr('style');
-                    dr.width(gridwidth);
-                    dr.height(gridheight);
-                    dr.appendTo($('<li>',{"class":"sourceitem list-group-item"}).appendTo('#sourcelist'));
-                    dr.children('.resizable').resizable('destroy').removeAttr("style");
-                    //dr.draggable("option","iframeFix",true);
-                    //dr.draggable("option","grid","");
-                    dr.draggable("destroy")
-                    .css({position:'absolute'}).draggable({ revert: 'invalid', iframeFix:true });
-                 }
-
-             });
-             $('#drz').droppable({
-                 accept : $('#sourcelist > li > .draggableHelper'),
-                 drop : function (evt,ui) {
-                        var droppedItem = $(ui.draggable)
-                        var prnt = droppedItem.parent()
-                        if (prnt.attr('id') != this.id) {
-                            var resizableItem = $('> .resizable', droppedItem);
-                            resizableItem.resizable({
-                               containment : drz,
-                               grid : [gridwidth,gridheight],
-                               stop: function (evn,ui){
-                                  $($(this).parent()).width($(this).width());
-                                  $($(this).parent()).height($(this).height());
-                               }
-                            }).removeAttr("style");
-                            leftPosition  = droppedItem.offset().left - $(this).offset().left;
-                            if (leftPosition<0){leftPosition=0}
-                            topPosition   = droppedItem.offset().top - $(this).offset().top;
-                            if (topPosition<0){topPosition=0}
-                            droppedItem.css({
-                                'position': 'absolute !important',
-                                'top' :  Math.floor(topPosition /gridheight)*gridheight,
-                                'left' : Math.floor(leftPosition /gridwidth )*gridwidth,
-                            });
-                            droppedItem.width(gridwidth);
-                            droppedItem.height(gridheight);
-                            $(this).append(droppedItem);
-                            droppedItem.draggable('option','containment', drz);
-                            droppedItem.draggable('option','grid',[gridwidth,gridheight]);
-                            prnt.remove()
-                        }
-                 }
-             });
-             $('#saveform').on('click',function(){
-                var a={'drz':{
-                            'width':drz.width(),
-                            'height':drz.height()
-                             }
-                      }
-                $('#drz > .draggableHelper').each(function(i,el){
-                    a[el.id]={'name':el.id,
-                                 'top':el.offsetTop,
-                                 'height':el.offsetHeight,
-                                 'left':el.offsetLeft,
-                                 'width':el.offsetWidth,
-                                }
-                });
-                $.each(a,function(i,v){
-                    console.log(v.name);
-                });
-                console.log(a);
-                layout=a;
-             });
-             $('#loadform').on('click',function(){
-                var a={'drz':{
-                            'width':drz.width(),
-                            'height':drz.height()
-                             }
-                      }
-                $('#drz > .draggableHelper').each(function(i,el){
-                    a[el.id]={'name':el.id,
-                                 'top':el.offsetTop,
-                                 'height':el.offsetHeight,
-                                 'left':el.offsetLeft,
-                                 'width':el.offsetWidth,
-                                }
-                });
-                $.each(a,function(i,v){
-                    console.log(v.name);
-                });
-                console.log(a);
-                layout=a;
-             });
-
-        });
-    </script>
+</script>
 </body>
 </html>
-

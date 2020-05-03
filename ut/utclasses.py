@@ -326,18 +326,19 @@ def get_formlayout(Class_id):
     try:
         res=Layouts.objects.get(Class_id=Class_id).form_dict
     except Layouts.DoesNotExist:
-        res={'Column1':'','Column2':''}
+        res={'settings':{},'layout':[]}
         a=Layouts(Class_id=Class_id,FormLayout=json.dumps(res))
         a.save()
     return res
 
 def get_tablelayout(Class_id):
     try:
-        res=Layouts.objects.get(Class_id=Class_id).table_dict
+        res=Layouts.objects.get(Class_id=Class_id).TableLayout
     except Layouts.DoesNotExist:
-        res={'Row1':''}
+        res={'settings':{},'layout':[]}
         a=Layouts(Class_id=Class_id,TableLayout=json.dumps(res))
         a.save()
+    print ('Class_id  ',Class_id,'res',res)
     return res
 
 def get_column(Class_id,col_name,Instance_id=0,type='FORM'):

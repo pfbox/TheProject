@@ -118,19 +118,19 @@ def instances(request,Class_id,SaveToExl=False):
         class Meta:
             #template_name="django_tables2/semantic.html"
             model=Instances
+            fields=()
 
     h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
     existing_columns=[f.name for f in Instances._meta.get_fields()]
 
-    extra=[]
-    tl=get_tablelayout(Class_id)['Row1']
-    atts= [int(x) if x>'' else 0 for x in tl.split(',')]
+    tl=get_tablelayout(Class_id)
+    print ('tl=',tl)
+    try:
+        atts=json.loads(tl)['layout']
+    except:
+        atts=[]
 
-    for a in atts:
-        if a>0:
-            extra.append(list(Attributes.objects.get(pk=a).selectfield.keys())[0])
-
-    extra_columns=[(f, tables.Column()) for f in extra]+[('Edit',h_link)]
+    extra_columns=[(f['name'], tables.Column(attrs={'th':{'width':f['width']}})) for f in atts]+[('Edit',h_link)]
 
     table=mytable(qs,extra_columns=extra_columns ,template_name="django_tables2/bootstrap4.html"
                   )
@@ -240,31 +240,6 @@ def change_formtemplate(request,Class_id=0):
     return render(request,'ut/formtemplate.html',context)
 """
 
-def change_tabletemplate(request,Class_id=0):
-    if request.method=='POST':
-        formlo={}
-        formlo['Row1']=request.POST['crow1']
-        lo=Layouts.objects.get(Class_id=Class_id)
-        lo.TableLayout=json.dumps(formlo)
-        lo.save()
-
-    fl = Classes.objects.get(pk=Class_id).fulllist
-
-    formlo=get_tablelayout(Class_id)
-
-    used=[]
-    r1=get_column(Class_id,'Row1',type='TABLE')
-
-    context={}
-    context['Class_id']=Class_id
-    if len(r1)>0:
-        context['row1']=r1.to_dict('records')
-        used=used+list(r1.id)
-    context['unused']=fl[~fl.id.isin(used)].to_dict('records')
-    context['list1']=formlo['Row1']
-
-    return render(request,'ut/tabletemplate.html',context)
-
 import xlwt
 
 from django.http import HttpResponse
@@ -346,7 +321,7 @@ class ProtectView(LoginRequiredMixin, View) :
         return render(request, 'ut/index.html')
 
 
-class FormTemlateView(View):
+class FormTemplateView(View):
     template = 'ut/formtemplate.html'
     def get(self, request,Class_id):
         table=Classes.objects.get(pk=Class_id).editattributes
@@ -370,6 +345,34 @@ class FormTemlateView(View):
 
         return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
 
+class TableTemplateView(View):
+    template = 'ut/tabletemplate.html'
+    def get(self, request,Class_id):
+        print ('im here')
+        table=Classes.objects.get(pk=Class_id).editattributes
+        context={}
+        if Layouts.objects.filter(Class=Class_id).exists():
+            context['layout']=Layouts.objects.get(Class=Class_id).TableLayout
+        context['table']=table
+        print (table)
+        context['Class_id']=Class_id
+        return render(request, self.template, context)
+
+    def post(self, request,Class_id) :
+        print ('im in post')
+        if request.POST:
+            print()
+            #layout=json.loads(request.POST['layout'])
+            lo_to_save=request.POST['layout']
+            print (request.POST)
+            if Layouts.objects.filter(Class=Class_id).exists():
+                rec=Layouts.objects.get(Class=Class_id)
+                rec.TableLayout=lo_to_save
+            else:
+                rec=Layouts(TableLayout=lo_to_save,Class=Class_id)
+            rec.save()
+
+        return HttpResponseRedirect(reverse('ut:change_tabletemplate',kwargs={'Class_id':Class_id}))
 
 
 

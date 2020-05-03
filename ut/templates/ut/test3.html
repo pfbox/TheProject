@@ -4,61 +4,107 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TEST3</title>
+    <title>TEST4</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <!-- JQuery css -->
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
+        .area {
+            width : 1200px;
+            height: 500px;
+            background : 	#B0E0E6;
+            padding : 0;
+            margin :0;
+        }
+        .example
+        {
+            margin: 30px 0px 10px 00px;
+            padding: 10px;
+            background-color: #F5F5F5;
+        }
+        .example .header
+        {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .example .description {
+        }
+        .example table {
+            width: 400px;
+            font-size: 8pt;
+        }
 
-    .sortablerow {width : 1200px; min-height : 50px}
-    .inner { background:#eee;height: 100%; border : 1px solid#000}
-    .draggable {margin:0;padding:0;border:0;position:abosute !important;}
-     #sortable1 {min-height:200px; border : border : 1px solid#000}
+        .headerrow {
+            background-color: black;
+            color: white;
+            font-weight: bold;
+            height: 25px;
+        }
 
+        .footerrow {
+            background-color: black;
+            color: white;
+            font-weight: bold;
+            height: 25px;
+        }
+
+        td {
+            border-collapse: collapse;
+            border: thin solid gray;
+            text-align: right;
+        }
+
+		.placeholder {
+		  visibility : visible !important;
+		  border: 1px solid #000;
+		  background-color: #D7DBDD;
+		}
+		ui-state-highlight {
+			 background-color: #D7DBDD !important;
+		}
 
     </style>
 </head>
 <body>
-
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-2">
-            <div class="container">
-                <button id="addrow" name="ar">Add Row</button>
-                <button id="savetodb">Save</button>
-                <div id="sortable1" class="connectedSortable">
-                    <div class="draggable">
-                        <div class="inner">Contact Us</div>
-                    </div>
-                    <div class="draggable">
-                        <div class="inner">FAQs</div>
-                    </div>
-                    <div class="draggable">
-                        <div class="inner">Phone</div>
-                    </div>
-                    <div class="draggable">
-                        <div class="inner">Address1</div>
-                    </div>
-                    <div class="draggable">
-                        <div class="inner">Address2</div>
-                    </div>
-                    <div class="draggable">
-                        <div class="inner">Home</div>
-                    </div>
-                </div>
-            </div>
+        <p id='p1' style="align:center;">i'm here</p>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <p id='p1' style="align:center;">i'm here</p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-2 area bg-secondary" id="source">
+        <div class="container fluid">
+<form method="post" action=#">
+            <button id = "saveform" type="submit">Save</button>
+            <button id = "loadform" style="">Load</button>
+            <button id = "validate" style="">Validate</button>
+            <input type="text" id="layout" name="layout" value="abc" hidden="true"/>
+</form>
         </div>
-        <div class="col-md-10">
-            <div class="container">
-                <div id="sortablerow1" class="row sortablerow connectedSortable bg-primary">
+            <button id="destroy">destroy</button>
+            <button id="create">create</button>
+            <button id="refresh">refresh</button>
+        <ul id="columnlist" class="list-group list-group-flush" >
+        </ul>
+    </div>
+    <div class="col-lg-10" style="margin:0;padding:0;">
+        <div class="area " id="drz">
+			<table id="table" class="table-bordered">
+				<tbody>
+					<tr id="tableheader" class="headerrow ui-sortable">
+					</tr>
+					<tr id="tabledata">
+					</tr>
 
-                </div>
-
-                <div id="sortablerow2" class="row sortablerow connectedSortable bg-secondary">
-                </div>
-            </div>
+				</tbody>
+			</table>
         </div>
     </div>
 </div>
@@ -81,43 +127,104 @@ $.widget.bridge('uibutton', $.ui.button);
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
         crossorigin="anonymous"></script>
 <!-- end Boostrap -->
-<script type="text/javascript">
-  $(function() {
-     counter=3;
-     gridwidth = $('#sortablerow1').width()/12;
-     halfgridwidth = gridwidth/2;
-     newgrid = [gridwidth,halfgridwidth]
-     $('.sortablerow').resizable({
-        grid : newgrid,
-        handles: 's'
-     });
-     $('.draggable','#sortable1').draggable({
-        grid : newgrid,
-     });
-     $('#sortablerow1').droppable({
-        accept : '#sortable1 > .draggable',
-        classes : {
-            "ui-droppable-active": "ui-state-highlight"
-        },
-        drop : function (evt,ui) {
-            var droppedItem = $(ui.draggable)
-            $(this).append(droppedItem);
-            droppedItem.width(gridwidth);
-            droppedItem.height(halfgridwidth);
-            droppedItem.draggable({
-                containment : "#sortablerow1"
-            });
-            droppedItem.resizable({
-                grid : newgrid,
-                //handles: 'e,s'
-            });
-            console.log (typeof ui);
-            console.log (ui);
+<script>
 
-        }
-     });
-  });
-
+$(function () {
+             inputarr=[]
+             ia = {'settings':{'width':1200},
+                    'layout': [{'name':'id','width':'50','visible':true},
+                    {'name':'Code','width':'200','visible':true},
+                    {'name':'ClientName','width':'150','visible':true},
+                    {'name':'Segment','width':'200','visible':false},
+                    {'name':'Client#2','width':'250','visible':true},
+                    {'name':'Client#3','width':'100','visible':true},
+                    {'name':'Cl#4','width':'250','visible':true}
+                    ]}
+			 $('.headerrow').sortable({
+				placeholder: 'ui-state-highlight',
+				forcePlaceholderSize : true,
+				//helperCells: ':not(.footerrow td)',
+				start : function(ev,ui){
+					ui.placeholder.width(ui.item.width())
+					ui.placeholder.css("visibility", "visible");
+					ui.placeholder.css("background-color", "#797D7F");
+					//add dummy th
+				},
+				stop : function (ev,ui){
+				}
+			 }).disableSelection();
+			 $('.thresizable').resizable({handles:"e"});
+             $('#layout').val(JSON.stringify(ia))
+             inputarr=loadfrominput()
+             createtable(inputarr);
+             buildfromcheckboxlist();
+             function buildfromcheckboxlist(){
+                $.each(inputarr,function(i,el){
+                    var column=$('<input/>',{'name':el.name,'type':'checkbox',checked:el.visible,text:el.name,class:'cbColumn'});
+                    var div=$('<div/>',{class:'checkbox'})
+                    var label=$('<label/>')
+                    div.appendTo($('#columnlist'));
+                    label.appendTo(div);
+                    column.appendTo(label)
+                    label.append(el.name);
+                });
+             };
+             $('.cbColumn').on('click',function(){
+             	var cb= $(this)
+		        if (cb.is(":checked")) {
+	        		addcolumn(cb.text());
+		        } else {
+		        	deletecolumn(cb.text());
+		        };
+             });
+			 $('#create').on('click',function(){
+			 	createtable(inputarr);
+			 });
+			 $('#destroy').on('click',function(){
+			 	destroytable();
+			 });
+             $('#refresh').on('click',function(){
+             	destroytable();
+             	createtable(inputarr);
+             });
+             function loadfrominput(){
+                var inputstr=JSON.parse($('#layout').val())
+                layout=inputstr['layout']
+                return layout;
+             };
+			 $('#saveform').on('click',function(){
+			 	savetoinput();
+			 });
+             function savetoinput(){
+             	arr=[];
+             	$('#tableheader .thresizable').each(function(){
+             		arr.append({'name':$(this).text(), 'width': $(this).width()});
+             	});
+             	layout_to_send={'settings':{},'layout':arr}
+             	$('#layout').val(JSON.stringify(layout_to_send));
+             };
+             function destroytable (){
+               	$('.thresizable').remove();
+             	$('.thdata').remove();
+             };
+             function addcolumn(name,width=50){
+               	th=$('<th class="thresizable" width="'+width+'" name="hd'+name+'">'+name+'</th>')
+                $('#tableheader').append(th)
+                //$('#tabledata').append('<th class="thdata" name="dt'+name+'">#</th>')
+                th.resizable({handles:"e"});
+             };
+             function deletecolumn(name){
+				$('#tableheader [name="hd'+name+'"]').remove()
+				$('#tabledata [name="dt'+name+'"]').remove()
+			 };
+             function createtable(arr){
+                 $.each(arr,function(i,el){
+                    if (el.visible) {
+                    	addcolumn(el.name,el.width);
+                    }
+                 });
+             };
+});
 </script>
 </body>
 </html>

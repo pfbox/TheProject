@@ -8,6 +8,13 @@
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <!-- Bootstrap Table-->
+    <link href="https://cdn.jsdelivr.net/gh/akottr/dragtable@master/dragtable.css" rel="stylesheet">
+    <link href="https://unpkg.com/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.css" rel="stylesheet">
+    <link href="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css" rel="stylesheet">
+
+
     <!-- JQuery css -->
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
@@ -49,114 +56,24 @@
 <div class="row">
     <div class="col-lg-2 area bg-secondary" id="source">
         <div class="container fluid">
-<form method="post" action="{% url 'ut:testformtemplate' %}">
-{% csrf_token %}
+<form method="post" action=#">
             <button id = "saveform" type="submit">Save</button>
             <button id = "loadform" style="">Load</button>
             <button id = "validate" style="">Validate</button>
             <input type="text" id="layout" name="layout" value="abc" hidden="true"/>
 </form>
         </div>
-        <ul id="sourcelist" class="">
-
-            {% for att in table  %}
-                <li  class="sourceitem list-group-item">
-                    <div id="att{{f.id}}"  name="name{{f.id}}" class="draggableHelper" style="">
-                      <div id="{{t.Attribute}}" class="resizable" > Image1
-                          <button class="deletedraggable">X</button>
-                      </div>
-                    </div>
-                </li>
-            {% endfor %}
-
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper1" class="draggableHelper" style="">
-              <div id="image1" class="resizable" > Image1
-                  <button class="deletedraggable">X</button>
-              </div>
-            </div>
-             </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper2" class="draggableHelper" style="">
-              <div id="image2" class="resizable"> Image2
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper3" class="draggableHelper" style="display:inline-block;">
-              <div id="image3" class="resizable"> Image3
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper4" class="draggableHelper" style="display:inline-block;">
-              <div id="image4" class="resizable"> Image4
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper5" class="draggableHelper" style="display:inline-block;">
-              <div id="image5" class="resizable"> Image5
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper6" class="draggableHelper" style="display:inline-block;">
-              <div id="image6" class="resizable"> Image6
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper7" class="draggableHelper" style="display:inline-block;">
-              <div id="image7" class="resizable"> Image7
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper8" class="draggableHelper" style="display:inline-block;">
-              <div id="image8" class="resizable"> Image8
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper9" class="draggableHelper" style="display:inline-block;">
-              <div id="image9" class="resizable"> Image9
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper10" class="draggableHelper" style="display:inline-block;">
-              <div id="image10" class="resizable"> Image10
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper11" class="draggableHelper" style="display:inline-block;">
-              <div id="image11" class="resizable"> Image11
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
-            <li  class="sourceitem list-group-item">
-            <div id="wrapper12" class="draggableHelper" style="display:inline-block;">
-              <div id="image12" class="resizable"> Image12
-               <button class="deletedraggable">X</button>
-              </div>
-            </div>
-            </li>
+            <button id="destroy">destroy</button>
+            <button id="create">create</button>
+            <button id="refresh">refresh</button>
+        <ul id="columnlist" >
         </ul>
     </div>
     <div class="col-lg-10" style="margin:0;padding:0;">
         <div class="area" id="drz">
+            <!--
+            <table id="table" data-show-columns="true" data-resizable="true" data-reorderable-columns="true"> <thead> <tr> </tr></thead></table>
+            -->
         </div>
     </div>
 </div>
@@ -178,174 +95,129 @@ $.widget.bridge('uibutton', $.ui.button);
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
         crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/akottr/dragtable@master/jquery.dragtable.js"></script>
+<script src="https://unpkg.com/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.16.0/dist/extensions/resizable/bootstrap-table-resizable.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.16.0/dist/extensions/reorder-columns/bootstrap-table-reorder-columns.min.js"></script>
+
 <!-- end Boostrap -->
     <script>
         $(function() {
-             layout=[];
-             drz=$('#drz');
-             var gridwidth=100;// drz.width()/12;
-             var gridheight=50;//gridwidth/2;
-             drz.width(gridwidth*12);
-             lgrid = [gridwidth,gridheight]
-             x1=$('#drz').offset().left
-             y1=$('#drz').offset().top
-             x2=$('#drz').offset().left + 12*gridwidth;
-             y2=$('#drz').offset().top + 12*gridheight;
-             cont=[x1,y1,x2,y2]
-             $('.draggableHelper').css({
-                width : gridwidth,
-                height : gridheight,
-                position : 'absolute',
-             })
-             .draggable({ revert: 'invalid' });
-             $('.deletedraggable').on('click',function(){
-                 var dr = $(this).parent().parent();
-                 if (dr.parent().attr('id') == 'drz') {
-                    dr.removeAttr('style');
-                    dr.width(gridwidth);
-                    dr.height(gridheight);
-                    dr.appendTo($('<li>',{"class":"sourceitem list-group-item"}).appendTo('#sourcelist'));
-                    dr.children('.resizable').resizable('destroy').removeAttr("style");
-                    //dr.draggable("option","iframeFix",true);
-                    //dr.draggable("option","grid","");
-                    dr.draggable("destroy")
-                    .css({position:'absolute'}).draggable({ revert: 'invalid' });
-                 }
-             });
-             $('#drz').droppable({
-                 create : console.log('created'),
-                 accept : $('.draggableHelper'),
-                 drop : function (evt,ui) {
-                        var droppedItem = $(ui.draggable)
-                        dropitem(droppedItem)
-                 }
-             });
-             function rankbyfield (arr,field) {
-                output=arr;
-                propertyArr=[];
-                $.each(arr,function(){
-                    propertyArr.push(this[field])
+             inputarr=[]
+             ia = {'settings':{'width':1200},
+                    'layout': [{'name':'id','width':'5','visible':true},
+                    {'name':'Code','width':'20','visible':true},
+                    {'name':'ClientName','width':'15','visible':true},
+                    {'name':'Segment','width':'20','visible':false},
+                    {'name':'Client#2','width':'25','visible':true},
+                    {'name':'Client#3','width':'10','visible':true},
+                    {'name':'Cl#4','width':'25','visible':true}
+                    ]}
+             savetoinput(ia);
+             inputarr=loadfrominput()
+             createtable(inputarr);
+             tablewidth=$('#table').width();
+             buildfromcheckboxlist();
+
+             function adjustarrwidth(){
+                var totalwidth=0
+                $.each(inputarr,function(i,el){
+                    if (el.visible){
+                        totalwidth=totalwidth+parseInt(el.width)
+                    };
                 });
-                uniqueProp=propertyArr.filter(function(itm, i, a) {return i == a.indexOf(itm);});
-                rank=0;
-                $.each(uniqueProp,function(i,propvalue){
-                    $.each(output,function(i,el){
-                        if (el[field]==propvalue) {
-                            el['rank_'+field]=rank;
-                        }
-                    });
-                    rank++;
+                lastindex=0
+                adjtotal=0;
+                $.each(inputarr,function(i,el){
+                    if (el.visible){
+                        el.width=Math.round(parseInt(el.width)/totalwidth*100);
+                        adjtotal=adjtotal+el.width;
+                        console.log(el);
+                        lastindex=i;
+                    };
                 });
-                return output;
+                tablewidth=adjtotal;
+                //inputarr[lastindex].width=inputarr[lastindex].width+tablewidth-adjtotal;
+             }
+             function buildfromcheckboxlist(){
+                $.each(inputarr,function(i,el){
+                    var column=$('<input/>',{'name':el.name,'type':'checkbox',checked:el.visible,text:el.name,class:'cbColumn'});
+                    var div=$('<div/>',{class:'checkbox'})
+                    var label=$('<label/>')
+                    div.appendTo($('#columnlist'));
+                    label.appendTo(div);
+                    column.appendTo(label)
+                    label.append(el.name);
+                });
              };
-             $('#saveform').on('click',function(){
-                var arr1 = drz.children('.draggableHelper')
-                var a=[]
-                $.each(arr1, function(i,el){
-                    a.push({'name':el.id,
-                                 'top':el.offsetTop,
-                                 'height':el.offsetHeight,
-                                 'left':el.offsetLeft,
-                                 'width':el.offsetWidth,
-                                });
+
+             $('.cbColumn').on('click',function(){
+                var cb= $(this)
+                $.each(inputarr, function(i,el){
+                    if (el.name==cb.attr('name')) {
+                        el.visible=cb.is(":checked");
+                        return false;
+                        console.log('found ' + el.name);
+                    }
                 });
-                $.each(a,function(i,v){
-                    console.log(v.name);
-                });
-                console.log(a);
-                settings={'gridwidth':gridwidth, 'gridheight': gridheight}
-                layout=a;
-                layout_to_send={settings,'layout':a}
-                $('#layout').val(JSON.stringify(layout_to_send));
+                destroytable()
+                adjustarrwidth();
+                createtable(inputarr)
              });
 
-             $('#loadform').on('click',function(){
-                drz.find('.deletedraggable').each(function(){
-                    $(this).trigger('click');
-                });
-                $.each(layout,function(i,v){
-                    dropitem($('#'+v.name),v.left,v.top,v.width,v.height);
-                });
+             $('#refresh').on('click',function(){
+                destroytable();
+//                adjustarrwidth();
+                createtable(inputarr);
              });
-             function overlap ($e1,$e2) {
-                var overlapobjects = []
-                if (! ($($e1).get(0)===$($e2).get(0))) {
-                    e1x1=$e1.offsetLeft
-                    e1y1=$e1.offsetTop
-                    e1x2=$e1.offsetWidth + e1x1
-                    e1y2=$e1.offsetHeight + e1y1
-                    e2x1=$e2.offsetLeft
-                    e2y1=$e2.offsetTop
-                    e2x2=$e2.offsetWidth + e2x1
-                    e2y2=$e2.offsetHeight + e2y1
-                    return !(
-                      e1y1 >= e2y2 ||
-                      e1x2 <= e2x1 ||
-                      e1y2 <= e2y1 ||
-                      e1x1 >= e2x2
-                    );
+             function savetoinput(arr){
+                 $('#layout').val(JSON.stringify(arr));
+             };
+             function loadfrominput(){
+                var inputstr=JSON.parse($('#layout').val())
+                layout=inputstr['layout']
+                //tablewidth=inputstr['settings']['width']
+                return layout;
+             };
+
+             function destroytable (){
+                var visibles=0;
+                var lastvis=0;
+                totalwidth=0
+                $.each(inputarr,function(i,el){
+                    $('#table thead tr th').each(function(){
+                       if ($(this).text()==el.name){
+                         if (el.visible) {
+                             el.width=parseInt($(this).width())
+                             visibles=visibles+1
+                             totalwidth=totalwidth+parseInt($(this).width())
+                             lastvis=i;
+                         }
+                         return false
+                       };
+                    });
+                });
+                if (tablewidth!=totalwidth){
+                    //inputarr[lastvis].width=inputarr[lastvis].width+tablewidth-totalwidth
                 }
-                return false
+                $('.clearfix').remove();
+                $('.bootstrap-table').remove();
              };
-
-             $('#validate').on('click',function(){
-                var arr1=drz.children('.draggableHelper').toArray()
-                var arr2=$.merge([], arr1)
-                $.each(arr1,function (i,el1) {
-                    arr2.shift();
-                    $.each(arr2,function(ci,el2){
-                            if (overlap(el1,el2)) {
-                                alert ('Overlap '+$(el1).attr('id')+' and '+$(el2).attr('id'));
-                                return false
-                            }
-                    });
-                });
-                return true
-             });
-
-             function setitemposition($item,x=0,y=0,w=0,h=0){
-                        if ((x+y+w+h)==0) {
-                            leftPosition  = Math.max(0, Math.floor(($item.offset().left - drz.offset().left)/gridwidth )*gridwidth);
-                            topPosition   = Math.max(0,Math.floor(($item.offset().top - drz.offset().top)/gridheight)*gridheight,0);
-                        } else {
-                            leftPosition=x;
-                            topPosition=y;
-                        }
-                        elWidth = Math.max(w,gridwidth)
-                        elHeight = Math.max(h,gridheight);
-                        $item.css({
-                                'position': 'absolute !important',
-                                'top' :  topPosition,
-                                'left' : leftPosition,
-                                'width' : elWidth,
-                                'height' : elHeight
-                        });
+             function createtable(arr){
+                 tab=$('#drz').append('<table id="table" data-show-columns="true" data-resizable="true" data-reorderable-columns="true"><thead> <tr id="tableheader"></tr></thead><tbody><tr id="tabledata"></tr></tbody></table>')
+                 $.each(arr,function(i,el){
+                    if (el.visible) {
+                        $('#tableheader').append('<th data-field="'+el.name +'" data-sortable="false" data-width="'+el.width+'" data-width-unit="px">'+el.name+'</th>')
+                        $('#tabledata').append('<th>#</th>')
+                    }
+                 });
+                 $('#table').bootstrapTable({
+                    onReorderColumn: console.log('im here')
+                 });
              };
-             function dropitem($item,x=0,y=0,w=0,h=0) {
-                        var prnt = $item.parent();
-                        if (prnt.attr('id') != drz.attr('id')) {
-                            var resizableItem = $('> .resizable', $item);
-                            setitemposition($item,x,y,w,h);
-                            resizableItem.resizable({
-                               containment : drz,
-                               grid : lgrid,
-                               stop: function (evn,ui){
-                                  $(this).parent().width($(this).width());
-                                  $(this).parent().height($(this).height());
-                               }
-                            }) //.removeAttr("style");
-                            $item.appendTo(drz);
-                            $item.draggable('option','containment', drz);
-                            $item.draggable('option','grid', lgrid);
-                            prnt.remove();
-                            resizableItem.removeAttr("style");
-                        }
-                        //reset item position to put it in the right place on the form
-                        //setitemposition($item,x,y,w,h);
-             };
-             $('#trigger').on('click',function(){
-
-             });
         });
     </script>
 </body>

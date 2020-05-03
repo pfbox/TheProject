@@ -79,7 +79,9 @@ def create_form_field(Attribute_id):
     elif dt == 4:
         field=forms.CharField(widget=forms.Textarea,required=req)
     elif dt == 5:
-        field=forms.DateField(required=req)
+        field=forms.DateField(required=req,input_formats=['%Y-%m-%d'],
+                              widget=forms.TextInput(attrs={'type':'date'})
+        )
     elif dt == 6:
         if att.Ref_Class.id!=0:
             if att.Ref_Attribute.id==0:
@@ -94,11 +96,11 @@ def create_form_field(Attribute_id):
         field = forms.DateTimeFieldField(required=req)
     elif dt == 9: #boolean
         field=forms.ChoiceField(choices=[(0,'False'),(1,'True')],required=req)
-    elif dt == 10:
+    elif dt == 10: #list Do not use
         field=forms.ChoiceField(choises=['one','two','three'],required=req)
-    elif dt == 11:
+    elif dt == 11: #EmailField
         field=forms.EmailField(required=req)
-    elif dt == 12:
+    elif dt == 12: #Currency
         field=forms.FloatField(required=req)
     else:
         raise Exception('Datatype {} does not exists.'.format(dt))
