@@ -4,6 +4,7 @@ import pandas as pd
 from django_pandas.io import read_frame
 import numpy as np
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 
 from django_tables2.utils import A
 
@@ -16,7 +17,7 @@ for a in app_models:
 from django.db import connection
 con=connection
 df_classes=pd.DataFrame()#pd.read_sql('select * from ut_classes',con) #.set_index('id')
-df_attributes=pd.DataFrame()#pd.read_sql('select * from ut_attributes',con) #.set_index('id')
+df_attributes=pd.read_sql('select * from ut_attributes',con)#.set_index('id')
 df_datatypes=pd.DataFrame()#pd.read_sql('select * from ut_datatypes',con) #.set_index('id')
 df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.set_index('id')
 df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
@@ -25,7 +26,8 @@ df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
 from django_jinja_knockout.query import FilteredRawQuerySet
 
 def create_rawquery_from_attributes(Class_id=0,filter={}):
-    sql=Classes.objects.get(pk=Class_id).qs_sql + '\n' + create_filter_for_sql(filter)
+    sql=Classes.objects.get(pk=Class_id).qs_sql + '\n' + create_filter_for_sql(Class_id,filter)
+    print (sql)
     qs=Instances.objects.raw(sql)
 #    fqs = FilteredRawQuerySet.clone_raw_queryset(
 #            raw_qs=qs, relation_map={
@@ -121,7 +123,7 @@ def create_control_old(Instance_id,Attribute_id,read_only=False): #looks like I 
         ins=Instances.objects.filter(Class_id=at.Ref_Class.id).values_list('id', 'Code')
         options = '<option value=0></option>' + ' '.join(['<option value={} {}>{}</option>'.format(list(o)[0], 'selected' if value==list(o)[0] else '',list(o)[1]) for o in ins]) #(value.id==list(o)[0])
         return '<select class="form-control" name="{name}" {ro}> {op} </select>'.format(name=at.id,ro=ro,val=options)
-    elif dt == 9:  # instance
+    elif dt in [9,10,11,12]:
         pass
     else:
         raise('DataType does not exists --create_control')
@@ -228,6 +230,9 @@ def create_filter(Attribute_id,filter={}):
         value=''
     dt=at.DataType.id
     id=at.id
+
+
+
     cl="form-control form-control-xs"
     attribute=at.Attribute
     res='<div class ="d-inline-flex p-2 bd-highlight" >' \
@@ -269,41 +274,52 @@ def create_filter(Attribute_id,filter={}):
     res=res+'</div></div></div></div>'
     return res
 
-def create_filter_for_sql(filter={}):
+#this procedure creates a filter for the query that will be executed on the server
+def create_filter_for_sql(Class_id,filter={}):
     where = ''
     for key,val in filter.items():
-        if 'min' in key:
-            id=int(key[3:])
+        if '__min__' in key:
+            name=key[7:]
             type='min'
-        elif 'max' in key:
-            id=int(key[3:])
+        elif '__max__' in key:
+            name=key[7:]
             type='max'
         else:
-            id=int(key)
+            name=key
         #
-        at=Attributes.objects.get(pk=id)
-        id=at.id
-        dt=at.DataType.id
-        fieldname=get_fieldname(dt)
-        tablename='val' + str(id)
-        if id==0:
+        if name=='Code':
+            id=0
+        else:
+            try:
+                at=Attributes.objects.get(Class_id=Class_id,Attribute=name)
+                id=at.id
+                dt=at.DataType.id
+                fieldname=get_fieldname(dt)
+                tablename='val' + str(id)
+            except ObjectDoesNotExist:
+                print ('Attributes for',key,'have not been not found')
+                id=-1
+        if id<0:
+            pass
+        elif id==0:
             where = where + ' and ' + "ins.Code='{}'".format(val)
         elif dt in [1,2]:
             if type=='min':
                 where=where + ' and ' + tablename+'.'+fieldname+'>={}'.format(val)
             else:
                 where=where + ' and ' + tablename+'.'+fieldname+'<={}'.format(val)
-        elif dt in [5]:
+        elif dt in [5,7]:
             if type=='min':
                 where=where + ' and ' + tablename+'.'+fieldname+">='{}'".format(val)
             else:
-                where=where + ' and ' + tablename+'.'+fieldname+">='{}'".format(val)
-        elif dt in [3,4]:
+                where=where + ' and ' + tablename+'.'+fieldname+"<='{}'".format(val)
+        elif dt in [3,4,11,12]:
             where = where + ' and ' + tablename + '.' + fieldname + " like '%{}%'".format(val)
         elif dt in [6]:
             if int(val)!=0:
                 where = where + ' and '+ tablename + '.' + fieldname + "={}".format(val)
-
+        elif dt in [9]:
+            where = where + ' and ' + tablename + '.' + fieldname + " = {}".format(val)
     return where
 
 def get_next_counter(Class_id):
@@ -331,16 +347,7 @@ def get_formlayout(Class_id):
         a.save()
     return res
 
-def get_tablelayout(Class_id):
-    try:
-        res=Layouts.objects.get(Class_id=Class_id).TableLayout
-    except Layouts.DoesNotExist:
-        res={'settings':{},'layout':[]}
-        a=Layouts(Class_id=Class_id,TableLayout=json.dumps(res))
-        a.save()
-    print ('Class_id  ',Class_id,'res',res)
-    return res
-
+a="""
 def get_column(Class_id,col_name,Instance_id=0,type='FORM'):
     if type=='FORM':
         fl = Classes.objects.get(pk=Class_id).editlist
@@ -358,6 +365,7 @@ def get_column(Class_id,col_name,Instance_id=0,type='FORM'):
             id=int(f.strip())
             res=res.append(fl[fl.id==id])
     return res
+"""
 
 def raw_queryset_as_values_list(raw_qs):
     columns = raw_qs.columns
@@ -414,5 +422,7 @@ def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True)
         if name in instance.keys() and (index!=0):
             save_attribute(ins.id,rec.id,instance[name],passed_by_name=passed_by_name)
     return True
+
+
 
 

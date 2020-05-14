@@ -27,4 +27,5 @@ urlpatterns = [
     path('needlogin/',views.ProtectView.as_view(),name='needlogin'),
     path('Template/Form/<int:Class_id>/',views.FormTemplateView.as_view(),name='change_formtemplate'),
     path('Template/Table/<int:Class_id>/', views.TableTemplateView.as_view(), name='change_tabletemplate'),
+    path('TestFormset/', views.TestFormsetFactory.as_view(), name='change_tabletemplate'),
 ]

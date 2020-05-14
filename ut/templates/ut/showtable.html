@@ -4,21 +4,40 @@
 
 {% block content %}
 
-<div class="container-fluid">
-<form action="{% url 'ut:instances' Class_id %}" method="get">
-<div class="col-md-12">
-<div class="d-flex flex-wrap">
-    {% if filterform %}
-        {{filterform | safe}}
-    {% endif %}
-</div>
-<div class="d-inline-flex p-2 bd-highlight" >
+{% load bootstrap4 %}       {# import bootstrap4/bootstrap3 #}
+{% bootstrap_css %}         {# Embed Bootstrap CSS #}
+{% bootstrap_javascript jquery='full' %}  {# Embed Bootstrap JS+jQuery #}
+{{ form.media }}            {# Adds date-picker required JS and CSS #}
 
+{% load crispy_forms_tags %}
+<div class="container-fluid">
+<div class="col-md-12">
+
+  <div class="card">
+    <div class="card-header" id="headingOne">
+      <h5 class="mb-0">
+        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+          Filter {{filter_desc}}
+        </button>
+      </h5>
+    </div>
+
+    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+      <div class="card-body">
+        <div class="d-flex flex-wrap">
+            {% crispy filterform %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!--
+<div class="d-inline-flex p-2 bd-highlight" >
         <button class="btn btn-primary" type="submit">Filter</button>
         <button class="btn btn-primary" type="submit" formaction="{% url 'ut:instances' Class_id 1 %}">Save to xls</button>
 </div>
+-->
 </div>
-</form>
 </div>
 
 <div class="container-fluid">

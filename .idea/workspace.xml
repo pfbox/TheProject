@@ -39,7 +39,7 @@
   <component name="PropertiesComponent">
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut/templates/ut" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut" />
     <property name="settings.editor.selected.configurable" value="vcs.Git" />
   </component>
   <component name="PyConsoleOptionsProvider">
@@ -59,8 +59,8 @@
       <recent name="C:\Users\pavel\Anaconda3\TheProject" />
     </key>
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\TheProject\ut" />
+      <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\TheProject\templates" />
       <recent name="C:\TheProject\utlogin" />
       <recent name="C:\Users\pavel\Anaconda3\TheProject\ut\templates\ut" />
@@ -153,8 +153,8 @@
     </configuration>
     <list>
       <item itemvalue="Python.Unnamed" />
-      <item itemvalue="Python.test" />
       <item itemvalue="Python.formtemplate" />
+      <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
       <list>
@@ -279,10 +279,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="667" y="156" width="941" height="732" key="find.popup/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1586470558336" />
-    <state x="-1297" y="222" width="672" height="678" key="search.everywhere.popup" timestamp="1587877974262">
+    <state x="-1297" y="222" width="672" height="678" key="search.everywhere.popup" timestamp="1589142460203">
       <screen x="-1920" y="-3" width="1920" height="1040" />
     </state>
-    <state x="-1297" y="222" width="672" height="678" key="search.everywhere.popup/-1920.-3.1920.1040/0.0.1920.1040@-1920.-3.1920.1040" timestamp="1587877974262" />
+    <state x="-1297" y="222" width="672" height="678" key="search.everywhere.popup/-1920.-3.1920.1040/0.0.1920.1040@-1920.-3.1920.1040" timestamp="1589142460203" />
     <state x="2543" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/1920.0.1920.1040@1920.0.1920.1040" timestamp="1587683579356" />
   </component>
   <component name="XDebuggerManager">

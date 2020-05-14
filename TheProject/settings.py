@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'mptt',
     'bootstrap_modal_forms',
+    'bootstrap_datepicker_plus',
 #    'django_filter',
 ]
 
@@ -134,6 +135,10 @@ STATIC_URL = '/static/'
 #Pavel
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+BOOTSTRAP4 = {
+    'include_jquery':True
+}
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

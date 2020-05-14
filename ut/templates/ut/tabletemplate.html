@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
         .area {
-            width : 1200px;
-            height: 500px;
+            width : 1700px;
+            height: 300px;
             background : 	#B0E0E6;
             padding : 0;
             margin :0;
@@ -174,8 +174,11 @@ $(function () {
              	createtable(inputarr);
              });
              function loadfrominput(){
-                var inputstr=JSON.parse($('#layout').val())
-                layout=inputstr['layout']
+                try {
+                    var layout=JSON.parse($('#layout').val())['layout']
+                } catch (e) {
+                    layout=[];
+                }
                 return layout;
              };
 			 $('#saveform').on('click',function(){
@@ -184,7 +187,11 @@ $(function () {
              function savetoinput(){
              	arr=[];
              	$('#tableheader .thresizable').each(function(){
-             		arr.push({'name':$(this).text(), 'width': $(this).width(),'visible':true});
+             		arr.push({
+             		    'name':$(this).text(),
+             		    'width': $(this).width() + parseInt($(this).css('margin'))*2 + parseInt($(this).css('padding'))*2+parseInt($(this).css('border'))*2,
+             		    'visible':true
+             		});
              	});
              	layout_to_send={'settings':{},'layout':arr}
              	$('#layout').val(JSON.stringify(layout_to_send));

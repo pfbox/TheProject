@@ -18,10 +18,16 @@ def get_fieldname(dt):
         f = 'datetime_value'
     elif dt == 6:
         f = 'instance_value_id'
+    elif dt == 7:
+        f = 'datetime_value_id'
     elif dt==9 : #boolean
         f='int_value'
+    elif dt == 11:  # email
+        f = 'char_value'
+    elif dt == 22:  # string
+        f = 'char_value'
     else:
-        raise Exception ('No {} such datatype'.format(dt))
+        raise Exception ('No {} datatype'.format(dt))
     return '"'+f+'"'
 
 class Classes(models.Model):
@@ -69,11 +75,18 @@ class Classes(models.Model):
     def fulllist(self):
         atts=Attributes.objects.filter(Class_id=self.id)
         return pd.DataFrame([x.__dict__ for x in atts])
+    @property
+    def filterlist(self):
+        atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
+        return pd.DataFrame([x.__dict__ for x in atts if x.Filtered])
 
 
 #int,varchar,text,class
 class DataTypes(models.Model):
     DataType = models.CharField(max_length=50,unique=True)
+    FieldFilter = models.IntegerField(default=0)
+    Filter1stName = models.CharField(default='min',max_length=50)
+    Filter2ndName = models.CharField(default='max',max_length=50)
     class Meta:
         verbose_name='DataTypes'
     def __str__(self):
@@ -139,6 +152,8 @@ class Attributes(models.Model):
                     .format(tab=self.refatttablename,field=get_fieldname(self.Ref_Attribute.DataType.id),name=self.Attribute)
         elif self.DataType.id==8:
             res[self.Attribute]='{tab}.{field} as "{name}"'.format(tab=self.ExternalTable,field=self.ExternalField,name=self.Attribute)
+        elif self.DataType.id in [10]:
+            res[self.Attribute]='0 as Table__'+str(self.id)+'__'
         else:
             res[self.Attribute]='{tab}.{field} as "{name}"'.format(tab=self.tablename,id=self.id,field=get_fieldname(self.DataType.id),name=self.Attribute)
         return res
@@ -164,6 +179,13 @@ class Attributes(models.Model):
         if self.DataType.id==8:
             res=True
         return res
+
+    @property
+    def TableColumn(self):
+        if self.DataType == 8:
+            pass
+
+
 
 class Counters(models.Model):
     Class=models.OneToOneField(Classes,on_delete=models.CASCADE)
@@ -215,8 +237,9 @@ class Values(models.Model):
 import json
 class Layouts(models.Model):
     Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
-    FormLayout = models.TextField(null=True,blank=True)
-    TableLayout= models.TextField(null=True,blank=True)
+    FormLayout  = models.TextField(null=True,blank=True)
+    TableLayout = models.TextField(null=True,blank=True)
+    ShortLayout = models.TextField(null=True,blank=True)
 
     @property
     def form_dict(self):

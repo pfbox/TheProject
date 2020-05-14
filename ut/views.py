@@ -47,12 +47,28 @@ def showclass(request,Class_id):
 
 def edit_instance(request,Class_id,Instance_id):
     if request.method=='POST':
-        form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id)
-        if form.is_valid():
-            save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
+        if request.POST.get('cancel'):
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+        else:
+            form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id)
+            if form.is_valid():
+                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
+                return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
     form=InstanceForm(Class_id=Class_id,Instance_id=Instance_id)
-    context = {'form': form}
+
+    context={}
+    for a1 in Attributes.objects.filter(Class_id=Class_id,DataType_id=10):
+        refclass_id=a1.Ref_Class.id
+        refattr = a1.Ref_Attribute.Attribute
+        if Instance_id==0:
+            filter={refattr:-1}
+        else:
+            filter = {refattr:Instance_id}
+
+        qs = create_rawquery_from_attributes(refclass_id, filter=filter)
+        table = mytable(Class_id=refclass_id,style='ShortLayout',data=qs)
+        context['table'+str(a1.id)+'']=table
+    context['form'] = form
     return render(request,'ut/edit_instance.html',context)
 
 a='''\
@@ -94,48 +110,52 @@ def classes_view2(request):
     classes_list=Classes.objects.all()
     classes_filter=ClassesFilter(request.GET,queryset=classes_list)
     table = ClassesTable(classes_list)
-    RequestConfig(request, paginate={"per_page": 10}).configure(table)
-
+    RequestConfig(request, paginate={"per_page": 20}).configure(table)
     return render(request,'ut/classes.html',{'filter':classes_filter,'table':table})
 
+class insances_view():
+    def __init__(self,Class_id,filter={}):
+        super().__init__(self);
+        self.Class_id=Class_id
+        self.filter=filter
+    def get(self,request,Class_id,SaveToExl):
+        self.filter = {}
+        for key,value in request.GET.items():
+            if (value!='')&(key not in ['sort','page']):
+                pass
 
 def instances(request,Class_id,SaveToExl=False):
     filter = {}
+    sort=None
     if request.method=='GET':
+        if request.GET.get('sort'):
+            sort=request.GET.get('sort')
+        else:
+            sort = request.GET.get('sortfield')
         for key, value in request.GET.items():
-            if (value!='')&(key not in ['sort','page']):
+            if (value!='')&(key not in ['sort','page','submit','sortfield']):
                 filter[key]=value
-    filterform=create_filter_set(Class_id,filter)
+    filterform= FilterForm(Class_id=Class_id,filter=filter) #create_filter_set(Class_id,filter)
 
     qs=create_rawquery_from_attributes(Class_id,filter)
-
+    if pd.isnull(sort):
+        sort='Code'
     if SaveToExl:
         return export_instances_xls(request,qs)
     else:
         pass
+    #h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
 
-    class mytable(tables.Table):
-        class Meta:
-            #template_name="django_tables2/semantic.html"
-            model=Instances
-            fields=()
-
-    h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
-    existing_columns=[f.name for f in Instances._meta.get_fields()]
-
-    tl=get_tablelayout(Class_id)
-    try:
-        atts=json.loads(tl)['layout']
-    except:
-        atts=[]
-
-    extra_columns=[(f['name'], tables.Column(attrs={'th':{'width':f['width']}})) for f in atts]+[('Edit',h_link)]
-
-    table=mytable(qs,extra_columns=extra_columns ,template_name="django_tables2/bootstrap4.html"
-                  )
+    table=mytable(Class_id=Class_id,style='TableLayout',data=qs)
+    if not request.GET._mutable:
+        request.GET._mutable = True
+    request.GET['sort']=sort
+    #print (request.GET)
     RequestConfig(request).configure(table)
-    table.paginate(page=request.GET.get("page", 1), per_page=10)
-    context = {'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform}
+#    table.order_by = sort
+#    print ('sort=',sort)
+    table.paginate(page=request.GET.get("page", 1), per_page=20)
+    context = {'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform,'sortfield':sort}
     return render(request, 'ut/showtable.html',  context)
 
 def filters(request,Class_id):
@@ -147,7 +167,7 @@ def filters(request,Class_id):
 def attributes_view(request,Class_id):
     attlist=Attributes.objects.filter(Class_id=Class_id)
     table = AttributeTable(attlist)
-    RequestConfig(request, paginate={"per_page": 10}).configure(table)
+    RequestConfig(request, paginate={"per_page": 20}).configure(table)
     return render(request,'ut/attributes.html',{'table':table,'Class_id':Class_id})
 
 
@@ -367,6 +387,68 @@ class TableTemplateView(View):
             rec.save()
 
         return HttpResponseRedirect(reverse('ut:change_tabletemplate',kwargs={'Class_id':Class_id}))
+
+from django.forms import formset_factory
+
+class TestForm(forms.Form):
+    id=forms.IntegerField()
+    name=forms.CharField()
+
+from crispy_forms.layout import LayoutObject, Submit, Row, Column, MultiField,Field,Div,Fieldset,TEMPLATE_PACK,HTML
+from crispy_forms.helper import FormHelper
+from django.template.loader import render_to_string
+
+class FormSet1(LayoutObject):
+    template='ut/test.html'
+    def __init__(self,formset_name_in_context,template=None):
+        self.formset_name_in_context = formset_name_in_context
+        self.fields=[]
+        if template:
+            self.template=template
+        def render (self,form,form_style,context,template_pack=TEMPLATE_PACK):
+            formset = context[self.formset_name_in_context]
+            print('i was here')
+            return render_to_string(self.template,{'formset':formset})
+
+class TestParentForm(forms.Form):
+    parent=forms.CharField()
+    child=forms.CharField()
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.helper=FormHelper()
+        self.helper.layout=Layout(
+            Div(
+                Field('child'),
+                HTML("""{% load render_table from django_tables2 %}  
+                        {% if formset %} 
+                        something {% render_table formset %}
+                        {% else %}
+                        Nothing  
+                        {% endif %}
+                        """),
+                ),
+            Field('parent'),
+        )
+
+class TestFormsetFactory(View):
+    template = 'ut/test2.html'
+    def get (self,request):
+        cntx={}
+        data = [
+            {"width":100,"name": "Bradley","abc":'a'},
+            {"name": "Stevie","abc":'c'},
+        ]
+
+        class NameTable(tables.Table):
+            name = tables.Column()
+            abc = tables.Column()
+
+        table = NameTable(data)
+
+        TestFormSet = formset_factory(TestForm, extra=2);
+        cntx['form'] = TestParentForm()
+        cntx['formset']=table
+        return render(request,self.template,context=cntx)
 
 
 
