@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'ut.apps.UtConfig',
 #    'utlogin.apps.UtloginConfig',
     #extentions
+    'django_extensions',
     'django_tables2',
     'bootstrap3',
     'bootstrap4',

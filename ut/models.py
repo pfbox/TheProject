@@ -262,4 +262,3 @@ class FormLayouts(models.Model):
     Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
     Row = models.IntegerField(default=0)
     Column = models.IntegerField(default=0)
-

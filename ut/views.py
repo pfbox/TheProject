@@ -9,7 +9,6 @@ import numpy as np
 from django_tables2 import SingleTableView
 from .filters import ClassesFilter
 
-
 from .utclasses import *
 from django_tables2 import RequestConfig
 
@@ -93,7 +92,7 @@ def save_instance(request,Class_id,Instance_id=0):
             ins[key]=val
         ins['Instance_id']=Instance_id
         save_instance_byid(Class_id,ins)
-    return HttpResponseRedirect(reverse('instances', args=(Class_id,)))
+    return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
 '''
 
 
@@ -187,7 +186,7 @@ class AttributeCreateView(CreateView):
     def get_initial(self):
         initial = super().get_initial()
         self.Class_id = self.kwargs['Class_id']
-        initial['Class']=self.model.objects.get(pk=self.Class_id)
+        initial['Class']=Classes.objects.get(pk=self.Class_id)
         return initial
 
     def get_form_kwargs(self):
@@ -327,7 +326,7 @@ def load_instances(request,Class_id=0):
         form = UploadInstances(request.POST, request.FILES)
         if form.is_valid() and request.FILES['file']:
             handle_uploaded_file(request.FILES['file'],Class_id)
-            return HttpResponseRedirect(reverse('instances', args=(Class_id,)))
+            return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
     else:
         form = UploadInstances()
     return render(request, 'ut/loadinstances.html', {'form': form,'Class_id':Class_id})
@@ -358,35 +357,37 @@ class FormTemplateView(View):
                 rec=Layouts.objects.get(Class=Class_id)
                 rec.FormLayout=lo_to_save
             else:
-                rec=Layouts(FormLayout=lo_to_save,Class=Class_id)
+                rec=Layouts(FormLayout=lo_to_save,Class_id=Class_id)
             rec.save()
 
         return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
 
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
-    def get(self, request,Class_id):
+    def get(self, request,Style,Class_id):
         table=Classes.objects.get(pk=Class_id).editattributes
+        print (Style)
         context={}
         if Layouts.objects.filter(Class=Class_id).exists():
-            context['layout']=Layouts.objects.get(Class=Class_id).TableLayout
+            context['layout']=getattr(Layouts.objects.get(Class=Class_id),Style)
         context['table']=table
         context['Class_id']=Class_id
+        context['Style']=Style
         return render(request, self.template, context)
 
-    def post(self, request,Class_id) :
+    def post(self, request,Style,Class_id) :
         if request.POST:
             print()
             #layout=json.loads(request.POST['layout'])
             lo_to_save=request.POST['layout']
             if Layouts.objects.filter(Class=Class_id).exists():
                 rec=Layouts.objects.get(Class=Class_id)
-                rec.TableLayout=lo_to_save
             else:
-                rec=Layouts(TableLayout=lo_to_save,Class=Class_id)
+                rec=Layouts(Class=Class_id)
+            setattr(rec,Style,lo_to_save)
             rec.save()
 
-        return HttpResponseRedirect(reverse('ut:change_tabletemplate',kwargs={'Class_id':Class_id}))
+        return HttpResponseRedirect(reverse('ut:change_tabletemplate',kwargs={'Style':Style,'Class_id':Class_id}))
 
 from django.forms import formset_factory
 

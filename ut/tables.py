@@ -27,7 +27,6 @@ def get_tablelayout(Class_id,field='TableLayout'):
         a.save()
     return res
 
-
 from string import Template
 class mytable(tables.Table):
     def __init__(self,Class_id=0,style='TableLayout',*args,**kwargs):

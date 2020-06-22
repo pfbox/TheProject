@@ -76,12 +76,12 @@
 <div class="row">
     <div class="col-lg-2 area bg-secondary" id="source">
         <div class="container fluid">
-<form method="post" action="{% url 'ut:change_tabletemplate' Class_id %}">
+<form method="post" action="{% url 'ut:change_tabletemplate' Style Class_id %}">
 {% csrf_token %}
     {{Class_id}}
 
             <button id = "saveform" type="submit">Save</button>
-            <button id = "loadform" style="">Load</button>
+            <button id = "loadform" style="">Load</button>t1t1
             <button id = "validate" style="">Validate</button>
             <input type="text" id="layout" name="layout" value="{{layout}}" hidden="true"/>
 </form>

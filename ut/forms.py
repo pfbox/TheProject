@@ -3,8 +3,9 @@ from django import forms
 from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML
+from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button
 from bootstrap_datepicker_plus import DatePickerInput
+from django.urls import reverse,reverse_lazy
 
 class AttributeForm(forms.ModelForm):
     class Meta:
@@ -49,10 +50,11 @@ class UploadInstances(forms.Form):
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Upload'))
 
-def create_form_field(Attribute_id,usedinfilter=False,filter={}):
-    att=Attributes.objects.get(pk=Attribute_id)
+def create_form_field_2(Attribute_id,usedinfilter=False,filter={}):
+    print ('create_form_field_called')
+    att=get_attribute(Attribute_id,df_attributes)
     FieldName=att.Attribute
-    dt=att.DataType.id
+    dt=att.DataType_id
     if usedinfilter:
         req=False
     else:
@@ -64,7 +66,7 @@ def create_form_field(Attribute_id,usedinfilter=False,filter={}):
         try:
             vl=json.loads(valueslist)
         except:
-            print ('Could not load list of values for field',FieldName,'Class',att.Class.Class)
+            print ('Could not load list of values for field',FieldName,'Class =',att.Class_id)
     if dt == 1:
         if vl=='':
             field=forms.IntegerField(required=req)
@@ -87,17 +89,17 @@ def create_form_field(Attribute_id,usedinfilter=False,filter={}):
                               widget=DatePickerInput(format='%Y-%m-%d')
         )
     elif dt == 6:
-        if att.Ref_Class.id!=0:
-            if att.Ref_Attribute.id==0:
-                ch=[(i.id,i.Code) for i in Instances.objects.filter(Class_id=att.Class.id)]
+        if att.Ref_Class_id!=0:
+            if att.Ref_Attribute_id==0:
+                ch=[(i.id,i.Code) for i in Instances.objects.filter(Class_id=att.Class_id)]
             else:
-                ch=[(v.Instance_id,v.char_value) for v in Values.objects.filter(Attribute_id=att.Ref_Attribute)]
+                ch=[(v.Instance_id,v.char_value) for v in Values.objects.filter(Attribute_id=att.Ref_Attribute_id)]
         else:
             raise Exception('No reference values for the attribute {}'.format(att.Attribute))
         ch=[(0,'')]+ch
         field=forms.ChoiceField(choices=ch,required=req)
     elif dt == 7:
-        field = forms.DateTimeFieldField(required=req)
+        field = forms.DateTimeField(required=req)
     elif dt == 9: #boolean
         field=forms.ChoiceField(choices=[(0,'False'),(1,'True')],required=req)
     elif dt == 10: #list Do not use
@@ -122,10 +124,10 @@ class InstanceForm(forms.Form):
         self.Class_id=kwargs.pop('Class_id')
         self.Instance_id = kwargs.pop('Instance_id')
         super().__init__(*args, **kwargs)
-        cl=Classes.objects.get(pk=self.Class_id)
-        for i,att in cl.editlist.iterrows():
-            if create_form_field(att.id):
-                self.fields[att.Attribute]=create_form_field(att.id)
+
+        for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
+            if create_form_field(att):
+                self.fields[att.Attribute]=create_form_field(att)
                 if self.Instance_id!=0:
                     if att.id==0:
                         self.initial[att.Attribute] = Instances.objects.get(pk=self.Instance_id).Code
@@ -137,6 +139,7 @@ class InstanceForm(forms.Form):
         #add Save Button
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+        layout={}
         try:
             rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
             NinRow = rawlayout['settings']['NinRow']
@@ -147,7 +150,7 @@ class InstanceForm(forms.Form):
             print ("layout for the class "+ str(self.Class_id) + " was not found")
 
         try:
-            self.helper.layout= get_layout(cl,layout,'Layout')
+            self.helper.layout= get_layout(self.Class_id,layout,'Layout')
         except:
             raise
             print ("layout for the class "+ str(self.Class_id) + " didn't work")
@@ -251,31 +254,31 @@ class FilterForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.layout=Layout()
         r=Row()
-        cl=Classes.objects.get(pk=self.Class_id)
-        for i,att in cl.editlist.iterrows():
+        for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
             dt=DataTypes.objects.get(pk=att.DataType_id)
             if dt.id in [10]:
                 pass
             elif dt.FieldFilter > 1:
                 min=dt.Filter1stName
                 max=dt.Filter2ndName
-                self.fields['__min__'+att.Attribute] = create_form_field(att.id,usedinfilter=True)
+                self.fields['__min__'+att.Attribute] = create_form_field(att,usedinfilter=True)
                 self.fields['__min__'+att.Attribute].initial=filter.get('__min__'+att.Attribute)
                 self.fields['__min__'+att.Attribute].label = att.Attribute+' '+min
-                self.fields['__max__'+att.Attribute] = create_form_field(att.id,usedinfilter=True)
+                self.fields['__max__'+att.Attribute] = create_form_field(att,usedinfilter=True)
                 self.fields['__max__' + att.Attribute].initial = filter.get('__max__' + att.Attribute)
                 self.fields['__max__'+att.Attribute].label = att.Attribute+' '+max
                 r.append(Fieldset('',Row(Column('__min__'+att.Attribute),Column('__max__'+att.Attribute)),css_class='formgroup col-sm-2'))
             else:
-                self.fields[att.Attribute]=create_form_field(att.id,usedinfilter=True)
+                self.fields[att.Attribute]=create_form_field(att,usedinfilter=True)
                 self.fields[att.Attribute].initial = filter.get(att.Attribute)
                 r.append(Column(att.Attribute,css_class='form-group col-sm-1'))
         self.helper.layout.append(r)
         self.helper.layout.append(HTML('<input type="hidden" id="sortfield" name="sortfield" value="{{sortfield}}">'))
         self.helper.add_input(Submit('submit','Filter'))
         self.helper.add_input(Submit('reset', 'Reset'))
-        self.helper.add_input(Submit('cancel', 'Cancel'))
-        self.helper.add_input(Submit('save_to_xls', 'Save to xls'))
-        self.helper.add_input(Submit('load_from_xls', 'Load from xls'))
+        self.helper.add_input(Button('cancel', 'Cancel',css_class='btn-primary'))
+        self.helper.add_input(Button('save_to_xls', 'Save to xls',css_class='btn-primary',onclick="location.href='"+str(reverse_lazy('ut:instances',args=(self.Class_id,1)))+"'"))
+        self.helper.add_input(Button('load_from_xls', 'Load from xls',css_class='btn-primary',
+                                     onclick="location.href='"+str(reverse_lazy('ut:loadinstances',args=(self.Class_id,)))+"'"))
 
 
