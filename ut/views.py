@@ -203,11 +203,9 @@ class AttributeUpdateView(UpdateView):
     def get_success_url(self):
         return reverse_lazy('ut:attributes_view',args=(self.object.Class.id,))
 
-
-
 class ClassesUpdateView(UpdateView):
     model = Classes
-    template_name = 'ut\edit_attribute.html'
+    template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
 
     def get_success_url(self):
@@ -215,7 +213,7 @@ class ClassesUpdateView(UpdateView):
 
 class ClassesCreateView(CreateView):
     model = Classes
-    template_name = 'ut\edit_attribute.html'
+    template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
 
     def get_success_url(self):
