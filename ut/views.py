@@ -1,4 +1,4 @@
-from django.views.generic import UpdateView,CreateView,ListView
+from django.views.generic import View,UpdateView,CreateView,ListView
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse,reverse_lazy
 from django.shortcuts import render
@@ -8,13 +8,20 @@ from django.template.context_processors import csrf
 import numpy as np
 from django_tables2 import SingleTableView
 from .filters import ClassesFilter
+from django.db.models import Exists, OuterRef
 
 from .utclasses import *
 from django_tables2 import RequestConfig
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 def index(request):
     context={'table_list':am.to_dict('records')}
     context['classes']=Classes.objects.all()
+    context['projects']=Projects.objects.all()
+    context['reports']=Reports.objects.all()
+    context['pr_rep_conn']=ProjectReportConn.objects.all()
+    context['pr_cl_conn']=ProjectClassConn.objects.all()
+    context['defaultreport']=get_reporttable(5)['table']
     return render(request,'ut/index.html',context)
 
 from django.forms import ModelForm
@@ -99,11 +106,27 @@ def save_instance(request,Class_id,Instance_id=0):
 def classestree_view(request):
     return render(request, "ut/classestree.html", {'table': Classes.objects.all()})
 
-def classes_view(request):
-    table = ClassesTable(Classes.objects.all())
-    RequestConfig(request, paginate={"per_page": 10}).configure(table)
-    return render(request,'ut/classes.html',{'table':table})
+def reports_view(request,Project_id=0):
+    if Project_id==0:
+        table = ReportsTable(Reports.objects.all())
+    else:
+        table =  ReportsTable(Reports.objects.annotate(connectionexists=Exists(ProjectReportConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
+    print (table)
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    return render(request,'ut/reports.html',{'table':table,'Project_id':Project_id})
 
+def projects_view(request):
+    table = ProjectsTable(Projects.objects.all())
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    return render(request,'ut/projects.html',{'table':table})
+
+def classes_view(request,Project_id=0):
+    if Project_id==0:
+        table = ClassesTable(Classes.objects.all())
+    else:
+        table =  ClassesTable(Classes.objects.annotate(connectionexists=Exists(ProjectClassConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
+    RequestConfig(request, paginate={"per_page": 10}).configure(table)
+    return render(request,'ut/classes.html',{'table':table,'Project_id':Project_id})
 
 def classes_view2(request):
     classes_list=Classes.objects.all()
@@ -122,6 +145,68 @@ class insances_view():
         for key,value in request.GET.items():
             if (value!='')&(key not in ['sort','page']):
                 pass
+
+def dictfetchall(cursor):
+    #Return all rows from a cursor as a dict
+    columns = [col[0] for col in cursor.description]
+    return [
+       dict(zip(columns, row))
+       for row in cursor.fetchall()
+    ]
+
+def get_reporttable(Report_id):
+    r = Reports.objects.get(pk=Report_id)
+    sql = r.Query
+    cursor = con.cursor()
+    cursor.execute(sql)
+    t = dictfetchall(cursor)
+    extra_columns = [(c[0], tables.Column()) for c in cursor.description]
+    return {'table':ReportTable(data=t,extra_columns=extra_columns),
+            'ReportName':r.Report}
+
+class ReportRun(View):
+    template='ut/showreport.html'
+    def get(self,request,Report_id,Simple=False,*args,**kwargs):
+        r=get_reporttable(Report_id)
+        context={}
+        context['table']=r['table']
+        context['Report_id']=Report_id
+        context['ReportName']=r['ReportName']
+        #if not request.GET._mutable:
+        #    request.GET._mutable = True
+        # print (request.GET)
+        #if request.GET.get('sort'):
+        #RequestConfig(request).configure(table)
+        #    table.order_by = sort
+        #    print ('sort=',sort)
+        #table.paginate(page=request.GET.get("page", 1), per_page=30)
+        if Simple:
+            self.template='ut/simplereport'
+        return render(request, self.template, context)
+
+
+class ReportRun(View):
+    template='ut/showreport.html'
+    def get(self,request,Report_id,*args,**kwargs):
+        r=Reports.objects.get(pk=Report_id)
+        sql=r.Query
+        cursor=con.cursor()
+        cursor.execute(sql)
+        t=dictfetchall(cursor)
+        extra_columns=[(c[0], tables.Column()) for c in cursor.description]
+        context={}
+        context['table']=ReportTable(data=t,extra_columns=extra_columns)
+        context['Report_id']=Report_id
+        context['ReportName']=r.Report
+        #if not request.GET._mutable:
+        #    request.GET._mutable = True
+        # print (request.GET)
+        #if request.GET.get('sort'):
+        #RequestConfig(request).configure(table)
+        #    table.order_by = sort
+        #    print ('sort=',sort)
+        #table.paginate(page=request.GET.get("page", 1), per_page=30)
+        return render(request, self.template, context)
 
 def instances(request,Class_id,SaveToExl=False):
     filter = {}
@@ -169,13 +254,40 @@ def attributes_view(request,Class_id):
     RequestConfig(request, paginate={"per_page": 20}).configure(table)
     return render(request,'ut/attributes.html',{'table':table,'Class_id':Class_id})
 
-
 def edit_attribute(request,Attribute_id):
     at=Attributes.objects.get(pk=Attribute_id)
     form = AttributeForm(instance=at)
     return render(request,'ut/edit_attribute.html',{'form':form})
 
-class AttributeCreateView(CreateView):
+class ProjectEdit(UpdateView):
+    model = Projects
+    template_name = 'ut/edit_attribute.html'
+    form_class = ProjectForm
+    def get_success_url(self):
+        return reverse_lazy('ut:projects_view')
+
+class ProjectCreateVeiw(CreateView):
+    model = Projects
+    template_name = 'ut/edit_attribute.html'
+    form_class = ProjectForm
+    def get_success_url(self):
+        return reverse_lazy('ut:projects_view')
+
+class ReportEdit(UpdateView):
+    model = Reports
+    template_name = 'ut/edit_attribute.html'
+    form_class = ReportForm
+    def get_success_url(self):
+        return reverse_lazy('ut:reports_view')
+
+class ReportCreateVeiw(CreateView):
+    model = Reports
+    template_name = 'ut/edit_attribute.html'
+    form_class = ReportForm
+    def get_success_url(self):
+        return reverse_lazy('ut:reports_view')
+
+class AttributeCreateView(LoginRequiredMixin,CreateView):
     model = Attributes
     template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
@@ -194,8 +306,7 @@ class AttributeCreateView(CreateView):
         kw['initial']['Class_id']=self.Class_id
         return kw
 
-
-class AttributeUpdateView(UpdateView):
+class AttributeUpdateView(LoginRequiredMixin,UpdateView):
     model = Attributes
     template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
@@ -203,7 +314,7 @@ class AttributeUpdateView(UpdateView):
     def get_success_url(self):
         return reverse_lazy('ut:attributes_view',args=(self.object.Class.id,))
 
-class ClassesUpdateView(UpdateView):
+class ClassesUpdateView(LoginRequiredMixin,UpdateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
@@ -211,7 +322,7 @@ class ClassesUpdateView(UpdateView):
     def get_success_url(self):
         return reverse_lazy('ut:classes_view')
 
-class ClassesCreateView(CreateView):
+class ClassesCreateView(LoginRequiredMixin,CreateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
@@ -329,8 +440,6 @@ def load_instances(request,Class_id=0):
         form = UploadInstances()
     return render(request, 'ut/loadinstances.html', {'form': form,'Class_id':Class_id})
 
-from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
 class ProtectView(LoginRequiredMixin, View) :
     def get(self, request):
         return render(request, 'ut/index.html')

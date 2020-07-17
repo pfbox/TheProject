@@ -30,6 +30,20 @@ def get_fieldname(dt):
         raise Exception ('No {} datatype'.format(dt))
     return '"'+f+'"'
 
+class Projects(models.Model):
+    Project = models.CharField(max_length=100,unique=True)
+    Description = models.TextField(null=True,blank=True)
+    class Meta:
+        verbose_name='Projects'
+
+class Reports(models.Model):
+    Report = models.CharField(max_length=100,unique=True)
+    Description = models.TextField(null=True,blank=True)
+    #ReportType =
+    Query = models.TextField(null=True,blank=True)
+    class Meta:
+        verbose_name='Reports'
+
 class Classes(models.Model):
     Class = models.CharField(max_length=50,unique=True)
     Master = models.ForeignKey('self',on_delete=models.PROTECT)
@@ -80,6 +94,14 @@ class Classes(models.Model):
         atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
         return pd.DataFrame([x.__dict__ for x in atts if x.Filtered])
 
+class ProjectClassConn(models.Model):
+    Class =models.ForeignKey (Classes,on_delete=models.PROTECT)
+    Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
+
+class ProjectReportConn(models.Model):
+    Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
+    Report =models.ForeignKey(Reports,on_delete=models.PROTECT)
+    Default = models.BooleanField(default=False)
 
 #int,varchar,text,class
 class DataTypes(models.Model):

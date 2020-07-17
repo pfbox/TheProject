@@ -7,6 +7,27 @@ from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,Multi
 from bootstrap_datepicker_plus import DatePickerInput
 from django.urls import reverse,reverse_lazy
 
+class ProjectForm(forms.ModelForm):
+    class Meta:
+        model=Projects
+        fields='__all__'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model=Reports
+        #fields=['ID','Report','Description']
+        fields='__all__'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
+
 class AttributeForm(forms.ModelForm):
     class Meta:
         model=Attributes

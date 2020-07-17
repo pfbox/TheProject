@@ -18,6 +18,18 @@ class ClassesTable(tables.Table):
         model=Classes
         template_name = "django_tables2/bootstrap4.html"
 
+class ProjectsTable(tables.Table):
+    Edit = tables.LinkColumn('ut:edit_project', text='Edit', args=[A('pk')], orderable=False)
+    class Meta:
+        model=Projects
+        template_name = "django_tables2/bootstrap4.html"
+
+class ReportsTable(tables.Table):
+    Edit = tables.LinkColumn('ut:edit_report', text='Edit', args=[A('pk')], orderable=False)
+    class Meta:
+        model=Reports
+        template_name = "django_tables2/bootstrap4.html"
+
 def get_tablelayout(Class_id,field='TableLayout'):
     try:
         res=Layouts.objects.get(Class_id=Class_id).__dict__[field]
@@ -26,6 +38,15 @@ def get_tablelayout(Class_id,field='TableLayout'):
         a=Layouts(Class_id=Class_id,TableLayout=json.dumps(res),ShortLayout=json.dumps(res))
         a.save()
     return res
+
+
+class ReportTable(tables.Table):
+    class Meta:
+        template_name = "django_tables2/bootstrap4.html"
+        #template_name="django_tables2/semantic.html"
+        #attrs = {"class": "table table-hover table-striped table-sm table-bordered table-responsive"}
+        attrs = {"class": "table table-hover table-striped table-sm table-responsive"}
+        fields=()
 
 from string import Template
 class mytable(tables.Table):

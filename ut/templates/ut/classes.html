@@ -16,9 +16,7 @@
         {% else %}
             {% render_table object_list %}
         {% endif %}
-        <input type="button"
-        onclick="location.href='{% url 'ut:add_class' %}'"
-        value="New Class">
+        <input type="button" onclick="location.href='{% url 'ut:add_class' %}'" value="New Class">
     </body>
 
 {% endblock %}

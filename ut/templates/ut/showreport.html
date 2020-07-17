@@ -33,31 +33,18 @@
     </div>
   {% endif %}
 
-<!--
-<div class="d-inline-flex p-2 bd-highlight" >
-        <button class="btn btn-primary" type="submit">Filter</button>
-        <button class="btn btn-primary" type="submit" formaction="{% url 'ut:instances' Class_id 1 %}">Save to xls</button>
-</div>
--->
 </div>
 </div>
 
 <div class="container-fluid">
-<div class="col-md-12">
-
-{% csrf_token %}
-Table {{tablename}}
-{% if table %}
-   {% render_table table  %}
-{% else %}
-   'no such table'
-{% endif %}
-
-{% if Class_id %}
-<input type="button" onclick="location.href='{% url 'ut:edit_instance' Class_id 0 %}'" value="New Instance" />
-<input type="button" onclick="location.href='{% url 'ut:loadinstances' Class_id %}'" value="Load from File" />
-{% endif %}
-</div>
+  <div class="col-md-12">
+    <h3> {{ReportName}} </h3>
+    {% if table %}
+       {% render_table table  %}
+    {% else %}
+       'no such table'
+    {% endif %}
+  </div>
 </div>
 
 {% endblock %}
