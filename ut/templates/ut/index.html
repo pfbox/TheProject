@@ -3,11 +3,13 @@
 {% block content %}
 {% load render_table from django_tables2 %}
 <div class="jumbotron">
-  <h1 class="display-3">Welcome to Ultimate Tracker!</h1>
+  <h3 class="display-6">Welcome to Ultimate Tracker!</h3>
+  <!--
   <p class="lead">This tool is built for tracking anything.</p>
   <hr class="my-4">
   <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
   <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
+  -->
 </div>
 
 <div class="album py-5 bg-light">
@@ -15,7 +17,7 @@
     <div row>
     {% if projects%}
         {% for p in projects%}
-                <div class="col-6">
+                <div class="col">
                   <div class="card mb-2 box-shadow">
                     <!--img class="card-img-top" src="https://upload.wikimedia.org/wikipedia/en/e/ec/Soccer_ball.svg" alt="Card image cap"-->
                     <div class="card-body">
