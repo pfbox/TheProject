@@ -56,12 +56,12 @@ def edit_instance(request,Class_id,Instance_id):
         if request.POST.get('cancel'):
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
         else:
-            form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id)
+            form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,validation=True)
             if form.is_valid():
                 save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
                 return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
-    form=InstanceForm(Class_id=Class_id,Instance_id=Instance_id)
 
+    form=InstanceForm(Class_id=Class_id,Instance_id=Instance_id,validation=False)
     context={}
     for a1 in Attributes.objects.filter(Class_id=Class_id,DataType_id=10):
         refclass_id=a1.Ref_Class.id
@@ -125,14 +125,14 @@ def classes_view(request,Project_id=0):
         table = ClassesTable(Classes.objects.all())
     else:
         table =  ClassesTable(Classes.objects.annotate(connectionexists=Exists(ProjectClassConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
-    RequestConfig(request, paginate={"per_page": 10}).configure(table)
+    RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request,'ut/classes.html',{'table':table,'Project_id':Project_id})
 
 def classes_view2(request):
     classes_list=Classes.objects.all()
     classes_filter=ClassesFilter(request.GET,queryset=classes_list)
     table = ClassesTable(classes_list)
-    RequestConfig(request, paginate={"per_page": 20}).configure(table)
+    RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request,'ut/classes.html',{'filter':classes_filter,'table':table})
 
 class insances_view():
@@ -222,6 +222,7 @@ def instances(request,Class_id,SaveToExl=False):
     filterform= FilterForm(Class_id=Class_id,filter=filter) #create_filter_set(Class_id,filter)
 
     qs=create_rawquery_from_attributes(Class_id,filter)
+    print (qs)
     if pd.isnull(sort):
         sort='Code'
     if SaveToExl:

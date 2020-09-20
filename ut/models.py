@@ -4,28 +4,37 @@ import pandas as pd
 from django.db.models import Q
 # Create your models here.
 
+#Datatype Constants
+DT_Integer = 1
+DT_Float = 2
+DT_String =3
+DT_Text = 4
+DT_Date = 5
+DT_Instance = 6
+DT_Datetime = 7
+DT_External = 8
+DT_Boolean = 9
+DT_Table = 10
+DT_Currency = 11
+DT_Email = 12
+DT_Time = 13
+DT_Calculated=14
+
+
 def get_fieldname(dt):
     f = 'No fieldName'
-    if   dt == 1:
+    if   dt in [DT_Integer,DT_Boolean]: #int,boolean
         f = 'int_value'
-    elif dt == 2:
-        f = 'float_value'
-    elif dt == 3:
+    elif dt in [DT_Float,DT_Currency]:
+        f = 'float_value' #float,currency
+    elif dt in [DT_String,DT_Email]:
         f = 'char_value'
-    elif dt == 4:
+    elif dt in [DT_Text]:
         f = 'text_value'
-    elif dt == 5:
+    elif dt in [DT_Date,DT_Datetime,DT_Time]: #date,datetime,time
         f = 'datetime_value'
-    elif dt == 6:
+    elif dt in [DT_Instance]:
         f = 'instance_value_id'
-    elif dt == 7:
-        f = 'datetime_value_id'
-    elif dt==9 : #boolean
-        f='int_value'
-    elif dt == 11:  # email
-        f = 'char_value'
-    elif dt == 22:  # string
-        f = 'char_value'
     else:
         raise Exception ('No {} datatype'.format(dt))
     return '"'+f+'"'
@@ -44,6 +53,14 @@ class Reports(models.Model):
     class Meta:
         verbose_name='Reports'
 
+class SendOuts(models.Model):
+    Query = models.TextField(null=True,blank=True)
+    EmailField = models.CharField(max_length=50,null=False)
+    EmailGroupFields = models.TextField(null=True,blank=True)
+    EmailTemplate = models.TextField(null=True,blank=True)
+    class Meta:
+        verbose_name='SendOuts'
+
 class Classes(models.Model):
     Class = models.CharField(max_length=50,unique=True)
     Master = models.ForeignKey('self',on_delete=models.PROTECT)
@@ -55,22 +72,23 @@ class Classes(models.Model):
         verbose_name='Classes'
     def __str__(self):
         return self.Class
-    @property
+
+b="""    
+    @property 
     def qs_sql(self):
-        atts=Attributes.objects.filter(Q(Class_id=self.id) #| Q(Class_id=0)
-                                       )
+        atts=get_tableviewlist(Class_id=self.id,df_attr=df_attributes)
         ss = {}
         lo = {}
-        for a in atts:
-            for key,val in a.selectfield.items():
+        for a in atts.iterrows():
+            for key,val in a.SelectField.items():
                 ss[key]=val
-            for key,val in a.leftouter.items():
+            for key,val in a.LeftOuter.items():
                 lo[key]=val
         if len(ss)>0:
             co=','
         else:
             co=''
-        sselect = 'select ins.id, ins.Code' +co + ',\n'.join(ss.values())
+        sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
         sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
         swhere = 'where ins.Class_id={}'.format(self.id)
         return sselect +'\n' + sfrom + '\n' + swhere
@@ -93,6 +111,7 @@ class Classes(models.Model):
     def filterlist(self):
         atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
         return pd.DataFrame([x.__dict__ for x in atts if x.Filtered])
+"""
 
 class ProjectClassConn(models.Model):
     Class =models.ForeignKey (Classes,on_delete=models.PROTECT)
@@ -127,6 +146,7 @@ class Attributes(models.Model):
     DataType = models.ForeignKey(DataTypes,on_delete=models.PROTECT)
     Ref_Class = models.ForeignKey(Classes,on_delete=models.PROTECT,related_name='+',default=0) #zerohere
     Ref_Attribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
+    Formula = models.TextField(null=True,blank=True)
     InputType = models.ForeignKey(InputTypes,on_delete=models.PROTECT,default=0,blank=True)
     ReadOnly = models.BooleanField(default=False)
     Filtered = models.BooleanField(default=True)
@@ -166,18 +186,20 @@ class Attributes(models.Model):
     @property
     def selectfield(self):
         res={}
-        if self.DataType.id==6:
+        if self.DataType.id==DT_Instance:
             if self.Ref_Attribute.id==0:
-                res[self.Attribute]='{tab}.{field} as "{name}"'.format(tab=self.reftablename,field='"Code"',name=self.Attribute)
+                res[self.Attribute]='{tab}.{field}'.format(tab=self.reftablename,field='"Code"')
             else:
-                res[self.Attribute]='{tab}.{field} as "{name}"'\
-                    .format(tab=self.refatttablename,field=get_fieldname(self.Ref_Attribute.DataType.id),name=self.Attribute)
-        elif self.DataType.id==8:
-            res[self.Attribute]='{tab}.{field} as "{name}"'.format(tab=self.ExternalTable,field=self.ExternalField,name=self.Attribute)
-        elif self.DataType.id in [10]:
+                res[self.Attribute]='{tab}.{field}'\
+                    .format(tab=self.refatttablename,field=get_fieldname(self.Ref_Attribute.DataType.id))
+        elif self.DataType.id== DT_External:
+            res[self.Attribute]='{tab}.{field}'.format(tab=self.ExternalTable,field=self.ExternalField,name=self.Attribute)
+        elif self.DataType.id in [DT_Table]:
             res[self.Attribute]='0 as Table__'+str(self.id)+'__'
+        elif self.DataType.id == DT_Calculated:
+            res[self.Attribute]='{formula}'.format(formula=self.Formula)
         else:
-            res[self.Attribute]='{tab}.{field} as "{name}"'.format(tab=self.tablename,id=self.id,field=get_fieldname(self.DataType.id),name=self.Attribute)
+            res[self.Attribute]='{tab}.{field}'.format(tab=self.tablename,id=self.id,field=get_fieldname(self.DataType.id))
         return res
 
     @property
@@ -198,13 +220,13 @@ class Attributes(models.Model):
     @property
     def Calculated(self):
         res = False
-        if self.DataType.id==8:
+        if self.DataType.id in [DT_External,DT_Calculated]:
             res=True
         return res
 
     @property
     def TableColumn(self):
-        if self.DataType == 8:
+        if self.DataType == DT_External:
             pass
 
 
@@ -242,8 +264,8 @@ class Values(models.Model):
         val=0
         #handle unique
         if att.UniqueAtt:
-            if att.DataType.id in [1,3,5]:
-                val_con=Q(Qs[att.DataType.id])
+            if att.DataType.id in [DT_Integer,DT_String,DT_Email]:
+                #val_con=Q(Qs[att.DataType.id])
                 val=Values.objects.filter(Q(char_value=self.char_value)&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
             else:
                 pass

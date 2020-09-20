@@ -144,6 +144,8 @@ class InstanceForm(forms.Form):
     def __init__(self,*args,**kwargs):
         self.Class_id=kwargs.pop('Class_id')
         self.Instance_id = kwargs.pop('Instance_id')
+        if 'validation' in kwargs:
+            self.Validation = kwargs.pop('validation')
         super().__init__(*args, **kwargs)
 
         for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
@@ -155,7 +157,7 @@ class InstanceForm(forms.Form):
                     else:
                         self.initial[att.Attribute]=get_value(self.Instance_id,att.id)
                 else:
-                    if att.id==0:
+                    if att.id==0 and not self.Validation:
                         self.initial['Code']=get_next_counter(self.Class_id)
         #add Save Button
         self.helper = FormHelper()
@@ -277,22 +279,21 @@ class FilterForm(forms.Form):
         r=Row()
         for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
             dt=DataTypes.objects.get(pk=att.DataType_id)
-            if dt.id in [10]:
-                pass
-            elif dt.FieldFilter > 1:
-                min=dt.Filter1stName
-                max=dt.Filter2ndName
-                self.fields['__min__'+att.Attribute] = create_form_field(att,usedinfilter=True)
-                self.fields['__min__'+att.Attribute].initial=filter.get('__min__'+att.Attribute)
-                self.fields['__min__'+att.Attribute].label = att.Attribute+' '+min
-                self.fields['__max__'+att.Attribute] = create_form_field(att,usedinfilter=True)
-                self.fields['__max__' + att.Attribute].initial = filter.get('__max__' + att.Attribute)
-                self.fields['__max__'+att.Attribute].label = att.Attribute+' '+max
-                r.append(Fieldset('',Row(Column('__min__'+att.Attribute),Column('__max__'+att.Attribute)),css_class='formgroup col-sm-2'))
-            else:
-                self.fields[att.Attribute]=create_form_field(att,usedinfilter=True)
-                self.fields[att.Attribute].initial = filter.get(att.Attribute)
-                r.append(Column(att.Attribute,css_class='form-group col-sm-1'))
+            if att.Filtered and dt.id not in [DT_Table]:
+                if dt.FieldFilter > 1:
+                    min=dt.Filter1stName
+                    max=dt.Filter2ndName
+                    self.fields['__min__'+att.Attribute] = create_form_field(att,usedinfilter=True)
+                    self.fields['__min__'+att.Attribute].initial=filter.get('__min__'+att.Attribute)
+                    self.fields['__min__'+att.Attribute].label = att.Attribute+' '+min
+                    self.fields['__max__'+att.Attribute] = create_form_field(att,usedinfilter=True)
+                    self.fields['__max__' + att.Attribute].initial = filter.get('__max__' + att.Attribute)
+                    self.fields['__max__'+att.Attribute].label = att.Attribute+' '+max
+                    r.append(Fieldset('',Row(Column('__min__'+att.Attribute),Column('__max__'+att.Attribute)),css_class='formgroup col-sm-2'))
+                else:
+                    self.fields[att.Attribute]=create_form_field(att,usedinfilter=True)
+                    self.fields[att.Attribute].initial = filter.get(att.Attribute)
+                    r.append(Column(att.Attribute,css_class='form-group col-sm-1'))
         self.helper.layout.append(r)
         self.helper.layout.append(HTML('<input type="hidden" id="sortfield" name="sortfield" value="{{sortfield}}">'))
         self.helper.add_input(Submit('submit','Filter'))

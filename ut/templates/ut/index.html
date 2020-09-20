@@ -24,7 +24,8 @@
                       <h5 class="card-title">{{p.Project}}</h5>
                       <p class="card-text">{{p.Description}}</p>
                       {% render_table defaultreport %}
-                      <div class="d-flex justify-content-between align-items-center">
+                      <div class="d-flex justify-content">
+                        <div>
                         <ul class="list-group" >
                             <h6>Reports</h6>
                                 {% for r in pr_rep_conn %}
@@ -35,7 +36,9 @@
                                     {% endif %}
                                 {% endfor %}
                         </ul>
+                        </div>
                         <span>&nbsp</span>
+                        <div>
                         <ul class="list-group" >
                             <h6>Classes</h6>
                                   {% for c in pr_cl_conn %}
@@ -44,6 +47,7 @@
                             </li>
                                   {% endfor %}
                         </ul>
+                        </div>
                       </div>
                     </div>
                     </div>

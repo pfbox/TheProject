@@ -23,7 +23,6 @@ df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.se
 df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
 #df_filters =pd.read_sql('select * from ut_filters',con)
 
-from django_jinja_knockout.query import FilteredRawQuerySet
 
 def create_table_column(dt,width=50,attr={}):
     if dt in [5]:
@@ -38,29 +37,32 @@ def selectfield(id,df_attr):
     attr=df_attr[df_attr.id==id].iloc[0]
     dt= attr.DataType_id
     attribute=attr.Attribute
+    formula=attr.Formula
     tablename=attr['TableName']
     externaltable=attr.ExternalTable
     externalfield=attr.ExternalField
 
     ref_attribute_id=attr.Ref_Attribute_id
     refattribute=df_attr[df_attr.id==ref_attribute_id].iloc[0]
-    reftablename=refattribute.TableName
-    refatttablename=refattribute.RefAttTableName
+    reftablename='val_ins{}'.format(attr.id)
+    refatttablename='refval{}'.format(attr.id)
     refdt=refattribute.DataType_id
     res = {}
-    if dt == 6:
+    if dt == DT_Instance:
         if ref_attribute_id == 0:
-            res[attribute] = '{tab}.{field} as "{name}"'.format(tab=reftablename, field='"Code"',name=attribute)
+            res[attribute] = '{tab}.{field}'.format(tab=reftablename, field='"Code"')
         else:
-            res[attribute] = '{tab}.{field} as "{name}"' \
-                .format(tab=refatttablename, field=get_fieldname(refdt), name=attribute)
-    elif dt == 8:
-        res[attribute] = '{tab}.{field} as "{name}"'.format(tab=externaltable, field=externalfield,name=attribute)
-    elif dt in [10]:
+            res[attribute] = '{tab}.{field}' \
+                .format(tab=refatttablename, field=get_fieldname(refdt))
+    elif dt == DT_External:
+        res[attribute] = '{tab}.{field}'.format(tab=externaltable, field=externalfield)
+    elif dt in [DT_Table]:
         res[attribute] = '0 as Table__' + str(id) + '__'
+    elif dt in [DT_Calculated]:
+        res[attribute] = '{formula}'.format(formula=formula)
     else:
-        res[attribute] = '{tab}.{field} as "{name}"'.format(tab=tablename, id=id,
-                                                                 field=get_fieldname(dt), name=attribute)
+        res[attribute] = '{tab}.{field}'.format(tab=tablename, id=id,
+                                                                 field=get_fieldname(dt))
     return res
 
 def leftouter(id,df_attr):
@@ -74,8 +76,8 @@ def leftouter(id,df_attr):
     internalattr=df_attr[df_attr.id==attr.InternalAttribute_id].iloc[0]
     ref_attribute_id=attr.Ref_Attribute_id
     refattribute=df_attr[df_attr.id==ref_attribute_id].iloc[0]
-    reftablename=refattribute.TableName
-    refatttablename=refattribute.RefAttTableName
+    reftablename='val_ins{}'.format(attr.id)
+    refatttablename='refval{}'.format(attr.id)
     refdt=refattribute.DataType_id
 
     res={}
@@ -93,7 +95,7 @@ def leftouter(id,df_attr):
     return res
 
 def calculated(dt):
-    if dt==8:
+    if dt in [DT_External,DT_Calculated]:
         return True
     else:
         return False
@@ -102,7 +104,6 @@ from django import forms
 from bootstrap_datepicker_plus import DatePickerInput
 
 def create_form_field(attr,usedinfilter=False,filter={}):
-    print ('create_form_field_called')
     FieldName=attr.Attribute
     dt=attr.DataType_id
     if usedinfilter:
@@ -117,28 +118,28 @@ def create_form_field(attr,usedinfilter=False,filter={}):
             vl=json.loads(valueslist)
         except:
             print ('Could not load list of values for field',FieldName,'Class =',attr.Class_id)
-    if dt == 1:
+    if dt == DT_Integer:
         if vl=='':
             field=forms.IntegerField(required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
-    elif dt ==2:
+    elif dt ==DT_Float:
         if vl=='':
             field = forms.FloatField(required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
-    elif dt == 3:
+    elif dt == DT_String:
         if vl=='':
             field = forms.CharField(max_length=255, required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
-    elif dt == 4:
+    elif dt == DT_Text:
         field=forms.CharField(widget=forms.Textarea(attrs={'rows':1}),required=req)
-    elif dt == 5:
+    elif dt == DT_Date:
         field=forms.DateField(required=req, input_formats=['%Y-%m-%d','%m/%d/%Y','%m/%d/%y'],
                               widget=DatePickerInput(format='%Y-%m-%d')
         )
-    elif dt == 6:
+    elif dt == DT_Instance:
         if attr.Ref_Class_id!=0:
             if attr.Ref_Attribute_id==0:
                 ch=[(i.id,i.Code) for i in Instances.objects.filter(Class_id=attr.Ref_Class_id)]
@@ -148,16 +149,20 @@ def create_form_field(attr,usedinfilter=False,filter={}):
             raise Exception('No reference values for the attribute {}'.format(attr.Attribute))
         ch=[(0,'')]+ch
         field=forms.ChoiceField(choices=ch,required=req)
-    elif dt == 7:
+    elif dt == DT_Datetime:
         field = forms.DateTimeField(required=req)
-    elif dt == 9: #boolean
+    elif dt == DT_Boolean: #boolean
         field=forms.ChoiceField(choices=[(0,'False'),(1,'True')],required=req)
-    elif dt == 10: #list Do not use
+    elif dt == DT_Table: #list Do not use
         return False
-    elif dt == 11: #EmailField
-        field=forms.EmailField(required=req)
-    elif dt == 12: #Currency
-        field=forms.FloatField(required=req)
+    elif dt == DT_Currency: #Currency
+        field = forms.FloatField(required=req)
+    elif dt == DT_Email: #Email
+        field = forms.EmailField(required=req)
+    elif dt == DT_Time:
+        return False
+    elif dt == DT_Calculated:
+        return False
     else:
         raise Exception('Datatype {} does not exists.'.format(dt))
     return field
@@ -180,6 +185,9 @@ def get_attribute(id,df_attr):
 def get_editfieldlist(Class_id,df_attr):
     return df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.Calculated)]
 
+def get_calulatedfieldlist(Class_id,df_attr):
+    return df_attr[(df_attr.Class_id==Class_id)&(df_attr.DataType_id==DT_Calculated)]
+
 def get_tableviewlist(Class_id,df_attr):
     return df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([10]))]
 
@@ -187,7 +195,7 @@ def get_fulllist(Class_id,df_attr):
     return df_attr[df_attr.Class_id.isin([Class_id,0])]
 
 def create_rawquery_from_attributes(Class_id=0,filter={}):
-    sql=Classes.objects.get(pk=Class_id).qs_sql + '\n' + create_filter_for_sql(Class_id,filter)
+    sql=create_qs_sql(Class_id) + '\n' + create_filter_for_sql(Class_id,filter)
     qs=Instances.objects.raw(sql)
 #    fqs = FilteredRawQuerySet.clone_raw_queryset(
 #            raw_qs=qs, relation_map={
@@ -195,6 +203,34 @@ def create_rawquery_from_attributes(Class_id=0,filter={}):
 #        )
     return qs
 
+def create_qs_sql(Class_id):
+    atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
+    print (atts)
+    ss = {}
+    lo = {}
+    for i,a in atts.iterrows():
+        for key,val in a.SelectField.items():
+            ss[key]=val
+        for key,val in a.LeftOuter.items():
+            lo[key]=val
+    if len(ss)>0:
+        co=','
+    else:
+        co=''
+
+    calcfields=get_calulatedfieldlist(Class_id,df_attributes)
+    for i,cf in calcfields.iterrows():
+        for key,val in ss.items():
+            if ('"'+key+'"') in ss[cf.Attribute]:
+                ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
+    print (ss)
+
+    sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
+    sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
+    swhere = 'where ins.Class_id={}'.format(Class_id)
+    return sselect +'\n' + sfrom + '\n' + swhere
+
+b=""""
 def create_queryset_from_attributes(Class_id):
     qs=Instances.objects.filter(Class_id=Class_id)
     sselect={}
@@ -206,7 +242,7 @@ def create_queryset_from_attributes(Class_id):
             vfield_name='int_value'
         elif rec.DataType_id==2:
             vfield_name='float_value'
-        elif rec.DataType_id==3:
+        elif rec.DataType_id ==3:
             vfield_name='char_value'
         elif rec.DataType_id==4:
             vfield_name='text_value'
@@ -219,6 +255,7 @@ def create_queryset_from_attributes(Class_id):
         swhere.append('val'+str(rec.id)+'.Instance_id="ut_instances".id and val'+str(rec.id)+'.Attribute_id='+str(rec.id))
 
     return qs.extra(select=sselect,tables=sfrom,where=swhere)
+"""
 
 def get_value(Instance_id,Attribute_id):
     DataType=Attributes.objects.get(pk=Attribute_id).DataType.id
@@ -233,11 +270,11 @@ def get_value(Instance_id,Attribute_id):
                 value=v.int_value
             elif DataType == 2:
                 value=v.float_value
-            elif DataType == 3:
+            elif DataType in (3,12):
                 value=v.char_value
             elif DataType == 4:
                 value=v.text_value
-            elif DataType == 5:
+            elif DataType in (5,7,13):
                 value=v.datetime_value
             elif DataType == 6:
                 if pd.isnull(v.instance_value):
@@ -316,7 +353,7 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
             v.float_value=float(val)
         else:
             v.float_value=None
-    elif DataType == 3: #char
+    elif DataType in [3,12]: #char,email
         if val!='':
             v.char_value=val
         else:
@@ -351,7 +388,6 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
             v.int_value=int(val)
         else:
             v.int_value=None
-
     v.save()
 
 def fieldlist(Class_id):
@@ -496,6 +532,7 @@ def get_next_counter(Class_id):
         Counter.save()
         next= Counter.CurrentCounter
         res= pref + str(next).rjust(cno,'0')
+        print (res)
     return res
 
 def get_formlayout(Class_id):
@@ -554,7 +591,7 @@ def save_instance_byid(Class_id,instance={}):
             ins=Instances.objects.get(pk=Instance_id)
             ins.Code=code
         ins.save()
-        fl=Classes.objects.get(pk=Class_id).editlist
+        fl=get_editfieldlist(Class_id,df_attributes)
         for index,rec in fl.iterrows():
             if str(rec.id) in instance.keys():
                 save_attribute(ins.id,rec.id,instance[str(rec.id)])
@@ -576,7 +613,7 @@ def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True)
         ins=Instances.objects.get(pk=Instance_id)
         ins.Code=code
         ins.save()
-    fl=Classes.objects.get(pk=Class_id).editlist
+    fl=get_editfieldlist(Class_id,df_attributes)
     for index,rec in fl.iterrows():
         name=Attributes.objects.get(pk=rec.id).Attribute
         if name in instance.keys() and (index!=0):
@@ -592,6 +629,7 @@ def update_attributes(sender, instance, **kwargs):
     from .utclasses import set_attributes
     df_attributes=set_attributes()
     print ('Reset Attributes. ',instance.Attribute,'changed')
+
 
 
 
