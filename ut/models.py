@@ -20,6 +20,23 @@ DT_Email = 12
 DT_Time = 13
 DT_Calculated=14
 
+#ValuesTable
+DT_Value_map={
+DT_Integer : 'Values_Int',
+DT_Float   : 'Values_Float',
+DT_String  : 'Values_Char',
+DT_Text    : 'Values_Text',
+DT_Date    : 'Values_DateTime',
+DT_Instance: 'Values_Instance',
+DT_Datetime: 'Values_DateTime',
+DT_External: '',
+DT_Boolean : 'Values_Int',
+DT_Table   : '',
+DT_Currency: 'Values_Float',
+DT_Email   : 'Values_Char',
+DT_Time    : 'Values_DateTime',
+DT_Calculated : ''
+}
 
 def get_fieldname(dt):
     f = 'No fieldName'
@@ -215,7 +232,6 @@ class Attributes(models.Model):
                 if self.Ref_Attribute.id!=0:
                     res[self.refatttablename] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt})'\
                         .format(val=Values._meta.db_table,refval=self.refatttablename,refatt=self.Ref_Attribute.id,reftab=self.reftablename)
-
         return res
     @property
     def Calculated(self):
@@ -248,6 +264,7 @@ class Instances(models.Model):
 class Values(models.Model):
     Instance = models.ForeignKey(Instances,on_delete=models.CASCADE,related_name='+')
     Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
+#    Value=''
     int_value = models.IntegerField(null=True)
     char_value = models.CharField(max_length=255,null=True)
     text_value = models.TextField(null=True)
@@ -255,6 +272,7 @@ class Values(models.Model):
     datetime_value = models.DateTimeField(null=True)
     instance_value = models.ForeignKey(Instances,on_delete=models.PROTECT,related_name='+',null=True)
     class Meta:
+#        abstract = True
         unique_together = ('Instance','Attribute')
         verbose_name='Values'
 
@@ -265,8 +283,9 @@ class Values(models.Model):
         #handle unique
         if att.UniqueAtt:
             if att.DataType.id in [DT_Integer,DT_String,DT_Email]:
+                value=Qs[att.DataType.id]
                 #val_con=Q(Qs[att.DataType.id])
-                val=Values.objects.filter(Q(char_value=self.char_value)&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
+                val=Values.objects.filter(Q(value=value)&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
             else:
                 pass
             if val.count()>0:
@@ -277,6 +296,49 @@ class Values(models.Model):
                 raise Exception('Attribute "{}" cannot be NULL'.format(att.Attribute))
         super().save(*args, **kwargs)
 
+a='''
+class Values_Int(Values):
+    Value = models.IntegerField(null=True)
+    class Meta:
+        unique_together = ('Instance','Attribute')
+        verbose_name='Values_Int'
+
+class Values_Char(Values):
+    Value = models.CharField(max_length=255, null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Char'
+
+class Values_Text(Values):
+    Value = models.TextField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Text'
+
+class Values_Float(Values):
+    Value = models.FloatField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Float'
+        
+class Values_DateTime(Values):
+    Value = models.DateTimeField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_DateTime'
+
+class Values_Instance(Values):
+    Value = models.ForeignKey(Instances, on_delete=models.PROTECT, related_name='+', null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Instance'
+
+class Values_Image(Values):
+    Value = models.ImageField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Image'
+'''
 
 import json
 class Layouts(models.Model):

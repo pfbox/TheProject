@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0023_sendouts.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0024_attributes_formula.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/sendouts.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/DSmodels.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/sendouts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/sendouts.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
@@ -18,9 +17,6 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="FavoritesManager">
-    <favorites_list name="TheProject" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -47,15 +43,15 @@
   </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut" />
-    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -66,19 +62,19 @@
     </option>
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\TheProject\ut\templates\ut\templatesarchive" />
-      <recent name="C:\TheProject\templates\registration" />
-      <recent name="C:\TheProject\ut\templates\ut\registration" />
-      <recent name="C:\TheProject\ut\templates\ut" />
-      <recent name="C:\Users\pavel\Anaconda3\TheProject\media" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\TheProject\templates" />
       <recent name="C:\TheProject\utlogin" />
       <recent name="C:\Users\pavel\Anaconda3\TheProject\ut\templates\ut" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\TheProject\ut\templates\ut\templatesarchive" />
+      <recent name="C:\TheProject\templates\registration" />
+      <recent name="C:\TheProject\ut\templates\ut\registration" />
+      <recent name="C:\TheProject\ut\templates\ut" />
+      <recent name="C:\Users\pavel\Anaconda3\TheProject\media" />
     </key>
   </component>
   <component name="RunManager" selected="Python.formtemplate">
@@ -178,19 +174,7 @@
       </list>
     </recent_temporary>
   </component>
-  <component name="ServiceViewManager">
-    <option name="viewStates">
-      <list>
-        <serviceView>
-          <treeState>
-            <expand />
-            <select />
-          </treeState>
-        </serviceView>
-      </list>
-    </option>
-    <option name="showServicesTree" value="false" />
-  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -226,10 +210,22 @@
       <screen x="-1920" y="0" width="1920" height="1040" />
     </state>
     <state x="-1199" y="330" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1595712700072" />
-    <state x="-1297" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1594924496404">
+    <state x="986" y="153" key="FileChooserDialogImpl" timestamp="1602292453827">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="986" y="153" key="FileChooserDialogImpl/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1602292453827" />
+    <state x="620" y="118" key="SettingsEditor" timestamp="1602292462061">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="620" y="118" key="SettingsEditor/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1602292462061" />
+    <state x="-1149" y="439" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1600823838954">
       <screen x="-1920" y="0" width="1920" height="1040" />
     </state>
-    <state x="-1297" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1594924496404" />
+    <state x="-1149" y="439" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1600823838954" />
+    <state x="-1297" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1601162628361">
+      <screen x="-1920" y="0" width="1920" height="1040" />
+    </state>
+    <state x="-1297" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1601162628361" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -237,6 +233,15 @@
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/../Lib/site-packages/django/views/generic/list.py</url>
           <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/test.py</url>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/views.py</url>
+          <line>233</line>
+          <option name="timeStamp" value="12" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

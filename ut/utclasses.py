@@ -111,6 +111,7 @@ def create_form_field(attr,usedinfilter=False,filter={}):
     else:
         req=attr.NotNullAtt
     valueslist=attr.ValuesList
+    vl=''
     if pd.isnull(valueslist) or (valueslist == ''):
         vl = ''
     else:
@@ -209,10 +210,11 @@ def create_qs_sql(Class_id):
     ss = {}
     lo = {}
     for i,a in atts.iterrows():
-        for key,val in a.SelectField.items():
-            ss[key]=val
-        for key,val in a.LeftOuter.items():
-            lo[key]=val
+        if a.id != 0:
+            for key,val in a.SelectField.items():
+                ss[key]=val
+            for key,val in a.LeftOuter.items():
+                lo[key]=val
     if len(ss)>0:
         co=','
     else:

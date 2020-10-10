@@ -28,7 +28,6 @@ def send_communication(comm_id):
     emailgrouping=c.EmailField
     template='template'
 
-
 from django.template import engines
 django_engine=engines['django']
 template = django_engine.from_string("Hello {{ name }}!")

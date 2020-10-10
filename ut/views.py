@@ -232,6 +232,7 @@ def instances(request,Class_id,SaveToExl=False):
     #h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
 
     table=mytable(Class_id=Class_id,style='TableLayout',data=qs)
+    print (table)
     if not request.GET._mutable:
         request.GET._mutable = True
     request.GET['sort']=sort
@@ -449,11 +450,11 @@ class ProtectView(LoginRequiredMixin, View) :
 class FormTemplateView(View):
     template = 'ut/formtemplate.html'
     def get(self, request,Class_id):
-        table=Classes.objects.get(pk=Class_id).editattributes
+        table=get_editfieldlist(Class_id,df_attributes)
         context={}
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=Layouts.objects.get(Class=Class_id).FormLayout
-        context['table']=table
+        context['table']=table.to_dict('records')
         context['Class_id']=Class_id
         return render(request, self.template, context)
 
@@ -473,8 +474,7 @@ class FormTemplateView(View):
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
     def get(self, request,Style,Class_id):
-        table=Classes.objects.get(pk=Class_id).editattributes
-        print (Style)
+        table= get_editfieldlist(Class_id,df_attributes).to_dict('records')
         context={}
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=getattr(Layouts.objects.get(Class=Class_id),Style)
