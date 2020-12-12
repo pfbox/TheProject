@@ -4,8 +4,6 @@
 
 {% block content %}
         {% render_table table %}
-<input type="button"
-       onclick="location.href='{% url 'ut:add_attribute' Class_id %}'"
-       value="New Attribute">
+<input id='create_attr' type="button" value="New Attribute" onclick="location.href='{% url 'ut:add_attribute' Class_id %}'" >
 
 {% endblock %}

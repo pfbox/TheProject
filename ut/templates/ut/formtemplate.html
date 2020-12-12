@@ -211,7 +211,6 @@ $.widget.bridge('uibutton', $.ui.button);
                 }
                 return false
              };
-
              $('#validate').on('click',function(){
                 var arr1=drz.children('.draggableHelper').toArray()
                 var arr2=$.merge([], arr1)
@@ -226,7 +225,6 @@ $.widget.bridge('uibutton', $.ui.button);
                 });
                 return true
              });
-
              function setitemposition($item,x=0,y=0,w=0,h=0){
                         if ((x+y+w+h)==0) {
                             leftPosition  = Math.max(0, Math.floor(($item.offset().left - drz.offset().left)/gridwidth )*gridwidth);

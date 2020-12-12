@@ -1,14 +1,16 @@
 <!doctype html>
+{% load static %}
 <html lang="en">
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <!-- Bootstrap CSS-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static '/bootstrap/css/bootstrap.min.css' %}">
 
     <!-- Awesome Font -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.css' %}">
 
     <!-- Styles
     <link rel="stylesheet" href="style.css"> -->
@@ -98,9 +100,18 @@
         </div>
       </nav>
   </header>
+
   <main role="main" class="p-4">
+      <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="{% static '/jquery/jquery-3.5.1.min.js' %}"></script>
+    <!-- Bootsrap-->
+    <script src="{% static '/poper/umd/popper.min.js' %}"></script>
+    <script src="{% static '/bootstrap/js/bootstrap.min.js' %}"></script>
+
           {% block content %}
           {% endblock %}
+
   </main>
       <footer class="text-muted">
       <div class="container">
@@ -111,12 +122,11 @@
         <p>New to UT? <a href="../../">Visit the homepage</a> or read our <a href="../../getting-started/">getting started guide</a>.</p>
       </div>
     </footer>
-      <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <!-- Bootsrap-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+
+
+    {% block javascript %}
+    {% endblock %}
 
   </body>
 </html>

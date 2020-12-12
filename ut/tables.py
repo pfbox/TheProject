@@ -9,6 +9,12 @@ class AttributeTable(tables.Table):
         model=Attributes
         template_name = "django_tables2/bootstrap4.html"
 
+class FilterTable(tables.Table):
+    h_link = tables.LinkColumn('ut:edit_filter', text='Edit', args=[A('pk'),], attrs={'a':{'class':'btn'}}, orderable=False)
+    class Meta:
+        model=Filters
+        template_name = "django_tables2/bootstrap4.html"
+
 class ClassesTable(tables.Table):
     Edit = tables.LinkColumn('ut:edit_class', text='Edit', args=[A('pk')], orderable=False)
     Attributes = tables.LinkColumn('ut:attributes_view', text='View Attributes', args=[A('pk')], orderable=False)
@@ -54,9 +60,9 @@ class mytable(tables.Table):
         self.Class_id=Class_id
         self.Style=style
         self.layout=get_tablelayout(self.Class_id,style)
-        a=Template("""<a href="{% url "ut:edit_instance" $classid record.pk %}"><i class="far fa-eye"></i></a>
+        a=Template("""<a href="{% url "ut:view_instance" $classid record.pk %}"><i class="far fa-eye"></i></a>
              <a href="{% url "ut:edit_instance" $classid record.pk %}"><i class="far fa-edit"></i></a>
-             <a href="{% url "ut:edit_instance" $classid record.pk %}"><i class="far fa-trash-alt"></i></a>  
+             <a onclick="return confirm('Are you sure you want to delete {{record.Code}} code?')" href="{% url "ut:delete_instance" $classid record.pk %}"><i class="far fa-trash-alt"></i></a>  
           """).substitute(classid=Class_id)
         t_link = tables.TemplateColumn(a, attrs={'th':{'align':'right'}},orderable=False)
 #        existing_columns = [f.name for f in Instances._meta.get_fields()]

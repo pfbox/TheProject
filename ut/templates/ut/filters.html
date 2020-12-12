@@ -1,56 +1,9 @@
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
- {% load render_table from django_tables2 %}
+{% extends 'base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+{% load render_table from django_tables2 %}
 
-<style>
-</style>
+{% block content %}
+        {% render_table table %}
+<input id='create_filter' type="button" value="New Filter" onclick="location.href='{% url 'ut:add_filter' Class_id %}'" >
 
-<title>Universal Tracker</title>
-</head>
-<body>
-<header>
-<form action="{% url 'ut:instances' Class_id %}" method="post">
-{% csrf_token %}
-<div class="col-md-12">
-<div class="d-flex flex-wrap">
-<div class="d-inline-flex p-2 bd-highlight">
-    <div class="container rounded" style="border:1px solid #cecece;">
-    <div class="form-group">
-        <label>Code</label>
-        <input class="form-control form-control-sm" type="text" name="CODE">
-    </div>
-</div>
-</div>
-{% if fieldlist %}
-  {% for f in fieldlist %}
-<div class="d-inline-flex p-2 bd-highlight">
-<div class="container rounded" style="border:1px solid #cecece;">
-    <div class="form-group">
-        <label>{{f.Attribute}}</label><br>
-        <div class="input-group" >
-            {{f.ControlFilter | safe}}
-        </div>
-    </div>
-</div>
-</div>
-  {% endfor %}
-{% else %}
-  <p>No fieldlist</p>
-{% endif %}
-</div>
-<div class="d-inline-flex p-2 bd-highlight" >
-    <input class="btn btn-primary" type="submit" value="Filter">
-</div>
-</div>
-</form>
-
-
-</header>
-{% csrf_token %}
-
-</body>
-</html>
+{% endblock %}

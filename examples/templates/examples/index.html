@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>examples-index</title>
+</head>
+<body>
+
+    <script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
+    <script src="{% static '/jquery/jquery-3.5.1.min.js' %}"></script>
+    <script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
+    <!-- You can alternatively load the minified version -->
+    <script src="{% static 'js/jquery.bootstrap.modal.forms.min.js' %}"></script>
+
+
+index.html
+
+<!-- asyncSettings.dataElementId -->
+<table id="books-table" class="table">
+  <thead>
+  </thead>
+  <tbody>
+  {% for book in books %}
+    <tr>
+        <th>
+        {{ book.title }}
+        <!-- Update book buttons -->
+        <button type="button" class="update-book btn btn-primary" data-form-url="{% url 'update_book' book.pk %}">
+          <span class="fa fa-pencil">Update</span>
+        </button>
+        </th>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content"></div>
+  </div>
+</div>
+
+<!-- Create book button -->
+<button id="create-book" class="btn btn-primary" type="button" name="button">Create book</button>
+
+
+
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+    $("#create-book").modalForm({
+        formURL: "{% url 'create_book' %}"
+    });
+
+});
+</script>
+
+</body>
+</html>

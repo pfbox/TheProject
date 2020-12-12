@@ -1,4 +1,4 @@
-from django.views.generic import View,UpdateView,CreateView,ListView
+from django.views.generic import View,UpdateView,CreateView,ListView,DeleteView
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse,reverse_lazy
 from django.shortcuts import render
@@ -7,8 +7,9 @@ from .forms import *
 from django.template.context_processors import csrf
 import numpy as np
 from django_tables2 import SingleTableView
-from .filters import ClassesFilter
+#from .filters import ClassesFilter
 from django.db.models import Exists, OuterRef
+import json
 
 from .utclasses import *
 from django_tables2 import RequestConfig
@@ -51,7 +52,53 @@ def showclass(request,Class_id):
     context = {'classname':classname,'table':table}
     return render(request, 'ut/showtable.html', context)
 
-def edit_instance(request,Class_id,Instance_id):
+class delete_instance(LoginRequiredMixin,DeleteView):
+    model = Instances
+    success_url = reverse_lazy('ut:index')
+    def get(self,*args,**kwargs):
+        self.success_url = reverse_lazy('ut:instances',kwargs={'Class_id':kwargs['Class_id'],})
+        return self.post(*args,**kwargs)
+
+class edit_instance_base(View):
+    def post(self,request,*args,**kwargs):
+        Class_id=kwargs['Class_id']
+        Instance_id=kwargs['Instance_id']
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+        else:
+            form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly='False',validation=True)
+            if form.is_valid():
+                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
+                return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+
+    def get(self,request,ReadOnly=False,*args,**kwargs):
+        Class_id=kwargs['Class_id']
+        Instance_id=kwargs['Instance_id']
+        form = InstanceForm(Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly, validation=False)
+        context = {}
+        for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=10):
+            refclass_id = a1.Ref_Class.id
+            refattr = a1.Ref_Attribute.Attribute
+            if Instance_id == 0:
+                filter = {refattr: -1}
+            else:
+                filter = {refattr: Instance_id}
+            qs = create_rawquery_from_attributes(refclass_id, filter=filter)
+            table = mytable(Class_id=refclass_id, style='ShortLayout', data=qs)
+            context['table' + str(a1.id) + ''] = table
+        context['form'] = form
+        return render(request, 'ut/edit_instance.html', context)
+
+class edit_instance(LoginRequiredMixin,edit_instance_base):
+    pass
+
+class view_instance(edit_instance_base):
+    def get(self,request,ReadOnly=True,*args,**kwargs):
+        return super().get(request,ReadOnly=ReadOnly,*args,**kwargs)
+
+a='''\
+def edit_instance_old(request,Class_id,Instance_id):
+    print (request,request.POST)
     if request.method=='POST':
         if request.POST.get('cancel'):
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
@@ -77,7 +124,6 @@ def edit_instance(request,Class_id,Instance_id):
     context['form'] = form
     return render(request,'ut/edit_instance.html',context)
 
-a='''\
     fl = Classes.objects.get(pk=Class_id).editlist
 
     if Instance_id==0:
@@ -111,7 +157,6 @@ def reports_view(request,Project_id=0):
         table = ReportsTable(Reports.objects.all())
     else:
         table =  ReportsTable(Reports.objects.annotate(connectionexists=Exists(ProjectReportConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
-    print (table)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     return render(request,'ut/reports.html',{'table':table,'Project_id':Project_id})
 
@@ -126,14 +171,7 @@ def classes_view(request,Project_id=0):
     else:
         table =  ClassesTable(Classes.objects.annotate(connectionexists=Exists(ProjectClassConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
-    return render(request,'ut/classes.html',{'table':table,'Project_id':Project_id})
-
-def classes_view2(request):
-    classes_list=Classes.objects.all()
-    classes_filter=ClassesFilter(request.GET,queryset=classes_list)
-    table = ClassesTable(classes_list)
-    RequestConfig(request, paginate={"per_page": 25}).configure(table)
-    return render(request,'ut/classes.html',{'filter':classes_filter,'table':table})
+    return render(request,'ut/classes.html',{'table':table,'classes':table,'Project_id':Project_id})
 
 class insances_view():
     def __init__(self,Class_id,filter={}):
@@ -219,10 +257,10 @@ def instances(request,Class_id,SaveToExl=False):
         for key, value in request.GET.items():
             if (value!='')&(key not in ['sort','page','submit','sortfield']):
                 filter[key]=value
-    filterform= FilterForm(Class_id=Class_id,filter=filter) #create_filter_set(Class_id,filter)
+    filterform= InstanceFilterForm(Class_id=Class_id,filter=filter) #create_filter_set(Class_id,filter)
 
     qs=create_rawquery_from_attributes(Class_id,filter)
-    print (qs)
+    #print (qs)
     if pd.isnull(sort):
         sort='Code'
     if SaveToExl:
@@ -232,7 +270,7 @@ def instances(request,Class_id,SaveToExl=False):
     #h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
 
     table=mytable(Class_id=Class_id,style='TableLayout',data=qs)
-    print (table)
+    #print (table)
     if not request.GET._mutable:
         request.GET._mutable = True
     request.GET['sort']=sort
@@ -244,17 +282,20 @@ def instances(request,Class_id,SaveToExl=False):
     context = {'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform,'sortfield':sort}
     return render(request, 'ut/showtable.html',  context)
 
-def filters(request,Class_id):
-    fl = fieldlist(Class_id)
-    fl['ControlFilter'] = fl.id.apply(lambda x: create_filter(x))
-    context = {'Name': 'ShowFilters', 'fieldlist': fl.to_dict('records'),'Class_id':Class_id}
-    return render(request, 'ut/filters.html', context)
-
 def attributes_view(request,Class_id):
     attlist=Attributes.objects.filter(Class_id=Class_id)
     table = AttributeTable(attlist)
     RequestConfig(request, paginate={"per_page": 20}).configure(table)
     return render(request,'ut/attributes.html',{'table':table,'Class_id':Class_id})
+
+class filters_view(View):
+    template='ut/filters.html'
+    def get(self,request,*args,**kwargs):
+        self.Class_id=kwargs['Class_id']
+        context={'Class_id':self.Class_id}
+        table = FilterTable(Filters.objects.filter(Class_id=self.Class_id))
+        context['table']=table
+        return render(request,self.template,context)
 
 def edit_attribute(request,Attribute_id):
     at=Attributes.objects.get(pk=Attribute_id)
@@ -288,6 +329,35 @@ class ReportCreateVeiw(CreateView):
     form_class = ReportForm
     def get_success_url(self):
         return reverse_lazy('ut:reports_view')
+
+from bootstrap_modal_forms.generic import BSModalCreateView
+
+class FilterCreateView(LoginRequiredMixin,CreateView):
+    model = Filters
+    template_name = 'ut/edit_attribute.html'
+    form_class = FilterEditForm
+
+    def get_success_url(self):
+        return reverse_lazy('ut:filters_view', args = (self.Class_id,))
+
+    def get_initial(self):
+        initial = super().get_initial()
+        self.Class_id = self.kwargs['Class_id']
+        initial['Class']=Classes.objects.get(pk=self.Class_id)
+        return initial
+
+    def get_form_kwargs(self):
+        kw=super(FilterCreateView,self).get_form_kwargs()
+        kw['initial']['Class_id']=self.Class_id
+        return kw
+
+class FilterUpdateView(LoginRequiredMixin,UpdateView):
+    model = Filters
+    template_name = 'ut/edit_attribute.html'
+    form_class = FilterEditForm
+
+    def get_success_url(self):
+        return reverse_lazy('ut:filters_view',args=(self.object.Class.id,))
 
 class AttributeCreateView(LoginRequiredMixin,CreateView):
     model = Attributes
@@ -332,49 +402,12 @@ class ClassesCreateView(LoginRequiredMixin,CreateView):
     def get_success_url(self):
         return reverse_lazy('ut:classes_view')
 
-a="""
-def change_formtemplate(request,Class_id=0):
-    if request.method=='POST':
-        formlo={}
-        formlo['Column1']=request.POST['column1']
-        formlo['Column2']=request.POST['column2']
-        lo=Layouts.objects.get(Class_id=Class_id)
-        lo.FormLayout=json.dumps(formlo)
-        lo.save()
-
-    fl = Classes.objects.get(pk=Class_id).editlist
-    if len(fl)>0:
-        fl['Control']=fl.id.apply(lambda x: create_control(0,x))
-
-    formlo=get_formlayout(Class_id)
-
-    used=[]
-    c1=get_column(Class_id,'Column1')
-    c2=get_column(Class_id,'Column2')
-
-    context={}
-    context['Class_id']=Class_id
-    if len(c1)>0:
-        context['col1']=c1.to_dict('records')
-        used=used+list(c1.id)
-    if len(c2)>0:
-        context['col2']=c2.to_dict('records')
-        used=used+list(c2.id)
-    if len(fl)>0:
-        context['unused']=fl[~fl.id.isin(used)].to_dict('records')
-        context['list1']=formlo['Column1']
-        context['list2']=formlo['Column2']
-
-    return render(request,'ut/formtemplate.html',context)
-"""
-
 import xlwt
 
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 
 import csv
-
 
 def export_instances_csv(request,raw_qs):
     response = HttpResponse(content_type='text/csv')
@@ -446,7 +479,6 @@ class ProtectView(LoginRequiredMixin, View) :
     def get(self, request):
         return render(request, 'ut/index.html')
 
-
 class FormTemplateView(View):
     template = 'ut/formtemplate.html'
     def get(self, request,Class_id):
@@ -485,7 +517,6 @@ class TableTemplateView(View):
 
     def post(self, request,Style,Class_id) :
         if request.POST:
-            print()
             #layout=json.loads(request.POST['layout'])
             lo_to_save=request.POST['layout']
             if Layouts.objects.filter(Class=Class_id).exists():
@@ -516,51 +547,29 @@ class FormSet1(LayoutObject):
             self.template=template
         def render (self,form,form_style,context,template_pack=TEMPLATE_PACK):
             formset = context[self.formset_name_in_context]
-            print('i was here')
             return render_to_string(self.template,{'formset':formset})
 
-class TestParentForm(forms.Form):
-    parent=forms.CharField()
-    child=forms.CharField()
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        self.helper=FormHelper()
-        self.helper.layout=Layout(
-            Div(
-                Field('child'),
-                HTML("""{% load render_table from django_tables2 %}  
-                        {% if formset %} 
-                        something {% render_table formset %}
-                        {% else %}
-                        Nothing  
-                        {% endif %}
-                        """),
-                ),
-            Field('parent'),
-        )
+from django.http import JsonResponse
+def ajax_change_master(request,Attribute_id):
+    value = int(request.GET['value'])
+    m_attr=get_attribute(Attribute_id,df_attributes)
+    Ref_Class_id=df_attributes[df_attributes.id==Attribute_id].Ref_Class_id.max()
+    Class_id=df_attributes[df_attributes.id==Attribute_id].Class_id.max()
+    data={}
+    data['MasterAttribute_id']=Ref_Class_id
+    attrs={}
+    #find all attributes who depends on that Attribute_id
+    for i,a in df_attributes[(df_attributes.MasterAttribute_id==Attribute_id)&(df_attributes.Class_id==Class_id)].iterrows():
+        instances=get_options(a.id,{m_attr.Attribute:value})
+        attrs[a.id]=instances
+    data['attrs']=attrs
 
-class TestFormsetFactory(View):
-    template = 'ut/test2.html'
-    def get (self,request):
-        cntx={}
-        data = [
-            {"width":100,"name": "Bradley","abc":'a'},
-            {"name": "Stevie","abc":'c'},
-        ]
-
-        class NameTable(tables.Table):
-            name = tables.Column()
-            abc = tables.Column()
-
-        table = NameTable(data)
-
-        TestFormSet = formset_factory(TestForm, extra=2);
-        cntx['form'] = TestParentForm()
-        cntx['formset']=table
-        return render(request,self.template,context=cntx)
-
-
-
-
-
-
+    #find lookups
+    lookups={}
+    for i,a in df_attributes[(df_attributes.DataType_id==DT_Lookup)&(df_attributes.InternalAttribute_id==Attribute_id)].iterrows():
+        if value !=0 :
+            lookups[a.id]=Values.objects.filter(Attribute_id=a.Ref_Attribute_id,Instance_id=value).values()[0]['char_value']
+        else:
+            lookups[a.id]='(None)'
+    data['lookups']=lookups
+    return JsonResponse(data)

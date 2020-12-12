@@ -3,8 +3,8 @@ from django import forms
 from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button
-from bootstrap_datepicker_plus import DatePickerInput
+from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div
+from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
 from django.urls import reverse,reverse_lazy
 
 class ProjectForm(forms.ModelForm):
@@ -28,6 +28,40 @@ class ReportForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save'))
 
+
+class FilterEditForm(forms.ModelForm):
+    class Meta:
+        model = Filters
+        fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
+
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            self.initial.update({'Class_id':instance.Class.id})
+            self.Class_id=instance.Class.id
+        else:
+            self.Class_id = kwargs['initial']['Class_id']
+
+
+        self.fields['Attribute1'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
+        self.fields['Attribute2'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
+        self.fields['Attribute3'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
+
+
+        self.fields['Class'].widget.attrs['disabled'] = 'true'
+        self.fields['Class'].required = False
+
+
+    def save(self,commit=True):
+        Class_id=self.initial['Class_id'];
+        self.instance.Class=Classes.objects.get(pk=Class_id)
+        return super(FilterEditForm, self).save(commit=commit)
+
+
 class AttributeForm(forms.ModelForm):
     class Meta:
         model=Attributes
@@ -44,7 +78,7 @@ class AttributeForm(forms.ModelForm):
             self.Class_id=instance.Class.id
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Class'].required = False
-            self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(Class_id=instance.Ref_Class.id)
+            self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(Q(Class_id=instance.Ref_Class.id)|Q(Class_id=0))
         else:
             self.fields['Class'].required = False
             self.fields['Class'].widget.attrs['disabled'] = 'true'
@@ -71,91 +105,42 @@ class UploadInstances(forms.Form):
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Upload'))
 
-def create_form_field_2(Attribute_id,usedinfilter=False,filter={}):
-    print ('create_form_field_called')
-    att=get_attribute(Attribute_id,df_attributes)
-    FieldName=att.Attribute
-    dt=att.DataType_id
-    if usedinfilter:
-        req=False
-    else:
-        req=att.NotNullAtt
-    valueslist=att.ValuesList
-    if pd.isnull(valueslist) or (valueslist == ''):
-        vl = ''
-    else:
-        try:
-            vl=json.loads(valueslist)
-        except:
-            print ('Could not load list of values for field',FieldName,'Class =',att.Class_id)
-    if dt == 1:
-        if vl=='':
-            field=forms.IntegerField(required=req)
-        else:
-            field=forms.ChoiceField(choices=vl,required=req)
-    elif dt ==2:
-        if vl=='':
-            field = forms.FloatField(required=req)
-        else:
-            field=forms.ChoiceField(choices=vl,required=req)
-    elif dt == 3:
-        if vl=='':
-            field = forms.CharField(max_length=255, required=req)
-        else:
-            field=forms.ChoiceField(choices=vl,required=req)
-    elif dt == 4:
-        field=forms.CharField(widget=forms.Textarea(attrs={'rows':1}),required=req)
-    elif dt == 5:
-        field=forms.DateField(required=req, input_formats=['%Y-%m-%d','%m/%d/%Y','%m/%d/%y'],
-                              widget=DatePickerInput(format='%Y-%m-%d')
-        )
-    elif dt == 6:
-        if att.Ref_Class_id!=0:
-            if att.Ref_Attribute_id==0:
-                ch=[(i.id,i.Code) for i in Instances.objects.filter(Class_id=att.Class_id)]
-            else:
-                ch=[(v.Instance_id,v.char_value) for v in Values.objects.filter(Attribute_id=att.Ref_Attribute_id)]
-        else:
-            raise Exception('No reference values for the attribute {}'.format(att.Attribute))
-        ch=[(0,'')]+ch
-        field=forms.ChoiceField(choices=ch,required=req)
-    elif dt == 7:
-        field = forms.DateTimeField(required=req)
-    elif dt == 9: #boolean
-        field=forms.ChoiceField(choices=[(0,'False'),(1,'True')],required=req)
-    elif dt == 10: #list Do not use
-        return False
-    elif dt == 11: #EmailField
-        field=forms.EmailField(required=req)
-    elif dt == 12: #Currency
-        field=forms.FloatField(required=req)
-    else:
-        raise Exception('Datatype {} does not exists.'.format(dt))
-    return field
-
 from .formtemplate import *
 
 class InstanceForm(forms.Form):
-#    class Meta:
-#        model=Instances
-#        fields=['Code']
-#        Code=forms.CharField(max_length=255,required=True)
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
     def __init__(self,*args,**kwargs):
         self.Class_id=kwargs.pop('Class_id')
         self.Instance_id = kwargs.pop('Instance_id')
+        self.ReadOnly = kwargs.pop('ReadOnly')
         if 'validation' in kwargs:
             self.Validation = kwargs.pop('validation')
         super().__init__(*args, **kwargs)
 
+        # get form initial values
+        initrow={}
+        if self.Instance_id!=0:
+            sql = create_val_sql(self.Instance_id,self.Class_id)
+            with con.cursor() as cursor:
+                cursor.execute(sql)
+                initrow=dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
+            pass
+
         for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
-            if create_form_field(att):
-                self.fields[att.Attribute]=create_form_field(att)
+            if create_form_field_check(att):
+                self.fields[att.Attribute]=create_form_field(att,values=initrow)
+                self.fields[att.Attribute].widget.attrs['attr_id']=att.id
+                self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
+                self.fields[att.Attribute].widget.attrs['class']= \
+                    'hierarchy_trigger' if att.hierarchy_trigger>0 else '' +  'lookup_trigger'    if att.lookup_trigger>0 else ''
+
+                if self.ReadOnly or att.DataType_id in [DT_Lookup]:
+                    self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
+                    self.fields[att.Attribute].widget.attrs['disabled'] = "disabled"
+                    #self.fields[att.Attribute].required = False
+
                 if self.Instance_id!=0:
-                    if att.id==0:
-                        self.initial[att.Attribute] = Instances.objects.get(pk=self.Instance_id).Code
-                    else:
-                        self.initial[att.Attribute]=get_value(self.Instance_id,att.id)
+                    self.initial[att.Attribute]=initrow[att.Attribute]
                 else:
                     if att.id==0 and not self.Validation:
                         self.initial['Code']=get_next_counter(self.Class_id)
@@ -175,15 +160,18 @@ class InstanceForm(forms.Form):
         try:
             self.helper.layout= get_layout(self.Class_id,layout,'Layout')
         except:
-            raise
             print ("layout for the class "+ str(self.Class_id) + " didn't work")
+            raise
             #raise
         #self.helper.layout.append(lo)
         a=""""""
             #self.helper.layout.append(layout_row)
         b=""""""
-        self.helper.add_input(Submit('submit','Save'))
-        self.helper.add_input(Submit('cancel','Cancel'))
+        if self.ReadOnly:
+            self.helper.add_input(Submit('cancel','Cancel'))
+        else:
+            self.helper.add_input(Submit('submit','Save'))
+            self.helper.add_input(Submit('cancel','Cancel'))
 
 from string import Template
 
@@ -228,46 +216,9 @@ class Subform(forms.Field):
     def __init__(self,*args,**kwargs):
         super().__init__(self)
 
-bootstrap_textarea_100="""
-<div id="content" class="margin-from-nav">
-    <div class="container">
-        <form>
-            <div class="row">
-                <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
-                    <div class="form-group">
-                        <label for="inputName1">Imię</label>
-                        <input type="text" class="form-control" id="inputName1" placeholder="Imie">
-                    </div>
-                    <div class="form-group">
-                        <label for="inputName2">Nazwisko</label>
-                        <input type="text" class="form-control" id="inputName2" placeholder="Nazwisko">
-                    </div>                  
-                    <div class="form-group">
-                        <label for="inputEmail4">Adres e-mail</label>
-                        <input type="email" class="form-control" id="inputEmail4" placeholder="Email">
-                    </div>
-                    <div class="form-group">
-                        <label class="mr-sm-2" for="inlineFormCustomSelect">Temat zapytania</label>
-                        <select class="custom-select mr-sm-2" id="inlineFormCustomSelect">
-                            <option selected>Wybierz temat...</option>
-                            <option value="1">One</option>
-                            <option value="2">Two</option>
-                            <option value="3">Three</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6 d-flex flex-column">
-                    <div class="form-group flex-grow-1 d-flex flex-column">
-                        <label for="exampleFormControlTextarea1">Treść wiadomości</label>
-                        <textarea class="form-control flex-grow-1" id="exampleFormControlTextarea1" rows="8"></textarea>
-                    </div>
-                </div>          
-            </div>
-        </form>     
-    </div>
-</div>
-"""
-class FilterForm(forms.Form):
+
+
+class InstanceFilterForm(forms.Form):
     def __init__(self,Class_id=0,filter={},*args,**kwargs):
         self.Class_id=Class_id #kwargs.pop('Class_id')
         #self.Class_id=kwargs.pop('filter')
@@ -277,23 +228,28 @@ class FilterForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.layout=Layout()
         r=Row()
-        for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
-            dt=DataTypes.objects.get(pk=att.DataType_id)
-            if att.Filtered and dt.id not in [DT_Table]:
-                if dt.FieldFilter > 1:
-                    min=dt.Filter1stName
-                    max=dt.Filter2ndName
-                    self.fields['__min__'+att.Attribute] = create_form_field(att,usedinfilter=True)
-                    self.fields['__min__'+att.Attribute].initial=filter.get('__min__'+att.Attribute)
-                    self.fields['__min__'+att.Attribute].label = att.Attribute+' '+min
-                    self.fields['__max__'+att.Attribute] = create_form_field(att,usedinfilter=True)
-                    self.fields['__max__' + att.Attribute].initial = filter.get('__max__' + att.Attribute)
-                    self.fields['__max__'+att.Attribute].label = att.Attribute+' '+max
-                    r.append(Fieldset('',Row(Column('__min__'+att.Attribute),Column('__max__'+att.Attribute)),css_class='formgroup col-sm-2'))
-                else:
-                    self.fields[att.Attribute]=create_form_field(att,usedinfilter=True)
-                    self.fields[att.Attribute].initial = filter.get(att.Attribute)
-                    r.append(Column(att.Attribute,css_class='form-group col-sm-1'))
+        for f in Filters.objects.filter(Q(Class_id=self.Class_id)|Q(Class_id=0)):
+            att=get_attribute(f.Attribute1.id,df_attributes)
+            Attribute=f.Attribute1.Attribute
+            if f.FilterType == FT_MinMax:
+                self.fields['__min__'+f.Filter] = create_form_field(att,usedinfilter=True,fn=f.Filter)
+                self.fields['__min__'+f.Filter].initial=filter.get('__min__'+f.Filter)
+                self.fields['__min__'+f.Filter].label = False
+                self.fields['__min__' + f.Filter].help_text = 'min'
+                self.fields['__max__'+f.Filter] = create_form_field(att,usedinfilter=True,fn=f.Filter)
+                self.fields['__max__'+f.Filter].initial = filter.get('__max__' + f.Filter)
+                self.fields['__max__'+f.Filter].label = False
+                self.fields['__max__' + f.Filter].help_text = 'max'
+                r.append(Div(HTML('<label>{}</label>'.format(f.Filter)),
+                             Row(Column('__min__'+f.Filter),
+                                 Column('__max__'+f.Filter)
+                                 )
+                             ,css_class='form-group col-sm-{}'.format(f.Size)))
+            else:
+                self.fields[f.Filter]=create_form_field(att,usedinfilter=True,fn=f.Filter)
+                self.fields[f.Filter].initial = filter.get(f.Filter)
+                r.append(Column(f.Filter,css_class='col-sm-{}'.format(f.Size)))
+
         self.helper.layout.append(r)
         self.helper.layout.append(HTML('<input type="hidden" id="sortfield" name="sortfield" value="{{sortfield}}">'))
         self.helper.add_input(Submit('submit','Filter'))
@@ -304,3 +260,8 @@ class FilterForm(forms.Form):
                                      onclick="location.href='"+str(reverse_lazy('ut:loadinstances',args=(self.Class_id,)))+"'"))
 
 
+from bootstrap_modal_forms.forms import BSModalModelForm
+
+class BookModelForm(BSModalModelForm):
+    Intfield=forms.IntegerField()
+    CharField=forms.CharField(max_length=50)

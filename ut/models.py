@@ -19,6 +19,15 @@ DT_Currency = 11
 DT_Email = 12
 DT_Time = 13
 DT_Calculated=14
+DT_Lookup=15
+
+DT_NUMBERS = [DT_Integer,DT_Float,DT_Date,DT_Instance,DT_Datetime,DT_Boolean,DT_Currency]
+DT_LETTERS = [DT_String,DT_Text,DT_External,DT_Email,DT_Lookup,DT_Calculated]
+
+FT_Exact=1
+FT_MinMax=2
+FT_Contains=3
+FT_Like=4
 
 #ValuesTable
 DT_Value_map={
@@ -38,7 +47,7 @@ DT_Time    : 'Values_DateTime',
 DT_Calculated : ''
 }
 
-def get_fieldname(dt):
+def get_fieldname(dt,attr_id=0):
     f = 'No fieldName'
     if   dt in [DT_Integer,DT_Boolean]: #int,boolean
         f = 'int_value'
@@ -52,6 +61,8 @@ def get_fieldname(dt):
         f = 'datetime_value'
     elif dt in [DT_Instance]:
         f = 'instance_value_id'
+    elif dt in [DT_Lookup]:
+        f = 'char_value'
     else:
         raise Exception ('No {} datatype'.format(dt))
     return '"'+f+'"'
@@ -90,46 +101,6 @@ class Classes(models.Model):
     def __str__(self):
         return self.Class
 
-b="""    
-    @property 
-    def qs_sql(self):
-        atts=get_tableviewlist(Class_id=self.id,df_attr=df_attributes)
-        ss = {}
-        lo = {}
-        for a in atts.iterrows():
-            for key,val in a.SelectField.items():
-                ss[key]=val
-            for key,val in a.LeftOuter.items():
-                lo[key]=val
-        if len(ss)>0:
-            co=','
-        else:
-            co=''
-        sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
-        sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
-        swhere = 'where ins.Class_id={}'.format(self.id)
-        return sselect +'\n' + sfrom + '\n' + swhere
-    @property
-    def fieldlist(self):
-        atts=Attributes.objects.filter(Class_id=self.id)
-        return atts
-    @property
-    def editlist(self):
-        atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
-        return pd.DataFrame([x.__dict__ for x in atts if not x.Calculated])
-    @property
-    def editattributes(self):
-        return Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
-    @property
-    def fulllist(self):
-        atts=Attributes.objects.filter(Class_id=self.id)
-        return pd.DataFrame([x.__dict__ for x in atts])
-    @property
-    def filterlist(self):
-        atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
-        return pd.DataFrame([x.__dict__ for x in atts if x.Filtered])
-"""
-
 class ProjectClassConn(models.Model):
     Class =models.ForeignKey (Classes,on_delete=models.PROTECT)
     Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
@@ -141,10 +112,10 @@ class ProjectReportConn(models.Model):
 
 #int,varchar,text,class
 class DataTypes(models.Model):
-    DataType = models.CharField(max_length=50,unique=True)
+    DataType = models.CharField(max_length=50, unique=True)
     FieldFilter = models.IntegerField(default=0)
-    Filter1stName = models.CharField(default='min',max_length=50)
-    Filter2ndName = models.CharField(default='max',max_length=50)
+    Filter1stName = models.CharField(default='min', max_length=50)
+    Filter2ndName = models.CharField(default='max', max_length=50)
     class Meta:
         verbose_name='DataTypes'
     def __str__(self):
@@ -188,64 +159,21 @@ class Attributes(models.Model):
             res = self.Class.Class +'-->'+self.Attribute
         return res
 
-    @property
-    def tablename(self):
-        return '"val{}"'.format(self.id)
-
-    @property
-    def reftablename(self):
-        return '"val_ins{}"'.format(self.id)
-
-    @property
-    def refatttablename(self):
-        return '"refval{}"'.format(self.id)
-
-    @property
-    def selectfield(self):
-        res={}
-        if self.DataType.id==DT_Instance:
-            if self.Ref_Attribute.id==0:
-                res[self.Attribute]='{tab}.{field}'.format(tab=self.reftablename,field='"Code"')
-            else:
-                res[self.Attribute]='{tab}.{field}'\
-                    .format(tab=self.refatttablename,field=get_fieldname(self.Ref_Attribute.DataType.id))
-        elif self.DataType.id== DT_External:
-            res[self.Attribute]='{tab}.{field}'.format(tab=self.ExternalTable,field=self.ExternalField,name=self.Attribute)
-        elif self.DataType.id in [DT_Table]:
-            res[self.Attribute]='0 as Table__'+str(self.id)+'__'
-        elif self.DataType.id == DT_Calculated:
-            res[self.Attribute]='{formula}'.format(formula=self.Formula)
-        else:
-            res[self.Attribute]='{tab}.{field}'.format(tab=self.tablename,id=self.id,field=get_fieldname(self.DataType.id))
-        return res
-
-    @property
-    def leftouter(self):
-        res={}
-        if self.DataType.id==8:
-            res[self.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})'\
-                .format(ext=self.ExternalTable,uq=self.ExternalUq,loctab=self.InternalAttribute.tablename,locfield=get_fieldname(self.InternalAttribute.DataType.id))
-        else:
-            res[self.tablename]= 'LEFT OUTER JOIN {val} as {tab} ON ({tab}.Instance_id=ins.id and {tab}.Attribute_id={id})'.format(val=Values._meta.db_table,tab=self.tablename,id=self.id)
-            if self.DataType.id == 6:
-                res[self.reftablename]='LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id)'.format(ins=Instances._meta.db_table,tab=self.tablename,reftab=self.reftablename)
-                if self.Ref_Attribute.id!=0:
-                    res[self.refatttablename] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt})'\
-                        .format(val=Values._meta.db_table,refval=self.refatttablename,refatt=self.Ref_Attribute.id,reftab=self.reftablename)
-        return res
-    @property
-    def Calculated(self):
-        res = False
-        if self.DataType.id in [DT_External,DT_Calculated]:
-            res=True
-        return res
-
-    @property
-    def TableColumn(self):
-        if self.DataType == DT_External:
-            pass
-
-
+class Filters(models.Model):
+    conditions=[('OR','OR'),('AND','AND')]
+    fieldsizes=[(1,1),(2,2),(3,3),(4,4),(6,6),(12,12)]
+    filtertypes=[(FT_Exact,'Exact'),(FT_MinMax,'Min and Max'),(FT_Contains,'Contains'),(FT_Like,'SQL Style LIKE')]
+    Filter=models.CharField(max_length=50)
+    Class=models.ForeignKey(Classes, on_delete=models.CASCADE)
+    FilterType=models.IntegerField(choices=filtertypes,default=FT_Exact)
+    Size=models.IntegerField(default=1,choices=fieldsizes)
+    Attribute1=models.ForeignKey(Attributes, on_delete=models.CASCADE,related_name='+',default=0)
+    Condition1=models.CharField(max_length=50,null=True,blank=True,choices=conditions,default='OR')
+    Attribute2=models.ForeignKey(Attributes, on_delete=models.CASCADE,related_name='+',default=0)
+    Condition2=models.CharField(max_length=50,null=True,blank=True,choices=conditions,default='OR')
+    Attribute3=models.ForeignKey(Attributes, on_delete=models.CASCADE,related_name='+',default=0)
+    Formula = models.TextField(null=True,blank=True)
+    unique_together = ('Class', 'Filter')
 
 class Counters(models.Model):
     Class=models.OneToOneField(Classes,on_delete=models.CASCADE)
@@ -262,7 +190,7 @@ class Instances(models.Model):
         return self.Code
 
 class Values(models.Model):
-    Instance = models.ForeignKey(Instances,on_delete=models.CASCADE,related_name='+')
+    Instance = models.ForeignKey(Instances,on_delete=models.CASCADE, related_name='+')
     Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
 #    Value=''
     int_value = models.IntegerField(null=True)
@@ -270,7 +198,7 @@ class Values(models.Model):
     text_value = models.TextField(null=True)
     float_value= models.FloatField(null=True)
     datetime_value = models.DateTimeField(null=True)
-    instance_value = models.ForeignKey(Instances,on_delete=models.PROTECT,related_name='+',null=True)
+    instance_value = models.ForeignKey(Instances,on_delete=models.PROTECT, related_name='+',null=True)
     class Meta:
 #        abstract = True
         unique_together = ('Instance','Attribute')
@@ -279,17 +207,17 @@ class Values(models.Model):
     def save(self, *args, **kwargs): #rewrite save to check for unique & non null values
         att=self.Attribute
         Qs={1:self.int_value,2:self.float_value,3:self.char_value,4:self.text_value,5:self.datetime_value,6:self.instance_value}
+        Qn = {1: 'int_value', 2: 'float_value', 3: 'char_value', 4: 'text_value', 5: 'datetime_value',6: 'instance_value'}
         val=0
         #handle unique
         if att.UniqueAtt:
-            if att.DataType.id in [DT_Integer,DT_String,DT_Email]:
-                value=Qs[att.DataType.id]
-                #val_con=Q(Qs[att.DataType.id])
-                val=Values.objects.filter(Q(value=value)&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
+            if att.DataType.id in [DT_Integer,DT_String,DT_Date]:
+                val_con=Q(**{Qn[att.DataType.id]:Qs[att.DataType.id]})
+                val=Values.objects.filter(val_con&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
             else:
                 pass
             if val.count()>0:
-                raise Exception('Attribute "{}" for class "{}" is unique and already used in instance with id {}.'.format(att.Attribute,att.Class.Class,val[0].Instance.id))
+                raise Exception('Attribute "{}" for class "{}" is unique and the value "{}" has already used in the instance with id {}.'.format(att.Attribute,att.Class.Class,Qs[att.DataType.id],val[0].Instance.id))
         #handle not null value
         if att.NotNullAtt:
             if pd.isnull(Qs[att.DataType.id]):

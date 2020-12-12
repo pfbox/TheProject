@@ -1,0 +1,370 @@
+from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
+import pandas as pd
+from django.db.models import Q
+# Create your models here.
+
+#Datatype Constants
+DT_Integer = 1
+DT_Float = 2
+DT_String =3
+DT_Text = 4
+DT_Date = 5
+DT_Instance = 6
+DT_Datetime = 7
+DT_External = 8
+DT_Boolean = 9
+DT_Table = 10
+DT_Currency = 11
+DT_Email = 12
+DT_Time = 13
+DT_Calculated=14
+
+#ValuesTable
+DT_Value_map={
+DT_Integer : 'Values_Int',
+DT_Float   : 'Values_Float',
+DT_String  : 'Values_Char',
+DT_Text    : 'Values_Text',
+DT_Date    : 'Values_DateTime',
+DT_Instance: 'Values_Instance',
+DT_Datetime: 'Values_DateTime',
+DT_External: '',
+DT_Boolean : 'Values_Int',
+DT_Table   : '',
+DT_Currency: 'Values_Float',
+DT_Email   : 'Values_Char',
+DT_Time    : 'Values_DateTime',
+DT_Calculated : ''
+}
+
+def get_fieldname(dt):
+    f = 'No fieldName'
+    if   dt in [DT_Integer,DT_Boolean]: #int,boolean
+        f = 'int_value'
+    elif dt in [DT_Float,DT_Currency]:
+        f = 'float_value' #float,currency
+    elif dt in [DT_String,DT_Email]:
+        f = 'char_value'
+    elif dt in [DT_Text]:
+        f = 'text_value'
+    elif dt in [DT_Date,DT_Datetime,DT_Time]: #date,datetime,time
+        f = 'datetime_value'
+    elif dt in [DT_Instance]:
+        f = 'instance_value_id'
+    else:
+        raise Exception ('No {} datatype'.format(dt))
+    return '"'+f+'"'
+
+class Projects(models.Model):
+    Project = models.CharField(max_length=100,unique=True)
+    Description = models.TextField(null=True,blank=True)
+    class Meta:
+        verbose_name='Projects'
+
+class Reports(models.Model):
+    Report = models.CharField(max_length=100,unique=True)
+    Description = models.TextField(null=True,blank=True)
+    #ReportType =
+    Query = models.TextField(null=True,blank=True)
+    class Meta:
+        verbose_name='Reports'
+
+class SendOuts(models.Model):
+    Query = models.TextField(null=True,blank=True)
+    EmailField = models.CharField(max_length=50,null=False)
+    EmailGroupFields = models.TextField(null=True,blank=True)
+    EmailTemplate = models.TextField(null=True,blank=True)
+    class Meta:
+        verbose_name='SendOuts'
+
+class Classes(models.Model):
+    Class = models.CharField(max_length=50,unique=True)
+    Master = models.ForeignKey('self',on_delete=models.PROTECT)
+    Template = models.TextField(null=True,blank=True)
+    UseAutoCounter = models.BooleanField(default=False,blank=True)
+    Prefix = models.CharField(max_length=10,null=True,blank=True)
+    CounterStrLen = models.IntegerField(default=10)
+    class Meta:
+        verbose_name='Classes'
+    def __str__(self):
+        return self.Class
+
+b="""    
+    @property 
+    def qs_sql(self):
+        atts=get_tableviewlist(Class_id=self.id,df_attr=df_attributes)
+        ss = {}
+        lo = {}
+        for a in atts.iterrows():
+            for key,val in a.SelectField.items():
+                ss[key]=val
+            for key,val in a.LeftOuter.items():
+                lo[key]=val
+        if len(ss)>0:
+            co=','
+        else:
+            co=''
+        sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
+        sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
+        swhere = 'where ins.Class_id={}'.format(self.id)
+        return sselect +'\n' + sfrom + '\n' + swhere
+    @property
+    def fieldlist(self):
+        atts=Attributes.objects.filter(Class_id=self.id)
+        return atts
+    @property
+    def editlist(self):
+        atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
+        return pd.DataFrame([x.__dict__ for x in atts if not x.Calculated])
+    @property
+    def editattributes(self):
+        return Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
+    @property
+    def fulllist(self):
+        atts=Attributes.objects.filter(Class_id=self.id)
+        return pd.DataFrame([x.__dict__ for x in atts])
+    @property
+    def filterlist(self):
+        atts=Attributes.objects.filter(Q(Class_id=self.id)|Q(id=0)).order_by('Class_id','id')
+        return pd.DataFrame([x.__dict__ for x in atts if x.Filtered])
+"""
+
+class ProjectClassConn(models.Model):
+    Class =models.ForeignKey (Classes,on_delete=models.PROTECT)
+    Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
+
+class ProjectReportConn(models.Model):
+    Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
+    Report =models.ForeignKey(Reports,on_delete=models.PROTECT)
+    Default = models.BooleanField(default=False)
+
+#int,varchar,text,class
+class DataTypes(models.Model):
+    DataType = models.CharField(max_length=50, unique=True)
+    FieldFilter = models.IntegerField(default=0)
+    Filter1stName = models.CharField(default='min', max_length=50)
+    Filter2ndName = models.CharField(default='max', max_length=50)
+    class Meta:
+        verbose_name='DataTypes'
+    def __str__(self):
+        return self.DataType
+
+class InputTypes(models.Model):
+    Inputtype = models.CharField(max_length=50,unique=True)
+    HtmlLine = models.TextField(null=True)
+    Description = models.TextField(null=True)
+    class Meta:
+        verbose_name = 'InputTypes'
+
+class Attributes(models.Model):
+    Class = models.ForeignKey(Classes,on_delete=models.PROTECT,related_name='+')
+    Attribute = models.CharField(max_length=50)
+    DataType = models.ForeignKey(DataTypes,on_delete=models.PROTECT)
+    Ref_Class = models.ForeignKey(Classes,on_delete=models.PROTECT,related_name='+',default=0) #zerohere
+    Ref_Attribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
+    Formula = models.TextField(null=True,blank=True)
+    InputType = models.ForeignKey(InputTypes,on_delete=models.PROTECT,default=0,blank=True)
+    ReadOnly = models.BooleanField(default=False)
+    Filtered = models.BooleanField(default=True)
+    UniqueAtt = models.BooleanField(default=False)
+    NotNullAtt = models.BooleanField(default=False)
+    ShowInTable = models.BooleanField(default=True)
+    #these fields handles the connection with external source
+    # Externaltable.ExternalUq = values table wiht the right attribute (char or int), and ExternalField is shown
+    ExternalTable = models.CharField(max_length=50,null=True,blank=True)
+    ExternalUq = models.CharField(max_length=50,null=True,blank=True)
+    InternalAttribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
+    ExternalField = models.CharField(max_length=50,null=True,blank=True)
+    ValuesList = models.TextField(null=True,blank=True) #only for char, int & float
+    class Meta:
+        unique_together = ('Class','Attribute')
+        verbose_name='Attributes'
+
+    def __str__(self):
+        if self.Class.id == 0:
+            res = 'Default-->Default'
+        else:
+            res = self.Class.Class +'-->'+self.Attribute
+        return res
+
+    @property
+    def tablename(self):
+        return '"val{}"'.format(self.id)
+
+    @property
+    def reftablename(self):
+        return '"val_ins{}"'.format(self.id)
+
+    @property
+    def refatttablename(self):
+        return '"refval{}"'.format(self.id)
+
+    @property
+    def selectfield(self):
+        res={}
+        if self.DataType.id==DT_Instance:
+            if self.Ref_Attribute.id==0:
+                res[self.Attribute]='{tab}.{field}'.format(tab=self.reftablename,field='"Code"')
+            else:
+                res[self.Attribute]='{tab}.{field}'\
+                    .format(tab=self.refatttablename,field=get_fieldname(self.Ref_Attribute.DataType.id))
+        elif self.DataType.id== DT_External:
+            res[self.Attribute]='{tab}.{field}'.format(tab=self.ExternalTable,field=self.ExternalField,name=self.Attribute)
+        elif self.DataType.id in [DT_Table]:
+            res[self.Attribute]='0 as Table__'+str(self.id)+'__'
+        elif self.DataType.id == DT_Calculated:
+            res[self.Attribute]='{formula}'.format(formula=self.Formula)
+        else:
+            res[self.Attribute]='{tab}.{field}'.format(tab=self.tablename,id=self.id,field=get_fieldname(self.DataType.id))
+        return res
+
+    @property
+    def leftouter(self):
+        res={}
+        if self.DataType.id==8:
+            res[self.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})'\
+                .format(ext=self.ExternalTable,uq=self.ExternalUq,loctab=self.InternalAttribute.tablename,locfield=get_fieldname(self.InternalAttribute.DataType.id))
+        else:
+            res[self.tablename]= 'LEFT OUTER JOIN {val} as {tab} ON ({tab}.Instance_id=ins.id and {tab}.Attribute_id={id})'.format(val=Values._meta.db_table,tab=self.tablename,id=self.id)
+            if self.DataType.id == 6:
+                res[self.reftablename]='LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id)'.format(ins=Instances._meta.db_table,tab=self.tablename,reftab=self.reftablename)
+                if self.Ref_Attribute.id!=0:
+                    res[self.refatttablename] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt})'\
+                        .format(val=Values._meta.db_table,refval=self.refatttablename,refatt=self.Ref_Attribute.id,reftab=self.reftablename)
+        return res
+    @property
+    def Calculated(self):
+        res = False
+        if self.DataType.id in [DT_External,DT_Calculated]:
+            res=True
+        return res
+
+    @property
+    def TableColumn(self):
+        if self.DataType == DT_External:
+            pass
+
+
+
+class Counters(models.Model):
+    Class=models.OneToOneField(Classes,on_delete=models.CASCADE)
+    CurrentCounter = models.IntegerField(default=0)
+
+class Instances(models.Model):
+    Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
+    #Master = models.ForeignKey('self',on_delete=models.PROTECT,null=True)
+    Code = models.CharField(max_length=20)
+    class Meta:
+        unique_together = ('Class','Code')
+        verbose_name='Instances'
+    def __str__(self):
+        return self.Code
+
+class Values(models.Model):
+    Instance = models.ForeignKey(Instances,on_delete=models.CASCADE, related_name='+')
+    Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
+#    Value=''
+    int_value = models.IntegerField(null=True)
+    char_value = models.CharField(max_length=255,null=True)
+    text_value = models.TextField(null=True)
+    float_value= models.FloatField(null=True)
+    datetime_value = models.DateTimeField(null=True)
+    instance_value = models.ForeignKey(Instances,on_delete=models.PROTECT, related_name='+',null=True)
+    class Meta:
+#        abstract = True
+        unique_together = ('Instance','Attribute')
+        verbose_name='Values'
+
+    def save(self, *args, **kwargs): #rewrite save to check for unique & non null values
+        att=self.Attribute
+        Qs={1:self.int_value,2:self.float_value,3:self.char_value,4:self.text_value,5:self.datetime_value,6:self.instance_value}
+        Qn = {1: 'int_value', 2: 'float_value', 3: 'char_value', 4: 'text_value', 5: 'datetime_value',6: 'instance_value'}
+        val=0
+        #handle unique
+        if att.UniqueAtt:
+            if att.DataType.id in [DT_Integer,DT_String,DT_Date]:
+                val_con=Q(**{Qn[att.DataType.id]:Qs[att.DataType.id]})
+                val=Values.objects.filter(val_con&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
+            else:
+                pass
+            if val.count()>0:
+                raise Exception('Attribute "{}" for class "{}" is unique and the value "{}" has already used in the instance with id {}.'.format(att.Attribute,att.Class.Class,Qs[att.DataType.id],val[0].Instance.id))
+        #handle not null value
+        if att.NotNullAtt:
+            if pd.isnull(Qs[att.DataType.id]):
+                raise Exception('Attribute "{}" cannot be NULL'.format(att.Attribute))
+        super().save(*args, **kwargs)
+
+a='''
+class Values_Int(Values):
+    Value = models.IntegerField(null=True)
+    class Meta:
+        unique_together = ('Instance','Attribute')
+        verbose_name='Values_Int'
+
+class Values_Char(Values):
+    Value = models.CharField(max_length=255, null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Char'
+
+class Values_Text(Values):
+    Value = models.TextField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Text'
+
+class Values_Float(Values):
+    Value = models.FloatField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Float'
+        
+class Values_DateTime(Values):
+    Value = models.DateTimeField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_DateTime'
+
+class Values_Instance(Values):
+    Value = models.ForeignKey(Instances, on_delete=models.PROTECT, related_name='+', null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Instance'
+
+class Values_Image(Values):
+    Value = models.ImageField(null=True)
+    class Meta:
+        unique_together = ('Instance', 'Attribute')
+        verbose_name = 'Values_Image'
+'''
+
+import json
+class Layouts(models.Model):
+    Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
+    FormLayout  = models.TextField(null=True,blank=True)
+    TableLayout = models.TextField(null=True,blank=True)
+    ShortLayout = models.TextField(null=True,blank=True)
+
+    @property
+    def form_dict(self):
+        if not pd.isnull(self.FormLayout):
+            res=json.loads(self.FormLayout)
+        else:
+            res=json.loads('{"Column1":"","Column2":""}')
+        return res
+
+    @property
+    def table_dict(self):
+        if not pd.isnull(self.TableLayout):
+            res=json.loads(self.TableLayout)
+        else:
+            res=json.loads('{"Row1":""}')
+        return res
+
+class FormLayouts(models.Model):
+    Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
+    Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
+    Row = models.IntegerField(default=0)
+    Column = models.IntegerField(default=0)

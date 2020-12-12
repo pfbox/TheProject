@@ -2,17 +2,79 @@
 
 {% block content %}
 
-{% load bootstrap4 %}       {# import bootstrap4/bootstrap3 #}
-{% bootstrap_css %}         {# Embed Bootstrap CSS #}
-{% bootstrap_javascript jquery='full' %}  {# Embed Bootstrap JS+jQuery #}
-{{ form.media }}            {# Adds date-picker required JS and CSS #}
-
 {% load crispy_forms_tags %}
 
 <body>
-<div class="container">
-{% crispy form %}
+    <div class="container">
 
-</div>
+    {% crispy form form.helper %}
+
+    </div>
+
 </body>
+
 {% endblock %}
+
+{% block javascript %}
+
+{% load bootstrap4 %}       {# import bootstrap4/bootstrap3 #}
+{{ form.media }}            {# Adds date-picker required JS and CSS #}
+<script>
+    function empty_child(attr_id){
+        var el =$('select[masterattr_id='+attr_id+']')
+            if (el.length) {
+               var attr_id = el.attr('attr_id')
+               el.empty()
+               el.append($("<option></option>").attr("value",0).text('(None)'));
+               empty_child(attr_id)
+            }
+    }
+    function fill_new_options(attr_id,options) {
+         var  sel=$('select[attr_id='+attr_id+']')
+         sel.empty()
+         sel.append($("<option></option>").attr("value",0).text('(None)'));
+         $.each(options,function(i,name){
+             sel.append($("<option></option>")
+                .attr("value", i)
+                .text(name));
+         });
+         empty_child(attr_id);
+    }
+
+    $(".hierarchy_trigger,.lookup_trigger",).change(function () {
+      var attr_id = $(this).attr('attr_id')
+      var master_value  = $(this).val()
+      $.ajax({
+        url: "{% url 'ut:ajax_change_master' 12345 %}".replace(/12345/, attr_id.toString()),
+        data : {'value': master_value,'Attribute_id':attr_id},
+        dataType: 'json',
+        success: function (data) {
+           $.each(data.attrs,function(key, ops){
+                fill_new_options(key,ops);
+           });
+           $.each(data.lookups,function(key, value){
+                $('input[attr_id='+key+']').val(value)
+           });
+
+           /*
+           var masterclass_id=data.MasterClass_id
+           var subselects=$("select[masterclass_id='"+masterclass_id+"']")
+           $.each(subselects,function(key, el) {
+                var sattr_id = $(el).attr('attr_id')
+                var sel = $(el)
+                sel.empty()
+                sel.append($("<option></option>").attr("value",0).text(''));
+                $.each(data.attrs[sattr_id],function(i,name) {
+                    sel.append($("<option></option>")
+                        .attr("value", i)
+                        .text(name));
+                });
+           });
+           */
+        }
+      });
+    });
+</script>
+
+{% endblock %}
+

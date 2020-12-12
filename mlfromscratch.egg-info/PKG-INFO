@@ -1,0 +1,11 @@
+Metadata-Version: 1.1
+Name: mlfromscratch
+Version: 0.0.4
+Summary: Python implementations of some of the fundamental Machine Learning models and algorithms from scratch.
+Home-page: https://github.com/eriklindernoren/ML-From-Scratch
+Author: Erik Linder-Noren
+Author-email: eriklindernoren@gmail.com
+License: MIT
+Download-URL: https://github.com/eriklindernoren/ML-From-Scratch/tarball/master
+Description: UNKNOWN
+Platform: UNKNOWN
