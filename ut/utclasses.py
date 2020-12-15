@@ -2,6 +2,7 @@ from ut.models import *
 from ut.models import *
 import django_tables2 as tables
 import pandas as pd
+from .tables import ReportTable
 from django_pandas.io import read_frame
 import numpy as np
 from django.db import transaction
@@ -44,13 +45,29 @@ def create_table_column(dt,width=50,attr={}):
         res = tables.Column(attrs={'th': {'width': width}})
     return res
 
+def valuefield_property(attr):
+    dt= attr.DataType.id
+    attribute = attr.Attribute
+    res = {}
+    if id == 0:
+        res[attribute] = 'ins.Code'
+    elif dt == DT_Lookup:
+            res[attribute] = '{tab}.{field}' \
+                .format(tab=attr.RefAttrTableName, field=get_fieldname(DT_String))
+    elif dt == DT_External:
+        res[attribute] = '{tab}.{field}'.format(tab=attr.ExternalTable, field=attr.ExternalField)
+    elif dt in [DT_Table]:
+        res[attribute] = '0 as Table__' + str(id) + '__'
+    elif dt in [DT_Calculated]:
+        res[attribute] = '{formula}'.format(formula=attr.Formula)
+    else:
+        res[attribute] = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
+    return res
+
+
 def valuefield(id,df_attr):
     attr=df_attr[df_attr.id==id].iloc[0]
     dt= attr.DataType_id
-    attr=df_attr[df_attr.id==id].iloc[0]
-    ref_attr = df_attr[df_attr.id==attr.Ref_Attribute_id].iloc[0]
-    internal_attr = df_attr[df_attr.id==attr.InternalAttribute_id].iloc[0]
-
     attribute=attr.Attribute
     ref_attribute_id=attr.Ref_Attribute_id
     res = {}
@@ -161,7 +178,6 @@ def calculated(dt):
     else:
         return False
 
-
 def get_options(Attribute_id=0,values={}) :
     attr=get_attribute(Attribute_id,df_attributes)
     instances={}
@@ -186,7 +202,6 @@ def get_options(Attribute_id=0,values={}) :
         else:
             for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id):
                 instances[r.Instance_id]=r.char_value
-    print ('Attribute_id',Attribute_id,'Options',instances)
     return instances
 
 from django import forms
@@ -250,7 +265,11 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                                     )
     elif dt in [DT_Instance]:
         op=get_options(Attribute_id=attr.id,values=values)
-        ch=[(0,'(None)')]+ [(k, v) for k, v in op.items()]
+        if usedinfilter:
+            ch=[(-1,'(All)')]
+        else:
+            ch=[]
+        ch=ch+[(0,'(None)')]+[(k, v) for k, v in op.items()]
         field=forms.ChoiceField(choices=ch,required=req)
     elif dt == [DT_Datetime]:
         field = forms.DateTimeField(required=req)
@@ -261,7 +280,10 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     elif dt in [DT_Currency]: #Currency
         field = forms.FloatField(required=req)
     elif dt in [DT_Email]: #Email
-        field = forms.EmailField(required=req)
+        if not usedinfilter:
+            field = forms.EmailField(required=req)
+        else:
+            field = forms.CharField(max_length=255,required=req)
     elif dt == DT_Calculated:
         return False
     else:
@@ -379,8 +401,11 @@ def get_tableviewlist(Class_id,df_attr):
 def get_fulllist(Class_id,df_attr):
     return df_attr[df_attr.Class_id.isin([Class_id,0])]
 
+def create_rawquery_sql(Class_id=0,filter={}):
+    return create_qs_sql(Class_id) + '\n' + create_filter_for_sql(Class_id, filter)
+
 def create_rawquery_from_attributes(Class_id=0,filter={}):
-    sql=create_qs_sql(Class_id) + '\n' + create_filter_for_sql(Class_id,filter)
+    sql=create_rawquery_sql(Class_id,filter)
     qs=Instances.objects.raw(sql)
     return qs
 
@@ -502,44 +527,6 @@ def get_value(Instance_id,Attribute_id):
                 raise ('Wrong DataType')
     return value
 
-def create_control_old(Instance_id,Attribute_id,read_only=False): #looks like I don't need it anymore
-    at=Attributes.objects.get(pk=Attribute_id)
-    ro=''
-    if at.ReadOnly:
-        ro='readonly'
-    it=at.InputType.id
-    dt=at.DataType.id
-    valueslist=at.ValuesList
-    value=get_value(Instance_id,Attribute_id)
-    if   dt == 1: #int
-        if valueslist=='':
-            return '<input class="form-control" type="number" name="{name}" {ro} value="{val}" >'\
-            .format(name=at.id,ro=ro,val=value)
-        else:
-            return '<select class="form-control" name="{name}">'
-    elif dt == 2: #float
-        return '<input class="form-control" type="number" step="0.01" {ro} name="{name}" value="{val}" >'\
-            .format(name=at.id,ro=ro,val=value)
-    elif dt == 3: #char
-        return '<input class="form-control" type="text" name="{name}" value="{val}" {ro}>'\
-            .format(name=at.id,ro=ro,val=value)
-    elif dt == 4: #text
-        return '<textarea class="form-control" rows="4" cols="50" name="{name}" {ro}>{val}</textarea>'\
-            .format(name=at.id,ro=ro,val=value)
-    elif dt == 5: #date
-        if (type(value)!=str)&(not pd.isnull(value)):
-            value=value.strftime("%Y-%m-%d")
-        return '<input class="form-control" type="date" rows="4" cols="50" {ro} name="{name}" value="{val}">'\
-            .format(name=at.id,ro=ro,val=value)
-    elif dt == 6: #instance
-        ins=Instances.objects.filter(Class_id=at.Ref_Class.id).values_list('id', 'Code')
-        options = '<option value=0></option>' + ' '.join(['<option value={} {}>{}</option>'.format(list(o)[0], 'selected' if value==list(o)[0] else '',list(o)[1]) for o in ins]) #(value.id==list(o)[0])
-        return '<select class="form-control" name="{name}" {ro}> {op} </select>'.format(name=at.id,ro=ro,val=options)
-    elif dt in [9,10,11,12]:
-        pass
-    else:
-        raise('DataType does not exists --create_control')
-
 def qs_to_table(qs,m,url,args=[A('pk'),]):
     class h_table(tables.Table):
         h_link = tables.LinkColumn(url, text= 'edit', args=args, orderable=False)
@@ -623,70 +610,11 @@ def df_to_table(df):
     table=t(df.to_dict('records'))
     return table
 
-def cgreate_filter_set(Class_id,oldfilter={}):
-    #building filter form content
-    classattributes = Attributes.objects.filter(Class_id=Class_id,Filtered=True)
-    filterform = create_filter(0, oldfilter)
-    for at in classattributes:
-        filterform = filterform + create_filter(at.id,oldfilter)
-    return filterform
-
 def get_val_by_name(key,d={}):
     if key in d.keys():
         res=d[key]
     else:
         res=''
-    return res
-
-def create_filter(Attribute_id,filter={}):
-    #building html code for specific control
-    at=Attributes.objects.get(pk=Attribute_id)
-    if at.Attribute in filter.keys():
-        value=filter[at.Attribute]
-    else:
-        value=''
-    dt=at.DataType.id
-    id=at.id
-
-    cl="form-control form-control-xs"
-    attribute=at.Attribute
-    res='<div class ="d-inline-flex p-2 bd-highlight" >' \
-        '<div class ="container rounded" style="border:1px solid #cecece;" >' \
-        '<div class ="form-group" >'
-    res=res+'<label>'+attribute+'</label><br><div class="input-group">'
-    if   dt == 1: #int
-        res=res+'<input class="{cl}" type="number" name="min{name}" placeholder="min" value="{minval}">'
-        res=res+'<span class="input-group-addon">-</span>'
-        res=res+'<input class="{cl}" type="number" name="max{name}" placeholder="max" value="{maxval}">'
-        res=res.format(att=attribute,name=id,minval=get_val_by_name('min'+str(id),filter),maxval=get_val_by_name('max'+str(id),filter),cl=cl)
-    elif dt == 2: #float
-        res=res+'<input type="number" class="{cl}" step="{step}" name="min{name}" placeholder="min" value="{minval}">'
-        res=res+'<span class="input-group-addon">-</span>'
-        res=res+'<input type="number" class="{cl}" step="{step}" name="max{name}" placeholder="max" value="{maxval}">'
-        res=res.format(att=attribute,name=id,minval=get_val_by_name('min'+str(id)),maxval=get_val_by_name('max'+str(id)), step=0.01,cl=cl)
-    elif dt in [3,4]: #char & #text
-        res=res+'<input type="text" class="{cl}" name="{name}" value="{val}">'.format(att=attribute,name=at.id,cl=cl,val=get_val_by_name(str(id),filter))
-    elif dt == 5: #date
-        res=res+'<input class="{cl}" type="date" name="min{name}" value={fromval}>'
-        res=res+'<span class="input-group-addon">-</span>'
-        res=res+'<input class="{cl}" type="date" name="max{name}" value={toval}>'
-        res=res.format(att=attribute,name=at.id,cl=cl,fromval=get_val_by_name('from'+str(id),filter),toval=get_val_by_name('to'+str(id),filter))
-    elif dt == 6: #instance
-        val=get_val_by_name(str(id),filter)
-        try:
-            val=int(val)
-        except:
-            val=0
-
-        ins=Instances.objects.filter(Class_id=at.Ref_Class.id).values_list('id', 'Code')
-        options = '<option value=0></option>' + ' '.join(['<option value="{value}" {sel}>{opt}</option>'.format(value=list(o)[0],sel='selected' if val==list(o)[0] else '', opt=list(o)[1]) for o in ins])#(value.id==list(o)[0])
-
-        res=res+'<select class="{cl}" name="{name}">{opt}</select>'.format(att=attribute,name=id,opt=options,cl=cl)
-    elif dt == 9:  # instance
-        pass
-    else:
-        raise('DataType does not exists --create_control')
-    res=res+'</div></div></div></div>'
     return res
 
 #this procedure creates a filter for the query that will be executed on the server
@@ -710,7 +638,7 @@ def create_filter_for_sql(Class_id,filter={}):
             type=d[f.FilterType]
         #
         print (f.Expression,f.Expression[type])
-        if val!='' and (not (val=='0' and f.DataType_id==6)):
+        if val!='' and (not (val=='-1' and f.DataType_id==6)):
             where = where + f.Expression[type].format(val=val)
     return where
 
@@ -816,6 +744,31 @@ def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True)
             save_attribute(ins.id,rec.id,instance[name],passed_by_name=passed_by_name)
     return True
 
+def dictfetchall(cursor):
+    #Return all rows from a cursor as a dict
+    columns = [col[0] for col in cursor.description]
+    return [
+       dict(zip(columns, row))
+       for row in cursor.fetchall()
+    ]
+
+def get_report_df(Report_id):
+    r = Reports.objects.get(pk=Report_id)
+    sql = r.Query
+    df = pd.read_sql(sql,con)
+    return {'df': df,'ReportName':r.Report}
+
+def get_reporttable(Report_id):
+    r = Reports.objects.get(pk=Report_id)
+    sql = r.Query
+    cursor = con.cursor()
+    cursor.execute(sql)
+    t = dictfetchall(cursor)
+    extra_columns = [(c[0], tables.Column()) for c in cursor.description]
+    return {'table': ReportTable(data=t,extra_columns=extra_columns),
+            'ReportName':r.Report}
+
+
 df_attributes=set_attributes()
 df_filters = set_filters()
 
@@ -823,9 +776,19 @@ from django.dispatch import receiver
 @receiver(models.signals.post_save, sender=Attributes)
 def update_attributes(sender, instance, **kwargs):
     global df_attributes
+    global df_filters
     from .utclasses import set_attributes
     df_attributes=set_attributes()
     print ('Reset Attributes. ',instance.Attribute,'changed')
     df_filters = set_filters()
+
+
+
+
+
+
+
+
+
 
 

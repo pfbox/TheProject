@@ -55,7 +55,6 @@ class FilterEditForm(forms.ModelForm):
         self.fields['Class'].widget.attrs['disabled'] = 'true'
         self.fields['Class'].required = False
 
-
     def save(self,commit=True):
         Class_id=self.initial['Class_id'];
         self.instance.Class=Classes.objects.get(pk=Class_id)
@@ -215,7 +214,6 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
 class Subform(forms.Field):
     def __init__(self,*args,**kwargs):
         super().__init__(self)
-
 
 
 class InstanceFilterForm(forms.Form):

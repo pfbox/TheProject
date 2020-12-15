@@ -51,7 +51,7 @@ INSTALLED_APPS = [
 #    'mptt',
     'bootstrap_modal_forms',
     'bootstrap_datepicker_plus',
-    'widget_tweaks',
+    'widget_tweaks'
 #    'django_filter',
 ]
 
@@ -150,7 +150,8 @@ MEDIA_URL = '/media/'
 
 EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST_USER='myultimatetracker@gmail.com'
+EMAIL_HOST_PASSWORD='gzbhibpvarnomyjw'
 EMAIL_HOST='smtp.gmail.com'
-EMAIL_PORT = '578'
+EMAIL_PORT = '587'
 EMAIL_USE_TLS  = True
-EMAIL_HOS_PASSWORD='jvnauxaxbdrrqqay'
+

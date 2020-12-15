@@ -96,59 +96,6 @@ class view_instance(edit_instance_base):
     def get(self,request,ReadOnly=True,*args,**kwargs):
         return super().get(request,ReadOnly=ReadOnly,*args,**kwargs)
 
-a='''\
-def edit_instance_old(request,Class_id,Instance_id):
-    print (request,request.POST)
-    if request.method=='POST':
-        if request.POST.get('cancel'):
-            return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
-        else:
-            form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,validation=True)
-            if form.is_valid():
-                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
-                return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
-
-    form=InstanceForm(Class_id=Class_id,Instance_id=Instance_id,validation=False)
-    context={}
-    for a1 in Attributes.objects.filter(Class_id=Class_id,DataType_id=10):
-        refclass_id=a1.Ref_Class.id
-        refattr = a1.Ref_Attribute.Attribute
-        if Instance_id==0:
-            filter={refattr:-1}
-        else:
-            filter = {refattr:Instance_id}
-
-        qs = create_rawquery_from_attributes(refclass_id, filter=filter)
-        table = mytable(Class_id=refclass_id,style='ShortLayout',data=qs)
-        context['table'+str(a1.id)+'']=table
-    context['form'] = form
-    return render(request,'ut/edit_instance.html',context)
-
-    fl = Classes.objects.get(pk=Class_id).editlist
-
-    if Instance_id==0:
-        code=get_next_counter(Class_id) # need to do some counter
-    else:
-        code=Instances.objects.get(pk=Instance_id).Code
-    context = {'Name': 'showemptyform', 'Instance_id':Instance_id,
-               'Code':code,'Class_id':Class_id}
-    context['col1']=get_column(Class_id,'Column1',Instance_id).to_dict('records')
-    context['col2']=get_column(Class_id,'Column2',Instance_id).to_dict('records')
-
-    return render(request, 'ut/emptyclass.html', context)
-
-def save_instance(request,Class_id,Instance_id=0):
-    #Class_id=Instances.objects.get(pk=Instance_id).Class.id
-    ins={}
-    if request.method == 'POST':
-        for key,val in request.POST.items():
-            ins[key]=val
-        ins['Instance_id']=Instance_id
-        save_instance_byid(Class_id,ins)
-    return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
-'''
-
-
 def classestree_view(request):
     return render(request, "ut/classestree.html", {'table': Classes.objects.all()})
 
@@ -183,24 +130,6 @@ class insances_view():
         for key,value in request.GET.items():
             if (value!='')&(key not in ['sort','page']):
                 pass
-
-def dictfetchall(cursor):
-    #Return all rows from a cursor as a dict
-    columns = [col[0] for col in cursor.description]
-    return [
-       dict(zip(columns, row))
-       for row in cursor.fetchall()
-    ]
-
-def get_reporttable(Report_id):
-    r = Reports.objects.get(pk=Report_id)
-    sql = r.Query
-    cursor = con.cursor()
-    cursor.execute(sql)
-    t = dictfetchall(cursor)
-    extra_columns = [(c[0], tables.Column()) for c in cursor.description]
-    return {'table':ReportTable(data=t,extra_columns=extra_columns),
-            'ReportName':r.Report}
 
 class ReportRun(View):
     template='ut/showreport.html'

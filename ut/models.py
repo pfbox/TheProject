@@ -128,6 +128,23 @@ class InputTypes(models.Model):
     class Meta:
         verbose_name = 'InputTypes'
 
+from django.db.models import F, Func
+
+class get_tablename(Func):
+    function = 'get_tablename'
+
+from django.db.models.functions import Concat
+from django.db.models import Value
+
+class AttributeManager(models.Manager):
+    def get_queryset(self):
+        qs=super(AttributeManager,self).get_queryset()\
+            .annotate(TableName=Concat(Value('"val'),'id',Value('"'),output_field=models.CharField()))\
+            .annotate(RefTableName=Concat(Value('"val_ins'),'id',Value('"'),output_field=models.CharField())) \
+            .annotate(RefAttrTableName=Concat(Value('"val_ins'), 'id', Value('"'), output_field=models.CharField()))\
+            .annotate(Master=F('Ref_Class_id__Master'))
+        return qs
+
 class Attributes(models.Model):
     Class = models.ForeignKey(Classes,on_delete=models.PROTECT,related_name='+')
     Attribute = models.CharField(max_length=50)
@@ -148,6 +165,11 @@ class Attributes(models.Model):
     InternalAttribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
     ExternalField = models.CharField(max_length=50,null=True,blank=True)
     ValuesList = models.TextField(null=True,blank=True) #only for char, int & float
+
+    #TableName = models.CharField(max_length=100,null=True,blank=True)
+    #additional fields from adding from AttributeManager
+    objects = AttributeManager()
+
     class Meta:
         unique_together = ('Class','Attribute')
         verbose_name='Attributes'
@@ -158,6 +180,9 @@ class Attributes(models.Model):
         else:
             res = self.Class.Class +'-->'+self.Attribute
         return res
+
+class email_templates(models.Model):
+    pass
 
 class Filters(models.Model):
     conditions=[('OR','OR'),('AND','AND')]
@@ -206,12 +231,15 @@ class Values(models.Model):
 
     def save(self, *args, **kwargs): #rewrite save to check for unique & non null values
         att=self.Attribute
-        Qs={1:self.int_value,2:self.float_value,3:self.char_value,4:self.text_value,5:self.datetime_value,6:self.instance_value}
-        Qn = {1: 'int_value', 2: 'float_value', 3: 'char_value', 4: 'text_value', 5: 'datetime_value',6: 'instance_value'}
+        #Add Datatypes Here
+        Qs={DT_Integer:self.int_value,DT_Float:self.float_value,DT_String:self.char_value,DT_Text:self.text_value,
+            DT_Date:self.datetime_value,DT_Datetime:self.datetime_value, DT_Instance:self.instance_value,DT_Email:self.char_value}
+        Qn = {DT_Integer: 'int_value', DT_Float: 'float_value', DT_String: 'char_value', DT_Text: 'text_value',
+              DT_Date:'datetime_value',DT_Datetime: 'datetime_value',DT_Instance: 'instance_value',DT_Email : 'char_value'}
         val=0
         #handle unique
         if att.UniqueAtt:
-            if att.DataType.id in [DT_Integer,DT_String,DT_Date]:
+            if att.DataType.id in [DT_Integer,DT_String,DT_Date,DT_Email]:
                 val_con=Q(**{Qn[att.DataType.id]:Qs[att.DataType.id]})
                 val=Values.objects.filter(val_con&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
             else:
@@ -223,6 +251,19 @@ class Values(models.Model):
             if pd.isnull(Qs[att.DataType.id]):
                 raise Exception('Attribute "{}" cannot be NULL'.format(att.Attribute))
         super().save(*args, **kwargs)
+
+a="""
+class Email_Templates(models.Model):
+    Ones = 0
+    Daily = 1
+    Weekly = 2
+    Monthly = 3
+    frequencies=[(Daily,'Daily'),(Weekly,'Weekly'),(Monthly,'Monthly')]
+    weekdays_short = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+
+    Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
+    Report = models.ForeingKey(Reports,on_delete=models.PROTECT)
+"""
 
 a='''
 class Values_Int(Values):
@@ -296,3 +337,4 @@ class FormLayouts(models.Model):
     Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
     Row = models.IntegerField(default=0)
     Column = models.IntegerField(default=0)
+
