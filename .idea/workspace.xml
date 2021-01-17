@@ -23,11 +23,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0031_auto_20201219_1852.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0032_values_m2m.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0033_remove_values_manytomany.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0034_auto_20201220_2013.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0035_auto_20201220_2113.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0036_auto_20201222_1020.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0037_auto_20201230_1208.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0038_instances_created.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templatetags/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templatetags/ut_tags.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TheProject/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/sendouts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/sendouts.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/tables.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/tables.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
@@ -86,7 +100,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut/templates/ut" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut/templatetags" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="configurable.group.appearance" />
   </component>
@@ -100,11 +114,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\TheProject\ut\templatetags" />
       <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\templates" />
       <recent name="C:\TheProject\utlogin" />
-      <recent name="C:\Users\pavel\Anaconda3\TheProject\ut\templates\ut" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\TheProject\ut\templates\ut\templatesarchive" />
@@ -114,7 +128,7 @@
       <recent name="C:\Users\pavel\Anaconda3\TheProject\media" />
     </key>
   </component>
-  <component name="RunManager" selected="Django Server.The Project">
+  <component name="RunManager" selected="Unknown.The Project378003116">
     <configuration name="Unnamed" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="TheProject" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -250,9 +264,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Django Server.The Project" />
-      <item itemvalue="Python.shell_plus" />
       <item itemvalue="Python.Unnamed" />
+      <item itemvalue="Python.shell_plus" />
       <item itemvalue="Python.formtemplate" />
       <item itemvalue="Python.test" />
     </list>
@@ -281,7 +294,11 @@
       <workItem from="1607361594567" duration="7042000" />
       <workItem from="1607430972351" duration="22166000" />
       <workItem from="1607605412928" duration="100529000" />
-      <workItem from="1608050049149" duration="676000" />
+      <workItem from="1608050049149" duration="3423000" />
+      <workItem from="1608088120624" duration="11051000" />
+      <workItem from="1608420460034" duration="56915000" />
+      <workItem from="1609007530291" duration="21269000" />
+      <workItem from="1609889294274" duration="4938000" />
     </task>
     <servers />
   </component>
@@ -313,81 +330,6 @@
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
-  <component name="WindowStateProjectService">
-    <state x="-1368" y="181" key="#Notifications" timestamp="1600622171681">
-      <screen x="-1920" y="0" width="1920" height="1040" />
-    </state>
-    <state x="-1368" y="181" key="#Notifications/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1600622171681" />
-    <state x="558" y="118" width="1092" height="787" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606571578751">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="558" y="118" width="1092" height="787" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1606571578751" />
-    <state x="640" y="255" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1606571453719">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="640" y="255" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1606571453719" />
-    <state x="615" y="239" key="#xdebugger.XInspectDialog" timestamp="1607290665548">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="615" y="239" key="#xdebugger.XInspectDialog/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1607290665548" />
-    <state x="1065" y="222" key="FileChooserDialogImpl" timestamp="1605534954773">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="1065" y="222" key="FileChooserDialogImpl/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1605534954773" />
-    <state width="1877" height="338" key="GridCell.Tab.0.bottom" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.0.center" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.0.left" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.0.right" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.1.bottom" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.1.center" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.1.left" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state width="1877" height="338" key="GridCell.Tab.1.right" timestamp="1608049994199">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="338" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1608049994199" />
-    <state x="531" y="165" key="SettingsEditor" timestamp="1607610511979">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="531" y="165" key="SettingsEditor/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1607610511979" />
-    <state x="-1149" y="439" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1600823838954">
-      <screen x="-1920" y="0" width="1920" height="1040" />
-    </state>
-    <state x="-1149" y="439" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1600823838954" />
-    <state x="613" y="131" width="1206" height="559" key="dock-window-1" timestamp="1607820786142">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="613" y="131" width="1206" height="559" key="dock-window-1/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1607820786142" />
-    <state x="2586" y="119" width="587" height="801" key="find.popup" timestamp="1607798357202">
-      <screen x="1920" y="0" width="1920" height="1040" />
-    </state>
-    <state x="2586" y="119" width="587" height="801" key="find.popup/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1607798357202" />
-    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1607742824974">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="-1297" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1601162628361" />
-    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1607742824974" />
-  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
@@ -398,16 +340,6 @@
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/test.py</url>
           <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/views.py</url>
-          <line>408</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>258</line>
-          <option name="timeStamp" value="66" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -424,15 +356,9 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="f.Expression[type]" language="Python" />
-        <watch expression="f.Filter" language="Python" />
-        <watch expression="sql" language="Python" />
-        <watch expression="self.instance.pk" language="Python" />
-        <watch expression="__py_debug_temp_var_181453517.Condition1" />
+        <watch expression="re.search('$select','select * from abc') == True" language="Python" />
+        <watch expression="request.POST.get_list()" language="Python" />
       </configuration>
     </watches-manager>
-  </component>
-  <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/TheProject$shell_plus.coverage" NAME="shell_plus Coverage Results" MODIFIED="1607720758767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

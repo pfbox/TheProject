@@ -25,6 +25,7 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('',include('ut.urls')),
     path('examples/', include('examples.urls')),
+    path("select2/", include("django_select2.urls")),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

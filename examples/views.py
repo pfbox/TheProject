@@ -4,14 +4,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.views import generic
 
-from bootstrap_modal_forms.generic import (
-    BSModalLoginView,
-    BSModalFormView,
-    BSModalCreateView,
-    BSModalUpdateView,
-    BSModalReadView,
-    BSModalDeleteView
-)
+from bootstrap_modal_forms.generic import BSModalLoginView,BSModalFormView,BSModalCreateView,BSModalUpdateView,BSModalReadView,BSModalDeleteView
 
 from .forms import (
     BookModelForm,
@@ -87,7 +80,7 @@ class SignUpView(BSModalCreateView):
 
 class CustomLoginView(BSModalLoginView):
     authentication_form = CustomAuthenticationForm
-    template_name = 'examples/login.html'
+    template_name = 'login.html'
     success_message = 'Success: You were successfully logged in.'
     success_url = reverse_lazy('index')
 

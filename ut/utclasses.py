@@ -1,5 +1,4 @@
 from ut.models import *
-from ut.models import *
 import django_tables2 as tables
 import pandas as pd
 from .tables import ReportTable
@@ -7,10 +6,14 @@ from django_pandas.io import read_frame
 import numpy as np
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+import re
 
 from django_tables2.utils import A
 
+from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget
+
 from django.apps import apps
+
 app_models = apps.get_app_config('ut').get_models()
 am=pd.DataFrame()
 for a in app_models:
@@ -22,7 +25,7 @@ df_classes=pd.DataFrame()#pd.read_sql('select * from ut_classes',con) #.set_inde
 df_attributes=pd.DataFrame()#pd.read_sql('select * from ut_attributes',con)#.set_index('id')
 df_datatypes=pd.DataFrame()#pd.read_sql('select * from ut_datatypes',con) #.set_index('id')
 df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.set_index('id')
-df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
+#df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
 df_filters=pd.DataFrame()
 
 select_options_sql="""
@@ -35,6 +38,21 @@ i.Class_id = {cl} and
 v.instance_value_id={val} and
 v2.Attribute_id={att} 
 """
+
+select_simple_options_sql="""
+select 
+i.id, case when {Attribute_id}=0 then i.Code else v2.char_value end options  from ut_instances i
+left outer join ut_values v2 on v2.Instance_id = i.id and v2.Attribute_id = {Attribute_id}
+WHERE
+i.Class_id={Class_id} 
+"""
+
+def get_simple_options(Class_id,Attribute_id):
+    with con.cursor() as cursor:
+        cursor.execute(select_simple_options_sql.format(Class_id=Class_id,Attribute_id=Attribute_id))
+        dict=cursor.fetchall()
+    return dict
+
 
 def create_table_column(dt,width=50,attr={}):
     if dt in [5]:
@@ -230,10 +248,18 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     if pd.isnull(valueslist) or (valueslist == ''):
         vl = ''
     else:
-        try:
-            vl=json.loads(valueslist)
-        except:
-            print ('Could not load list of values for field',FieldName,'Class =',attr.Class_id)
+        if re.search('^select',valueslist,re.IGNORECASE):
+            try:
+                cursor=con.cursor()
+                cursor.execute(valueslist)
+                vl=cursor.fetchall()
+            except:
+                print ('Could not load values from sql-->'+valueslist+'<--')
+        else:
+            try:
+                vl=json.loads(valueslist)
+            except:
+                print ('Could not load list of values for field',FieldName,'Class =',attr.Class_id,' String=',valueslist)
     if dt in [DT_Integer]:
         if vl=='':
             field=forms.IntegerField(required=req)
@@ -284,6 +310,11 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
             field = forms.EmailField(required=req)
         else:
             field = forms.CharField(max_length=255,required=req)
+    elif dt == DT_ManyToMany:
+        ch=get_simple_options(Class_id=attr.Ref_Class_id,Attribute_id=attr.Ref_Attribute_id)
+        field = forms.MultipleChoiceField(choices=ch,required=req
+                                          ,widget=Select2MultipleWidget
+                                          )
     elif dt == DT_Calculated:
         return False
     else:
@@ -396,7 +427,7 @@ def get_calulatedfieldlist(Class_id,df_attr):
     return df_attr[(df_attr.Class_id==Class_id)&(df_attr.DataType_id==DT_Calculated)]
 
 def get_tableviewlist(Class_id,df_attr):
-    return df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([10]))]
+    return df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([DT_Table,DT_ManyToMany]))]
 
 def get_fulllist(Class_id,df_attr):
     return df_attr[df_attr.Class_id.isin([Class_id,0])]
@@ -414,7 +445,6 @@ def get_qs_instance_sql():
 
 def create_val_sql(Instance_id,Class_id):
     atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
-    #print (atts)
     ss = {}
     lo = {}
     for i,a in atts.iterrows():
@@ -432,7 +462,6 @@ def create_val_sql(Instance_id,Class_id):
         for key,val in ss.items():
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
-    #print (ss)
 
     sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
     sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
@@ -440,9 +469,9 @@ def create_val_sql(Instance_id,Class_id):
     return sselect +'\n' + sfrom + '\n' + swhere
 
 
-def create_qs_sql(Class_id):
+def create_qs_sql(Class_id=0):
+    user_id=get_current_user().id
     atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
-    #print (atts)
     ss = {}
     lo = {}
     for i,a in atts.iterrows():
@@ -461,11 +490,16 @@ def create_qs_sql(Class_id):
         for key,val in ss.items():
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
-    #print (ss)
 
     sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
     sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
-    swhere = 'where ins.Class_id={}'.format(Class_id)
+    swhere = """
+    where ins.Class_id={Class_id}
+    and 
+    (exists (select * from ut_classes_ViewGroups vg, auth_user_groups ug where vg.group_id=ug.group_id and user_id = {user_id})
+    or ins.owner_id={user_id}
+    )
+    """.format(Class_id=Class_id, user_id=user_id)
     return sselect +'\n' + sfrom + '\n' + swhere
 
 b=""""
@@ -535,68 +569,81 @@ def qs_to_table(qs,m,url,args=[A('pk'),]):
     return h_table(qs)
 
 def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
-    if pd.isnull(value):
-        val=''
-    else:
-        val=value
     at=Attributes.objects.get(pk=Attribute_id)
     DataType = at.DataType.id
-    if not Values.objects.filter(Instance_id=Instance_id,Attribute_id=Attribute_id).exists():
-        v = Values(Instance_id=Instance_id,Attribute_id=Attribute_id)
+    if DataType==DT_ManyToMany:
+        if type(value)==list:
+            int_values = [int(i) for i in value]
+            #get all available values
+            old_values = list(Values_m2m.objects.filter(Instance_id=Instance_id, Attribute_id=Attribute_id).values_list('instance_value_id',flat=True))
+            for i in int_values:
+                if not i in old_values:
+                    vm=Values_m2m(Instance_id=Instance_id,Attribute_id=Attribute_id,instance_value_id=i)
+                    vm.save()
+            for old_i in old_values:
+                if not old_i in int_values:
+                    Values_m2m.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id,instance_value_id=old_i).delete()
     else:
-        v = Values.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id)
-    if DataType == DT_Integer: #int
-        if val!='':
-            v.int_value=int(val)
+        if pd.isnull(value):
+            val = ''
         else:
-            v.int_value=None
-    elif DataType in [DT_Float,DT_Currency]: #float, currency
-        if val!='':
-            v.float_value=float(val)
+            val = value
+        if not Values.objects.filter(Instance_id=Instance_id,Attribute_id=Attribute_id).exists():
+            v = Values(Instance_id=Instance_id,Attribute_id=Attribute_id)
         else:
-            v.float_value=None
-    elif DataType in [DT_String,DT_Email]: #char,email
-        if val!='':
-            v.char_value=val
-        else:
-            v.char_value=None
-    elif DataType == DT_Text: #text
-        if val!='':
-            v.text_value=val
-        else:
-            v.text_value=None
-    elif DataType in [DT_Date,DT_Datetime] : #date,datetime
-        if val!='':
-            v.datetime_value=val
-        else:
-            v.datetime_value=None
-    elif DataType in [DT_Time]: #time only
-        if val!='':
-            val=val.strftime('%H:%M:%S')
-            v.char_value=val
-        else:
-            v.char_value=None
-    elif DataType == DT_Instance: #instance
-        if val=='':
-            v.instance_value = None
-        else:
-            if passed_by_name:
-                ref_class=Attributes.objects.get(pk=Attribute_id).Ref_Class.id
-                ref_attr=Attributes.objects.get(pk=Attribute_id).Ref_Attribute.id
-                if ref_attr==0:
-                    val=Instances.objects.get(Class_id=ref_class,Code=value).id
-                else:
-                    val=Values.objects.get(Attribute_id=ref_attr,char_value=value).Instance.id
-            try:
-                v.instance_value=Instances.objects.get(pk=int(val))
-            except Instances.DoesNotExist:
-                v.instance_value=None
-    elif DataType == DT_Boolean: #boolean
-        if val!='':
-            v.int_value=int(val)
-        else:
-            v.int_value=None
-    v.save()
+            v = Values.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id)
+        if DataType == DT_Integer: #int
+            if val!='':
+                v.int_value=int(val)
+            else:
+                v.int_value=None
+        elif DataType in [DT_Float,DT_Currency]: #float, currency
+            if val!='':
+                v.float_value=float(val)
+            else:
+                v.float_value=None
+        elif DataType in [DT_String,DT_Email]: #char,email
+            if val!='':
+                v.char_value=val
+            else:
+                v.char_value=None
+        elif DataType == DT_Text: #text
+            if val!='':
+                v.text_value=val
+            else:
+                v.text_value=None
+        elif DataType in [DT_Date,DT_Datetime] : #date,datetime
+            if val!='':
+                v.datetime_value=val
+            else:
+                v.datetime_value=None
+        elif DataType in [DT_Time]: #time only
+            if val!='':
+                val=val.strftime('%H:%M:%S')
+                v.char_value=val
+            else:
+                v.char_value=None
+        elif DataType == DT_Instance: #instance
+            if val=='':
+                v.instance_value = None
+            else:
+                if passed_by_name:
+                    ref_class=Attributes.objects.get(pk=Attribute_id).Ref_Class.id
+                    ref_attr=Attributes.objects.get(pk=Attribute_id).Ref_Attribute.id
+                    if ref_attr==0:
+                        val=Instances.objects.get(Class_id=ref_class,Code=value).id
+                    else:
+                        val=Values.objects.get(Attribute_id=ref_attr,char_value=value).Instance.id
+                try:
+                    v.instance_value=Instances.objects.get(pk=int(val))
+                except Instances.DoesNotExist:
+                    v.instance_value=None
+        elif DataType == DT_Boolean: #boolean
+            if val!='':
+                v.int_value=int(val)
+            else:
+                v.int_value=None
+        v.save()
 
 def fieldlist(Class_id):
     output = pd.read_sql('select * from ut_attributes where Class_id={}'.format(Class_id),con)
@@ -619,7 +666,6 @@ def get_val_by_name(key,d={}):
 
 #this procedure creates a filter for the query that will be executed on the server
 def create_filter_for_sql(Class_id,filter={}):
-    print (filter)
     d={FT_Exact:'FT_Exact',FT_Contains:'FT_Contains',FT_Like:'FT_Like'}
     where = ''
     for key,val in filter.items():
@@ -637,7 +683,6 @@ def create_filter_for_sql(Class_id,filter={}):
         if type=='':
             type=d[f.FilterType]
         #
-        print (f.Expression,f.Expression[type])
         if val!='' and (not (val=='-1' and f.DataType_id==6)):
             where = where + f.Expression[type].format(val=val)
     return where
@@ -656,7 +701,6 @@ def get_next_counter(Class_id):
         Counter.save()
         next= Counter.CurrentCounter
         res= pref + str(next).rjust(cno,'0')
-        #print (res)
     return res
 
 def get_formlayout(Class_id):
@@ -721,22 +765,23 @@ def save_instance_byid(Class_id,instance={}):
         return True
 
 @transaction.atomic
-def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True):
+def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True,user=None):
     #Class_id=Instances.objects.get(pk=Instance_id).Class.id
     code=instance['Code']
-    print ('class_id=',Class_id,'Instance=',Instance_id,instance)
     if code=='':
         code=None
     if (Instance_id==0) and (passed_by_name) and pd.isnull(code):
         code=get_next_counter(Class_id)
 #    Instance_id
     if Instance_id==0:
-        ins=Instances(Class_id=Class_id,Code=code)
-        ins.save()
+        ins=Instances(Class_id=Class_id,Code=code,Owner=user)
     else:
         ins=Instances.objects.get(pk=Instance_id)
         ins.Code=code
-        ins.save()
+    ins.Updated=datetime.now()
+    if user:
+        ins.Updatedby=user
+    ins.save()
     fl=get_editfieldlist(Class_id,df_attributes)
     for index,rec in fl.iterrows():
         name=Attributes.objects.get(pk=rec.id).Attribute
@@ -777,7 +822,7 @@ from django.dispatch import receiver
 def update_attributes(sender, instance, **kwargs):
     global df_attributes
     global df_filters
-    from .utclasses import set_attributes
+    from .utclasses import set_attributes,set_filters
     df_attributes=set_attributes()
     print ('Reset Attributes. ',instance.Attribute,'changed')
     df_filters = set_filters()

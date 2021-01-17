@@ -16,16 +16,30 @@ from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 def index(request):
-    context={'table_list':am.to_dict('records')}
+    projects=Projects.objects.all()
+    default_reports=Projects.objects.filter(DefaultReport__isnull=False)
+    dr = {}
+    for r in default_reports:
+        dr[r.id]=get_reporttable(r.DefaultReport_id)['table']
+    context=get_base_context()
+    #context={'table_list':am.to_dict('records')}
     context['classes']=Classes.objects.all()
-    context['projects']=Projects.objects.all()
+    context['projects']=projects
     context['reports']=Reports.objects.all()
-    context['pr_rep_conn']=ProjectReportConn.objects.all()
-    context['pr_cl_conn']=ProjectClassConn.objects.all()
-    context['defaultreport']=get_reporttable(5)['table']
+    context['defaultreports']=dr
+
     return render(request,'ut/index.html',context)
 
 from django.forms import ModelForm
+
+def get_base_context(c={}):
+    if len(c)==0:
+        context={}
+    else:
+        context=c
+    context['base_classes']=Classes.objects.all()
+    context['base_projects']=Projects.objects.all()
+    return context
 
 def table(request,tablename):
     tm=am[am.TableName==tablename].iloc[0].Table
@@ -43,13 +57,13 @@ def table(request,tablename):
 
     form=mform()
     '''
-    context = {'tablename':tablename, 'table':  table , 'Class_id': 0}
+    context = get_base_context({'tablename':tablename, 'table':  table , 'Class_id': 0})
     return render(request, 'ut/showtable.html', context)
 
 def showclass(request,Class_id):
     classname=Classes.objects.get(pk=Class_id).Class
     table=Attributes.objects.filter(Class_id=Class_id)
-    context = {'classname':classname,'table':table}
+    context = get_base_context({'classname':classname,'table':table})
     return render(request, 'ut/showtable.html', context)
 
 class delete_instance(LoginRequiredMixin,DeleteView):
@@ -68,14 +82,14 @@ class edit_instance_base(View):
         else:
             form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly='False',validation=True)
             if form.is_valid():
-                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
+                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False,user=request.user)
                 return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
 
     def get(self,request,ReadOnly=False,*args,**kwargs):
         Class_id=kwargs['Class_id']
         Instance_id=kwargs['Instance_id']
         form = InstanceForm(Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly, validation=False)
-        context = {}
+        context = get_base_context()
         for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=10):
             refclass_id = a1.Ref_Class.id
             refattr = a1.Ref_Attribute.Attribute
@@ -103,24 +117,32 @@ def reports_view(request,Project_id=0):
     if Project_id==0:
         table = ReportsTable(Reports.objects.all())
     else:
-        table =  ReportsTable(Reports.objects.annotate(connectionexists=Exists(ProjectReportConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
+        vl = Reports.objects.filter(id=Project_id).values_list('Reports_m2m', flat=True)
+        table =  ReportsTable(Projects.objects.filter(id__in=vl))
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    return render(request,'ut/reports.html',{'table':table,'Project_id':Project_id})
+    context=get_base_context()
+    context['table']= table
+    context['Project_id']= Project_id
+    return render(request,'ut/reports.html',context)
 
 def projects_view(request):
     table = ProjectsTable(Projects.objects.all())
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    return render(request,'ut/projects.html',{'table':table})
+    context=get_base_context()
+    context['table']= table
+    return render(request,'ut/projects.html',context)
 
 def classes_view(request,Project_id=0):
     if Project_id==0:
         table = ClassesTable(Classes.objects.all())
     else:
-        table =  ClassesTable(Classes.objects.annotate(connectionexists=Exists(ProjectClassConn.objects.filter(Class=OuterRef('pk'),Project_id=Project_id))).filter(connectionexists=True))
+        vl = Reports.objects.filter(id=Project_id).values_list('Classes_m2m', flat=True)
+        table =  ClassesTable(Classes.objects.filter(id__in=vl))
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
-    return render(request,'ut/classes.html',{'table':table,'classes':table,'Project_id':Project_id})
+    context=get_base_context({'table':table,'classes':table,'Project_id':Project_id})
+    return render(request,'ut/classes.html',context)
 
-class insances_view():
+class instances_view():
     def __init__(self,Class_id,filter={}):
         super().__init__(self);
         self.Class_id=Class_id
@@ -133,27 +155,6 @@ class insances_view():
 
 class ReportRun(View):
     template='ut/showreport.html'
-    def get(self,request,Report_id,Simple=False,*args,**kwargs):
-        r=get_reporttable(Report_id)
-        context={}
-        context['table']=r['table']
-        context['Report_id']=Report_id
-        context['ReportName']=r['ReportName']
-        #if not request.GET._mutable:
-        #    request.GET._mutable = True
-        # print (request.GET)
-        #if request.GET.get('sort'):
-        #RequestConfig(request).configure(table)
-        #    table.order_by = sort
-        #    print ('sort=',sort)
-        #table.paginate(page=request.GET.get("page", 1), per_page=30)
-        if Simple:
-            self.template='ut/simplereport'
-        return render(request, self.template, context)
-
-
-class ReportRun(View):
-    template='ut/showreport.html'
     def get(self,request,Report_id,*args,**kwargs):
         r=Reports.objects.get(pk=Report_id)
         sql=r.Query
@@ -161,7 +162,7 @@ class ReportRun(View):
         cursor.execute(sql)
         t=dictfetchall(cursor)
         extra_columns=[(c[0], tables.Column()) for c in cursor.description]
-        context={}
+        context=get_base_context()
         context['table']=ReportTable(data=t,extra_columns=extra_columns)
         context['Report_id']=Report_id
         context['ReportName']=r.Report
@@ -208,20 +209,22 @@ def instances(request,Class_id,SaveToExl=False):
 #    table.order_by = sort
 #    print ('sort=',sort)
     table.paginate(page=request.GET.get("page", 1), per_page=20)
-    context = {'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform,'sortfield':sort}
+    context = get_base_context({'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform,'sortfield':sort})
     return render(request, 'ut/showtable.html',  context)
 
 def attributes_view(request,Class_id):
     attlist=Attributes.objects.filter(Class_id=Class_id)
     table = AttributeTable(attlist)
     RequestConfig(request, paginate={"per_page": 20}).configure(table)
-    return render(request,'ut/attributes.html',{'table':table,'Class_id':Class_id})
+    context=get_base_context({'table':table,'Class_id':Class_id})
+    return render(request,'ut/attributes.html',context)
 
 class filters_view(View):
     template='ut/filters.html'
     def get(self,request,*args,**kwargs):
         self.Class_id=kwargs['Class_id']
-        context={'Class_id':self.Class_id}
+        context=get_base_context()
+        context['Class_id']=self.Class_id
         table = FilterTable(Filters.objects.filter(Class_id=self.Class_id))
         context['table']=table
         return render(request,self.template,context)
@@ -229,7 +232,8 @@ class filters_view(View):
 def edit_attribute(request,Attribute_id):
     at=Attributes.objects.get(pk=Attribute_id)
     form = AttributeForm(instance=at)
-    return render(request,'ut/edit_attribute.html',{'form':form})
+    context=get_base_context({'form':form})
+    return render(request,'ut/edit_attribute.html',context)
 
 class ProjectEdit(UpdateView):
     model = Projects
@@ -259,7 +263,7 @@ class ReportCreateVeiw(CreateView):
     def get_success_url(self):
         return reverse_lazy('ut:reports_view')
 
-from bootstrap_modal_forms.generic import BSModalCreateView
+#from bootstrap_modal_forms.generic import BSModalCreateView
 
 class FilterCreateView(LoginRequiredMixin,CreateView):
     model = Filters
@@ -334,7 +338,6 @@ class ClassesCreateView(LoginRequiredMixin,CreateView):
 import xlwt
 
 from django.http import HttpResponse
-from django.contrib.auth.models import User
 
 import csv
 
@@ -402,7 +405,8 @@ def load_instances(request,Class_id=0):
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
     else:
         form = UploadInstances()
-    return render(request, 'ut/loadinstances.html', {'form': form,'Class_id':Class_id})
+    context=get_base_context({'form': form,'Class_id':Class_id})
+    return render(request, 'ut/loadinstances.html',context)
 
 class ProtectView(LoginRequiredMixin, View) :
     def get(self, request):
@@ -412,7 +416,7 @@ class FormTemplateView(View):
     template = 'ut/formtemplate.html'
     def get(self, request,Class_id):
         table=get_editfieldlist(Class_id,df_attributes)
-        context={}
+        context=get_base_context()
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=Layouts.objects.get(Class=Class_id).FormLayout
         context['table']=table.to_dict('records')
@@ -436,7 +440,7 @@ class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
     def get(self, request,Style,Class_id):
         table= get_editfieldlist(Class_id,df_attributes).to_dict('records')
-        context={}
+        context=get_base_context()
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=getattr(Layouts.objects.get(Class=Class_id),Style)
         context['table']=table
@@ -479,6 +483,18 @@ class FormSet1(LayoutObject):
             return render_to_string(self.template,{'formset':formset})
 
 from django.http import JsonResponse
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NpEncoder, self).default(obj)
+
 def ajax_change_master(request,Attribute_id):
     value = int(request.GET['value'])
     m_attr=get_attribute(Attribute_id,df_attributes)
@@ -501,4 +517,4 @@ def ajax_change_master(request,Attribute_id):
         else:
             lookups[a.id]='(None)'
     data['lookups']=lookups
-    return JsonResponse(data)
+    return JsonResponse(data,encoder=NpEncoder)

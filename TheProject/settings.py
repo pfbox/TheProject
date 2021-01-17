@@ -48,11 +48,11 @@ INSTALLED_APPS = [
     'bootstrap3',
     'bootstrap4',
     'crispy_forms',
-#    'mptt',
     'bootstrap_modal_forms',
     'bootstrap_datepicker_plus',
-    'widget_tweaks'
-#    'django_filter',
+    'widget_tweaks',
+    'django_select2',
+    'rules',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_currentuser.middleware.ThreadLocalUserMiddleware',
 ]
 
 ROOT_URLCONF = 'TheProject.urls'
@@ -155,3 +156,21 @@ EMAIL_HOST='smtp.gmail.com'
 EMAIL_PORT = '587'
 EMAIL_USE_TLS  = True
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'ut_cache_table',
+    },
+    "select2": {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'ut_cache_table',
+    }
+}
+
+# Tell select2 which cache configuration to use:
+SELECT2_CACHE_BACKEND = "select2"
+
+AUTHENTICATION_BACKENDS = (
+    'rules.permissions.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)

@@ -1,5 +1,6 @@
 <!doctype html>
 {% load static %}
+{% load ut_tags %}
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -48,13 +49,58 @@
               <a class="nav-link" href="{% url 'ut:index' %}">Home <span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'ut:projects_view' %}">Projects</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="{% url 'ut:classes_view' %}">Classes</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Templates</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Attributes
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                {% if base_classes %}
+                    {% for c in base_classes %}
+                      <a class="dropdown-item" href="{% url 'ut:attributes_view' c.id %}">{{c.Class}}</a>
+                    {% endfor %}
+                {% endif %}
+              </div>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Attributes</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Filters
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                {% if base_classes %}
+                    {% for c in base_classes %}
+                      <a class="dropdown-item" href="{% url 'ut:filters_view' c.id %}">{{c.Class}}</a>
+                    {% endfor %}
+                {% endif %}
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                FormLayouts
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                {% if base_classes %}
+                    {% for c in base_classes %}
+                      <a class="dropdown-item" href="{% url 'ut:change_formtemplate' c.id %}">{{c.Class}}</a>
+                    {% endfor %}
+                {% endif %}
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                TableLayouts
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                {% if base_classes %}
+                    {% for c in base_classes %}
+                      <a class="dropdown-item" href="{% url 'ut:change_tabletemplate' 'TableLayout' c.id %}">{{c.Class}}</a>
+                    {% endfor %}
+                {% endif %}
+              </div>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#">Export/Import</a>
@@ -64,8 +110,8 @@
                 Bookmarks
               </a>
               <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="{% url 'ut:projects_view' %}">Projects</a>
                 <a class="dropdown-item" href="{% url 'ut:classes_view' %}">Classes</a>
-                <a class="dropdown-item" href="#">Templates</a>
                 <a class="dropdown-item" href="#">Attributes</a>
                 <a class="dropdown-item" href="#">Export/Import</a>
                 <div class="dropdown-divider"></div>
@@ -122,7 +168,6 @@
         <p>New to UT? <a href="../../">Visit the homepage</a> or read our <a href="../../getting-started/">getting started guide</a>.</p>
       </div>
     </footer>
-
 
 
     {% block javascript %}

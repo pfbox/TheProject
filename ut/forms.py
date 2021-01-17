@@ -6,13 +6,21 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div
 from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
 from django.urls import reverse,reverse_lazy
+from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget
 
 class ProjectForm(forms.ModelForm):
     class Meta:
         model=Projects
         fields='__all__'
+        widgets = {'Classes_m2m': ModelSelect2MultipleWidget(search_fields=['Class__icontains'],attrs={'data-minimum-input-length': 0}),
+                   'Reports_m2m': ModelSelect2MultipleWidget(search_fields=['Report__icontains'],attrs={'data-minimum-input-length': 0}),
+                   'ViewGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   'UpdateGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save'))
@@ -65,7 +73,11 @@ class AttributeForm(forms.ModelForm):
     class Meta:
         model=Attributes
         fields='__all__'
+        widgets = {'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   }
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -90,6 +102,10 @@ class ClassesForm(forms.ModelForm):
     class Meta:
         model=Classes
         fields='__all__'
+        widgets = {
+            'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -139,7 +155,10 @@ class InstanceForm(forms.Form):
                     #self.fields[att.Attribute].required = False
 
                 if self.Instance_id!=0:
-                    self.initial[att.Attribute]=initrow[att.Attribute]
+                    if att.DataType_id in [DT_ManyToMany]:
+                        self.initial[att.Attribute]=list(Values_m2m.objects.filter(Instance_id=self.Instance_id,Attribute_id=att.id).values_list('instance_value_id',flat=True))
+                    else:
+                        self.initial[att.Attribute]=initrow[att.Attribute]
                 else:
                     if att.id==0 and not self.Validation:
                         self.initial['Code']=get_next_counter(self.Class_id)
@@ -258,8 +277,8 @@ class InstanceFilterForm(forms.Form):
                                      onclick="location.href='"+str(reverse_lazy('ut:loadinstances',args=(self.Class_id,)))+"'"))
 
 
-from bootstrap_modal_forms.forms import BSModalModelForm
+#from bootstrap_modal_forms.forms import BSModalModelForm
 
-class BookModelForm(BSModalModelForm):
-    Intfield=forms.IntegerField()
-    CharField=forms.CharField(max_length=50)
+#class BookModelForm(BSModalModelForm):
+#    Intfield=forms.IntegerField()
+#    CharField=forms.CharField(max_length=50)

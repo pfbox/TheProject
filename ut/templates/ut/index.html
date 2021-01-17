@@ -14,54 +14,48 @@
 
 <div class="album py-5 bg-light">
     <div class="container">
-    <div row>
-    {% if projects%}
-        {% for p in projects%}
-                <div class="col">
-                  <div class="card mb-2 box-shadow">
-                    <!--img class="card-img-top" src="https://upload.wikimedia.org/wikipedia/en/e/ec/Soccer_ball.svg" alt="Card image cap"-->
-                    <div class="card-body">
-                      <h5 class="card-title">{{p.Project}}</h5>
-                      <p class="card-text">{{p.Description}}</p>
-                      {% render_table defaultreport %}
-                      <div class="d-flex justify-content">
-                        <div>
-                        <ul class="list-group" >
-                            <h6>Reports</h6>
-                                {% for r in pr_rep_conn %}
-                                    {% if r.Project_id == p.id %}
-                                    <li class="list-group-item">
-                                              <a class="dropdown-item" href="{% url 'ut:run_report' r.Report_id %}">{{r.Report.Report}}</a>
-                                    </li>
-                                    {% endif %}
-                                {% endfor %}
-                        </ul>
-                        </div>
-                        <span>&nbsp</span>
-                        <div>
-                        <ul class="list-group" >
-                            <h6>Classes</h6>
-                                  {% for c in pr_cl_conn %}
-                            <li class="list-group-item">
-                                      <a class="dropdown-item" href="{% url 'ut:instances' c.Class_id %}">{{c.Class}}</a>
-                            </li>
-                                  {% endfor %}
-                        </ul>
+        <div class="row">
+        {% if projects%}
+            {% for p in projects%}
+                    <div class="col">
+                      <div class="card mb-2 box-shadow">
+                        <!--img class="card-img-top" src="https://upload.wikimedia.org/wikipedia/en/e/ec/Soccer_ball.svg" alt="Card image cap"-->
+                        <div class="card-body">
+                          <h5 class="card-title">{{p.Project}}</h5>
+                          <p class="card-text">{{p.Description}}</p>
+                          {% render_table defaultreports|lookup:p.id %}
+                          <div class="d-flex justify-content">
+                            <div>
+                            <ul class="list-group" >
+                                <h6>Reports</h6>
+                                    {% for r in p.Reports_m2m.all %}
+                                        <li class="list-group-item">
+                                                  <a class="dropdown-item" href="{% url 'ut:run_report' r.id %}">{{r.Report}}</a>
+                                        </li>
+                                    {% endfor %}
+                            </ul>
+                            </div>
+                            <span>&nbsp</span>
+                            <div>
+                            <ul class="list-group" >
+                                <h6>Classes</h6>
+                                      {% for c in p.Classes_m2m.all %}
+                                <li class="list-group-item">
+                                          <a class="dropdown-item" href="{% url 'ut:instances' c.id %}">{{c.Class}}</a>
+                                </li>
+                                      {% endfor %}
+                            </ul>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    </div>
-
-                  </div>
-                </div>
-        {% endfor %}
-    {% else %}
-        <br> No Projects <br>
-    {% endif %}
+            {% endfor %}
+        {% else %}
+            <br> No Projects <br>
+        {% endif %}
+        </div>
     </div>
-     </div>
-     </div>
-
 </div>
 
 <div class="album py-5 bg-light">

@@ -45,7 +45,6 @@ def get_tablelayout(Class_id,field='TableLayout'):
         a.save()
     return res
 
-
 class ReportTable(tables.Table):
     class Meta:
         template_name = "django_tables2/bootstrap4.html"
@@ -58,12 +57,17 @@ from string import Template
 class mytable(tables.Table):
     def __init__(self,Class_id=0,style='TableLayout',*args,**kwargs):
         self.Class_id=Class_id
+        user=get_current_user()
+        showedit=Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists()
         self.Style=style
         self.layout=get_tablelayout(self.Class_id,style)
-        a=Template("""<a href="{% url "ut:view_instance" $classid record.pk %}"><i class="far fa-eye"></i></a>
+        t="""<a href="{% url "ut:view_instance" $classid record.pk %}"><i class="far fa-eye"></i></a>"""
+        if showedit:
+            t =t+"""
              <a href="{% url "ut:edit_instance" $classid record.pk %}"><i class="far fa-edit"></i></a>
              <a onclick="return confirm('Are you sure you want to delete {{record.Code}} code?')" href="{% url "ut:delete_instance" $classid record.pk %}"><i class="far fa-trash-alt"></i></a>  
-          """).substitute(classid=Class_id)
+          """
+        a=Template(t).substitute(classid=Class_id)
         t_link = tables.TemplateColumn(a, attrs={'th':{'align':'right'}},orderable=False)
 #        existing_columns = [f.name for f in Instances._meta.get_fields()]
         tl = self.layout

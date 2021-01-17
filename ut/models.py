@@ -1,7 +1,14 @@
 from django.db import models
+from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 import pandas as pd
 from django.db.models import Q
+from django.conf import settings
+from django.contrib.auth.models import Group
+from datetime import datetime
+from django_currentuser.middleware import get_current_user, get_current_authenticated_user
+from django_currentuser.db.models import CurrentUserField
+
 # Create your models here.
 
 #Datatype Constants
@@ -20,6 +27,7 @@ DT_Email = 12
 DT_Time = 13
 DT_Calculated=14
 DT_Lookup=15
+DT_ManyToMany=16
 
 DT_NUMBERS = [DT_Integer,DT_Float,DT_Date,DT_Instance,DT_Datetime,DT_Boolean,DT_Currency]
 DT_LETTERS = [DT_String,DT_Text,DT_External,DT_Email,DT_Lookup,DT_Calculated]
@@ -53,25 +61,22 @@ def get_fieldname(dt,attr_id=0):
         f = 'int_value'
     elif dt in [DT_Float,DT_Currency]:
         f = 'float_value' #float,currency
-    elif dt in [DT_String,DT_Email]:
+    elif dt in [DT_String,DT_Email,DT_Time]:
         f = 'char_value'
     elif dt in [DT_Text]:
         f = 'text_value'
-    elif dt in [DT_Date,DT_Datetime,DT_Time]: #date,datetime,time
+    elif dt in [DT_Date,DT_Datetime]: #date,datetime,time
         f = 'datetime_value'
     elif dt in [DT_Instance]:
         f = 'instance_value_id'
     elif dt in [DT_Lookup]:
         f = 'char_value'
+    elif dt in [DT_ManyToMany]:
+        f = 'manytomany'
     else:
         raise Exception ('No {} datatype'.format(dt))
     return '"'+f+'"'
 
-class Projects(models.Model):
-    Project = models.CharField(max_length=100,unique=True)
-    Description = models.TextField(null=True,blank=True)
-    class Meta:
-        verbose_name='Projects'
 
 class Reports(models.Model):
     Report = models.CharField(max_length=100,unique=True)
@@ -80,6 +85,8 @@ class Reports(models.Model):
     Query = models.TextField(null=True,blank=True)
     class Meta:
         verbose_name='Reports'
+    def __str__(self):
+        return self.Report
 
 class SendOuts(models.Model):
     Query = models.TextField(null=True,blank=True)
@@ -96,19 +103,23 @@ class Classes(models.Model):
     UseAutoCounter = models.BooleanField(default=False,blank=True)
     Prefix = models.CharField(max_length=10,null=True,blank=True)
     CounterStrLen = models.IntegerField(default=10)
+    ViewGroups = models.ManyToManyField(Group,related_name='+')
+    UpdateGroups = models.ManyToManyField(Group,related_name='+')
     class Meta:
         verbose_name='Classes'
     def __str__(self):
         return self.Class
 
-class ProjectClassConn(models.Model):
-    Class =models.ForeignKey (Classes,on_delete=models.PROTECT)
-    Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
-
-class ProjectReportConn(models.Model):
-    Project=models.ForeignKey(Projects,on_delete=models.PROTECT)
-    Report =models.ForeignKey(Reports,on_delete=models.PROTECT)
-    Default = models.BooleanField(default=False)
+class Projects(models.Model):
+    Project = models.CharField(max_length=100,unique=True)
+    Description = models.TextField(null=True,blank=True)
+    DefaultReport = models.ForeignKey(Reports,on_delete=models.SET_NULL,related_name='+',null=True,blank=True)
+    Classes_m2m = models.ManyToManyField(Classes,blank=True)
+    Reports_m2m = models.ManyToManyField(Reports,blank=True)
+    ViewGroups = models.ManyToManyField(Group,related_name='+')
+    UpdateGroups = models.ManyToManyField(Group,related_name='+')
+    class Meta:
+        verbose_name='Projects'
 
 #int,varchar,text,class
 class DataTypes(models.Model):
@@ -129,9 +140,6 @@ class InputTypes(models.Model):
         verbose_name = 'InputTypes'
 
 from django.db.models import F, Func
-
-class get_tablename(Func):
-    function = 'get_tablename'
 
 from django.db.models.functions import Concat
 from django.db.models import Value
@@ -165,6 +173,8 @@ class Attributes(models.Model):
     InternalAttribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
     ExternalField = models.CharField(max_length=50,null=True,blank=True)
     ValuesList = models.TextField(null=True,blank=True) #only for char, int & float
+    ViewGroups = models.ManyToManyField(Group,related_name='+')
+    UpdateGroups = models.ManyToManyField(Group,related_name='+')
 
     #TableName = models.CharField(max_length=100,null=True,blank=True)
     #additional fields from adding from AttributeManager
@@ -181,9 +191,6 @@ class Attributes(models.Model):
             res = self.Class.Class +'-->'+self.Attribute
         return res
 
-class email_templates(models.Model):
-    pass
-
 class Filters(models.Model):
     conditions=[('OR','OR'),('AND','AND')]
     fieldsizes=[(1,1),(2,2),(3,3),(4,4),(6,6),(12,12)]
@@ -198,21 +205,54 @@ class Filters(models.Model):
     Condition2=models.CharField(max_length=50,null=True,blank=True,choices=conditions,default='OR')
     Attribute3=models.ForeignKey(Attributes, on_delete=models.CASCADE,related_name='+',default=0)
     Formula = models.TextField(null=True,blank=True)
-    unique_together = ('Class', 'Filter')
+    ViewGroups = models.ManyToManyField(Group,related_name='+')
+    UpdateGroups = models.ManyToManyField(Group,related_name='+')
+    class Meta:
+        unique_together = ('Class', 'Filter')
+
 
 class Counters(models.Model):
     Class=models.OneToOneField(Classes,on_delete=models.CASCADE)
     CurrentCounter = models.IntegerField(default=0)
 
+class InstancesManager(models.Manager):
+    def get_queryset(self):
+        qs=super(InstancesManager,self).get_queryset()
+        return qs
+
 class Instances(models.Model):
     Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
     #Master = models.ForeignKey('self',on_delete=models.PROTECT,null=True)
     Code = models.CharField(max_length=20)
+    Updatedby = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,related_name='+')
+    Updated = models.DateTimeField(auto_now_add=True)
+    Owner = CurrentUserField(related_name='+')
+    Created = models.DateTimeField(auto_now_add=True)
+    objects=InstancesManager()
     class Meta:
         unique_together = ('Class','Code')
         verbose_name='Instances'
     def __str__(self):
         return self.Code
+    def save(self,*args,**kwargs):
+        #check for editing rights
+        user=get_current_user()
+        Class_id=self.Class_id
+        if Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists():
+            super().save(*args,**kwargs)
+        else:
+            raise Exception("User {} does not have rights to update/insert/delete record".format(user.username))
+    def delete(self,*args,**kwargs):
+        #check for editing rights
+        user=get_current_user()
+        Class_id=self.Class_id
+        if Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists():
+            super().delete(*args,**kwargs)
+        else:
+            raise Exception("User {} does not have rights to update/insert/delete record".format(user.username))
+
+
+
 
 class Values(models.Model):
     Instance = models.ForeignKey(Instances,on_delete=models.CASCADE, related_name='+')
@@ -233,13 +273,13 @@ class Values(models.Model):
         att=self.Attribute
         #Add Datatypes Here
         Qs={DT_Integer:self.int_value,DT_Float:self.float_value,DT_String:self.char_value,DT_Text:self.text_value,
-            DT_Date:self.datetime_value,DT_Datetime:self.datetime_value, DT_Instance:self.instance_value,DT_Email:self.char_value}
+            DT_Time:self.char_value,DT_Date:self.datetime_value,DT_Datetime:self.datetime_value, DT_Instance:self.instance_value,DT_Email:self.char_value}
         Qn = {DT_Integer: 'int_value', DT_Float: 'float_value', DT_String: 'char_value', DT_Text: 'text_value',
-              DT_Date:'datetime_value',DT_Datetime: 'datetime_value',DT_Instance: 'instance_value',DT_Email : 'char_value'}
+              DT_Time: 'char_value', DT_Date:'datetime_value',DT_Datetime: 'datetime_value',DT_Instance: 'instance_value',DT_Email : 'char_value'}
         val=0
         #handle unique
         if att.UniqueAtt:
-            if att.DataType.id in [DT_Integer,DT_String,DT_Date,DT_Email]:
+            if att.DataType.id in [DT_Integer,DT_String,DT_Date,DT_Email,DT_Time,DT_Datetime]:
                 val_con=Q(**{Qn[att.DataType.id]:Qs[att.DataType.id]})
                 val=Values.objects.filter(val_con&Q(Attribute_id=att.id)&(~Q(Instance_id=self.Instance.id)))
             else:
@@ -251,6 +291,14 @@ class Values(models.Model):
             if pd.isnull(Qs[att.DataType.id]):
                 raise Exception('Attribute "{}" cannot be NULL'.format(att.Attribute))
         super().save(*args, **kwargs)
+
+class Values_m2m(models.Model):
+    Instance = models.ForeignKey(Instances,on_delete=models.CASCADE)
+    Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
+    instance_value = models.ForeignKey(Instances,on_delete=models.CASCADE, related_name='+')
+    class Meta:
+        verbose_name='Values_m2m'
+        unique_together=('Instance_id','Attribute_id','instance_value_id')
 
 a="""
 class Email_Templates(models.Model):
@@ -316,6 +364,7 @@ class Layouts(models.Model):
     TableLayout = models.TextField(null=True,blank=True)
     ShortLayout = models.TextField(null=True,blank=True)
 
+
     @property
     def form_dict(self):
         if not pd.isnull(self.FormLayout):
@@ -337,4 +386,5 @@ class FormLayouts(models.Model):
     Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
     Row = models.IntegerField(default=0)
     Column = models.IntegerField(default=0)
+
 
