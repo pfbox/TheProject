@@ -3,7 +3,7 @@ from django import forms
 from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div
+from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div,ButtonHolder
 from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
 from django.urls import reverse,reverse_lazy
 from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget
@@ -19,8 +19,6 @@ class ProjectForm(forms.ModelForm):
                    }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save'))
@@ -54,11 +52,9 @@ class FilterEditForm(forms.ModelForm):
         else:
             self.Class_id = kwargs['initial']['Class_id']
 
-
         self.fields['Attribute1'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
         self.fields['Attribute2'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
         self.fields['Attribute3'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
-
 
         self.fields['Class'].widget.attrs['disabled'] = 'true'
         self.fields['Class'].required = False
@@ -104,7 +100,13 @@ class ClassesForm(forms.ModelForm):
         fields='__all__'
         widgets = {
             'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
-                   'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+            'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+            'DeleteGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],
+                                                       attrs={'data-minimum-input-length': 0}),
+            'InsertGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],
+                                                       attrs={'data-minimum-input-length': 0}),
+            'RightsFilteredByClass': ModelSelect2MultipleWidget(search_fields=['Class__icontains'],
+                                                       attrs={'data-minimum-input-length': 0})
                    }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,7 +114,8 @@ class ClassesForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save'))
 
-class UploadInstances(forms.Form):
+from bootstrap_modal_forms.forms import BSModalForm
+class UploadInstances(BSModalForm):
     file = forms.FileField()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -121,6 +124,7 @@ class UploadInstances(forms.Form):
         self.helper.add_input(Submit('submit', 'Upload'))
 
 from .formtemplate import *
+from bootstrap_modal_forms.forms import BSModalForm
 
 class InstanceForm(forms.Form):
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
@@ -130,6 +134,8 @@ class InstanceForm(forms.Form):
         self.ReadOnly = kwargs.pop('ReadOnly')
         if 'validation' in kwargs:
             self.Validation = kwargs.pop('validation')
+        if 'next' in kwargs:
+            self.Next = kwargs.pop('next')
         super().__init__(*args, **kwargs)
 
         # get form initial values
@@ -143,7 +149,8 @@ class InstanceForm(forms.Form):
 
         for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
             if create_form_field_check(att):
-                self.fields[att.Attribute]=create_form_field(att,values=initrow)
+                self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
+                self.fields[att.Attribute].label = att.Attribute
                 self.fields[att.Attribute].widget.attrs['attr_id']=att.id
                 self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
                 self.fields[att.Attribute].widget.attrs['class']= \
@@ -165,6 +172,9 @@ class InstanceForm(forms.Form):
         #add Save Button
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+        self.helper.attrs = {'id':'instanceform','data_instance_id':'{}'.format(self.Instance_id),'data_class_id':'{}'.format(self.Class_id)}
+        self.helper.form_class = 'instanceform'
+        self.helper.labels_uppercase = True
         layout={}
         try:
             rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
@@ -175,8 +185,15 @@ class InstanceForm(forms.Form):
         except:
             print ("layout for the class "+ str(self.Class_id) + " was not found")
 
+        self.helper.layout=Layout(HTML("""
+        <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Edit instance </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        """))
         try:
-            self.helper.layout= get_layout(self.Class_id,layout,'Layout')
+            self.helper.layout.append(Div(get_layout(self.Class_id,layout,'Layout'),css_class='modal-body'))
         except:
             print ("layout for the class "+ str(self.Class_id) + " didn't work")
             raise
@@ -186,13 +203,22 @@ class InstanceForm(forms.Form):
             #self.helper.layout.append(layout_row)
         b=""""""
         if self.ReadOnly:
-            self.helper.add_input(Submit('cancel','Cancel'))
+            Buttons = ButtonHolder(
+                Button(value='Close',name='close',css_class='btn-secondary',data_dismiss='modal'),
+                css_class='buttonHolder modal-footer'
+            )
         else:
-            self.helper.add_input(Submit('submit','Save'))
-            self.helper.add_input(Submit('cancel','Cancel'))
+            Buttons = ButtonHolder(
+                Button(value='Save',name='save',css_class='btn btn-primary savechanges',css_id='save'),
+                Button(value='Save&Next',name='savenext',css_class='btn btn-primary savechanges',css_id='savenext') if self.Instance_id!=0
+                else Button(value='Save&New',css_class='btn btn-primary savechanges',name='savenext',css_id='savenext'),
+                Button(value='Close',name='close',css_class='btn-secondary',data_dismiss='modal'),
+                css_class='buttonHolder modal-footer'
+            )
+        self.helper.layout.append(Buttons)
+        self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
 
 from string import Template
-
 def get_layout(Class_id,layout,mastertype='Row',level=0):
     master=globals()[mastertype]()
     for k,v in layout.items():
@@ -205,22 +231,35 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
         else:
             try:
                 attr=Attributes.objects.get(Class_id=Class_id,Attribute=v)
+                refattr=Attributes.objects.get(id=attr.Ref_Attribute_id).Attribute
                 dt=attr.DataType.id
             except ObjectDoesNotExist:
                 id=0
                 dt=0
-            if dt in [10]:
+            if dt in [DT_Table]:
                 a=Template("""
+                <table id="table$tb" class="classtable" style="width:100%"  data-class-id="$refclass" 
+                        data-ajax-link="{% url "ut:ajax_get_class_data" $refclass %}" 
+                        data-ref-attribute="$refattr">
+                    <thead>
+                        {% for c in columns$tb %}
+                            <th>{{ c }}</th>
+                        {% endfor %}
+                        <th>Actions</th>
+                    </thead>
+                </table>
+                """)
+                old_django_table_template="""
                 {% load render_table from django_tables2 %}
                 <div class="tableishere"><label>$attname</label> 
                     {% if table$tb %}
                        {% render_table table$tb  %}
                     {% else %}
-                       'no such table'
+                       no such table table$tb
                     {% endif %}                
                  </div>
-                """)
-                master.append(HTML(a.substitute(tb=attr.id,attname=attr.Attribute)))
+                """
+                master.append(HTML(a.substitute(tb=attr.id,attname=attr.Attribute,refclass=attr.Ref_Class_id,refattr=refattr)))
             elif clname=='Column': #form-group flex-grow-1 d-flex flex-column
                 master.append(cls(v,css_class=cssclass))
             else:

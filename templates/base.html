@@ -17,10 +17,32 @@
     <link rel="stylesheet" href="style.css"> -->
     <link rel="shortcut icon" type="image/png" href="/media/favicon.ico"/>
 
+    <!--DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.5/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/plug-ins/preview/searchPane/dataTables.searchPane.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/3.3.2/css/fixedColumns.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/yadcf/0.9.4-beta.13/jquery.dataTables.yadcf.css">
+
+
+    <!-- flatpicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
     <title>Ultimate Tracker</title>
     <style type="text/css">
     .container.custom-container {
           padding: 0 50px;
+    }
+    th, td { white-space: nowrap; }
+    div.dataTables_wrapper {
+        margin: 0 auto;
+    }
+
+    div.container {
+        width: 80%;
+    }
+    .yadcf-filter {
+    //    width: 50px;
     }
     .form-control-xs {
         height: calc(1em + .375rem + 2px) !important;
@@ -39,6 +61,7 @@
         </a>
 
         <a class="navbar-brand" href="#">ULTIMATE TRACKER</a>
+        {% if not Modal %}
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -48,9 +71,19 @@
             <li class="nav-item active">
               <a class="nav-link" href="{% url 'ut:index' %}">Home <span class="sr-only">(current)</span></a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'ut:projects_view' %}">Projects</a>
-            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Projects
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="{% url 'ut:projects_view' %}">View All Projects</a>
+                      <div class="dropdown-divider"></div>
+                  {% if base_projects %}
+                    {% for p in base_projects %}
+                      <a class="dropdown-item" href="{% url 'ut:instances' 0 0 p.id %}">{{p.Project}}</a>
+                    {% endfor %}
+                {% endif %}
+              </div>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'ut:classes_view' %}">Classes</a>
             </li>
@@ -144,6 +177,7 @@
             <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
           </form>
         </div>
+        {% endif %}
       </nav>
   </header>
 
@@ -154,21 +188,35 @@
     <!-- Bootsrap-->
     <script src="{% static '/poper/umd/popper.min.js' %}"></script>
     <script src="{% static '/bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.5.2/flatpickr.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.6.5/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.5.3/js/dataTables.colReorder.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/preview/searchPane/dataTables.searchPane.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/yadcf/0.9.4-beta.13/jquery.dataTables.yadcf.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/3.3.2/js/dataTables.fixedColumns.min.js"></script>
+
+
+
 
           {% block content %}
           {% endblock %}
 
   </main>
+
       <footer class="text-muted">
       <div class="container">
+        <p>&copy; Ulitmate Tracker</p>
+      {% if modal %}
         <p class="float-right">
           <a href="#">Back to top</a>
         </p>
-        <p>&copy; Ulitmate Tracker</p>
         <p>New to UT? <a href="../../">Visit the homepage</a> or read our <a href="../../getting-started/">getting started guide</a>.</p>
+      {% endif %}
       </div>
     </footer>
-
 
     {% block javascript %}
     {% endblock %}

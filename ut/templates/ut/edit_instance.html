@@ -18,7 +18,7 @@
 {% block javascript %}
 
 {% load bootstrap4 %}       {# import bootstrap4/bootstrap3 #}
-{{ form.media }}            {# Adds date-picker required JS and CSS #}
+
 <script>
     function empty_child(attr_id){
         var el =$('select[masterattr_id='+attr_id+']')
@@ -40,7 +40,6 @@
          });
          empty_child(attr_id);
     }
-
     $(".hierarchy_trigger,.lookup_trigger",).change(function () {
       var attr_id = $(this).attr('attr_id')
       var master_value  = $(this).val()
@@ -55,25 +54,30 @@
            $.each(data.lookups,function(key, value){
                 $('input[attr_id='+key+']').val(value)
            });
-
-           /*
-           var masterclass_id=data.MasterClass_id
-           var subselects=$("select[masterclass_id='"+masterclass_id+"']")
-           $.each(subselects,function(key, el) {
-                var sattr_id = $(el).attr('attr_id')
-                var sel = $(el)
-                sel.empty()
-                sel.append($("<option></option>").attr("value",0).text(''));
-                $.each(data.attrs[sattr_id],function(i,name) {
-                    sel.append($("<option></option>")
-                        .attr("value", i)
-                        .text(name));
-                });
-           });
-           */
         }
       });
     });
+
+        flatpickr(".datetimeinput", {
+            enableTime: true,
+            enableSeconds: false,
+            dateFormat: "Y-m-d H:i",
+            allowInput : true,
+        });
+        flatpickr(".dateinput", {
+            enableTime: false,
+            allowInput : true,
+            enableSeconds: false,
+            dateFormat: "Y-m-d",
+        });
+        flatpickr(".timeinput", {
+            enableTime:  true,
+            noCalendar: true,
+            allowInput : true,
+            time_24hr: true,
+            enableSeconds: false,
+            dateFormat: "H:i",
+        });
 </script>
 
 {% endblock %}

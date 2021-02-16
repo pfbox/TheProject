@@ -10,6 +10,8 @@ from django_tables2 import SingleTableView
 #from .filters import ClassesFilter
 from django.db.models import Exists, OuterRef
 import json
+from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 from .utclasses import *
 from django_tables2 import RequestConfig
@@ -73,35 +75,87 @@ class delete_instance(LoginRequiredMixin,DeleteView):
         self.success_url = reverse_lazy('ut:instances',kwargs={'Class_id':kwargs['Class_id'],})
         return self.post(*args,**kwargs)
 
-class edit_instance_base(View):
-    def post(self,request,*args,**kwargs):
+class update_instances_table(View):
+    def get(self,request,*args,**kwargs):
         Class_id=kwargs['Class_id']
-        Instance_id=kwargs['Instance_id']
-        if request.POST.get('cancel'):
-            return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
-        else:
-            form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly='False',validation=True)
-            if form.is_valid():
-                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False,user=request.user)
-                return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+        qs = create_rawquery_from_attributes(Class_id, {})
+        data = {}
+        data['table'] = render_to_string('ut/asynctable.html',
+                                         {'table': mytable(Class_id=Class_id, style='TableLayout', data=qs)},
+                                         request=request)
+        return JsonResponse(data)
 
-    def get(self,request,ReadOnly=False,*args,**kwargs):
+from django.template.context_processors import csrf
+from crispy_forms.utils import render_crispy_form
+from django.test.client import RequestFactory
+
+
+class edit_instance_base(View):
+    def get(self,request,Modal=True,ReadOnly=False,*args,**kwargs):
         Class_id=kwargs['Class_id']
         Instance_id=kwargs['Instance_id']
         form = InstanceForm(Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly, validation=False)
         context = get_base_context()
-        for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=10):
+        for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=DT_Table):
             refclass_id = a1.Ref_Class.id
             refattr = a1.Ref_Attribute.Attribute
             if Instance_id == 0:
                 filter = {refattr: -1}
             else:
                 filter = {refattr: Instance_id}
-            qs = create_rawquery_from_attributes(refclass_id, filter=filter)
+
+            context['columns'+ str(a1.id)] = create_qs_sql(refclass_id)['columns']
+
+            qs = create_rawquery_from_attributes(refclass_id, masterclassfilter=filter)
             table = mytable(Class_id=refclass_id, style='ShortLayout', data=qs)
             context['table' + str(a1.id) + ''] = table
         context['form'] = form
-        return render(request, 'ut/edit_instance.html', context)
+        context['Modal']=True
+        context['Class_id']=Class_id
+        context['Instance_id']=Instance_id
+        if Modal:
+            data={}
+            data['modalformcontent']=render_to_string('ut/_edit_instance_modal.html',context=context,request=request)
+            return JsonResponse(data)
+        else:
+            return render(request, 'ut/edit_instance.html', context)
+
+    def post(self,request,*args,**kwargs):
+        Class_id=kwargs['Class_id']
+        Instance_id=kwargs['Instance_id']
+        Next_id=request.POST.get('next','0')
+        form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly=False,validation=True)
+        res = {}
+        if form.is_valid():
+            try:
+                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False,user=request.user)
+                res['success'] = True
+                if request.POST.get('action')=='savenext':
+                    #newrequest = RequestFactory().get('/')
+                    #newrequest.GET=request.POST.copy()
+                    ctx = {}
+                    ctx.update(csrf(request))
+                    if not Next_id.isnumeric(): #need to show error if no next item
+                        res['form_errors']='Instance has been saved but next instance has not been identified.'
+                        res['success']=False
+                    else:
+                        Next_id = int(Next_id)
+                        form = InstanceForm(Class_id=Class_id, Instance_id=Next_id, ReadOnly=False,validation=False)
+                        form_html = render_crispy_form(form, context=ctx)
+                        res['form_html']=form_html
+            except BaseException as e:
+                res['success']=False
+                res['form_errors']= str(e)
+            return JsonResponse(res)
+        else:
+            ctx = {}
+            ctx.update(csrf(request))
+            form = InstanceForm(request.POST, Class_id=Class_id, Instance_id=Instance_id, ReadOnly=False,
+                                validation=False)
+            form_html = render_crispy_form(form, context=ctx)
+            return JsonResponse({'success':False,'form_html':form_html})
+            #return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+
 
 class edit_instance(LoginRequiredMixin,edit_instance_base):
     pass
@@ -166,17 +220,11 @@ class ReportRun(View):
         context['table']=ReportTable(data=t,extra_columns=extra_columns)
         context['Report_id']=Report_id
         context['ReportName']=r.Report
-        #if not request.GET._mutable:
-        #    request.GET._mutable = True
-        # print (request.GET)
-        #if request.GET.get('sort'):
-        #RequestConfig(request).configure(table)
-        #    table.order_by = sort
-        #    print ('sort=',sort)
-        #table.paginate(page=request.GET.get("page", 1), per_page=30)
         return render(request, self.template, context)
 
-def instances(request,Class_id,SaveToExl=False):
+def instances(request,Class_id,SaveToExl=False,Project_id=0):
+    if Class_id==0 and Project_id!=0:
+        Class_id=Projects.objects.filter(id=Project_id).values_list('Classes_m2m').first()[0]
     filter = {}
     sort=None
     if request.method=='GET':
@@ -187,30 +235,22 @@ def instances(request,Class_id,SaveToExl=False):
         for key, value in request.GET.items():
             if (value!='')&(key not in ['sort','page','submit','sortfield']):
                 filter[key]=value
+
     filterform= InstanceFilterForm(Class_id=Class_id,filter=filter) #create_filter_set(Class_id,filter)
 
-    qs=create_rawquery_from_attributes(Class_id,filter)
-    #print (qs)
-    if pd.isnull(sort):
-        sort='Code'
+
     if SaveToExl:
+        qs = create_rawquery_from_attributes(Class_id, filter)
         return export_instances_xls(request,qs)
     else:
         pass
-    #h_link = tables.LinkColumn('ut:edit_instance', text=lambda x: x.Code, args=[A('Class_id'), A('pk')], orderable=False)
 
-    table=mytable(Class_id=Class_id,style='TableLayout',data=qs)
-    #print (table)
-    if not request.GET._mutable:
-        request.GET._mutable = True
-    request.GET['sort']=sort
-    #print (request.GET)
-    RequestConfig(request).configure(table)
-#    table.order_by = sort
-#    print ('sort=',sort)
-    table.paginate(page=request.GET.get("page", 1), per_page=20)
     context = get_base_context({'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform,'sortfield':sort})
-    return render(request, 'ut/showtable.html',  context)
+    context['columns']=create_qs_sql(Class_id)['columns']
+
+    if Project_id!=0:
+        context['Project']=Projects.objects.get(pk=Project_id)
+    return render(request, 'ut/showproject.html',  context)
 
 def attributes_view(request,Class_id):
     attlist=Attributes.objects.filter(Class_id=Class_id)
@@ -235,28 +275,34 @@ def edit_attribute(request,Attribute_id):
     context=get_base_context({'form':form})
     return render(request,'ut/edit_attribute.html',context)
 
-class ProjectEdit(UpdateView):
+class BaseContext():
+    def get_context_data(self, **kwargs):
+        context=super(BaseContext,self).get_context_data(**kwargs)
+        context.update(get_base_context())
+        return context
+
+class ProjectEdit(BaseContext,UpdateView):
     model = Projects
     template_name = 'ut/edit_attribute.html'
     form_class = ProjectForm
     def get_success_url(self):
         return reverse_lazy('ut:projects_view')
 
-class ProjectCreateVeiw(CreateView):
+class ProjectCreateVeiw(BaseContext,CreateView):
     model = Projects
     template_name = 'ut/edit_attribute.html'
     form_class = ProjectForm
     def get_success_url(self):
         return reverse_lazy('ut:projects_view')
 
-class ReportEdit(UpdateView):
+class ReportEdit(BaseContext,UpdateView):
     model = Reports
     template_name = 'ut/edit_attribute.html'
     form_class = ReportForm
     def get_success_url(self):
         return reverse_lazy('ut:reports_view')
 
-class ReportCreateVeiw(CreateView):
+class ReportCreateVeiw(BaseContext,CreateView):
     model = Reports
     template_name = 'ut/edit_attribute.html'
     form_class = ReportForm
@@ -265,7 +311,7 @@ class ReportCreateVeiw(CreateView):
 
 #from bootstrap_modal_forms.generic import BSModalCreateView
 
-class FilterCreateView(LoginRequiredMixin,CreateView):
+class FilterCreateView(BaseContext,LoginRequiredMixin,CreateView):
     model = Filters
     template_name = 'ut/edit_attribute.html'
     form_class = FilterEditForm
@@ -284,7 +330,7 @@ class FilterCreateView(LoginRequiredMixin,CreateView):
         kw['initial']['Class_id']=self.Class_id
         return kw
 
-class FilterUpdateView(LoginRequiredMixin,UpdateView):
+class FilterUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
     model = Filters
     template_name = 'ut/edit_attribute.html'
     form_class = FilterEditForm
@@ -292,7 +338,7 @@ class FilterUpdateView(LoginRequiredMixin,UpdateView):
     def get_success_url(self):
         return reverse_lazy('ut:filters_view',args=(self.object.Class.id,))
 
-class AttributeCreateView(LoginRequiredMixin,CreateView):
+class AttributeCreateView(BaseContext,LoginRequiredMixin,CreateView):
     model = Attributes
     template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
@@ -311,7 +357,7 @@ class AttributeCreateView(LoginRequiredMixin,CreateView):
         kw['initial']['Class_id']=self.Class_id
         return kw
 
-class AttributeUpdateView(LoginRequiredMixin,UpdateView):
+class AttributeUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
     model = Attributes
     template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
@@ -319,7 +365,7 @@ class AttributeUpdateView(LoginRequiredMixin,UpdateView):
     def get_success_url(self):
         return reverse_lazy('ut:attributes_view',args=(self.object.Class.id,))
 
-class ClassesUpdateView(LoginRequiredMixin,UpdateView):
+class ClassesUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
@@ -327,7 +373,7 @@ class ClassesUpdateView(LoginRequiredMixin,UpdateView):
     def get_success_url(self):
         return reverse_lazy('ut:classes_view')
 
-class ClassesCreateView(LoginRequiredMixin,CreateView):
+class ClassesCreateView(BaseContext,LoginRequiredMixin,CreateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
@@ -469,7 +515,6 @@ class TestForm(forms.Form):
 
 from crispy_forms.layout import LayoutObject, Submit, Row, Column, MultiField,Field,Div,Fieldset,TEMPLATE_PACK,HTML
 from crispy_forms.helper import FormHelper
-from django.template.loader import render_to_string
 
 class FormSet1(LayoutObject):
     template='ut/test.html'
@@ -481,8 +526,6 @@ class FormSet1(LayoutObject):
         def render (self,form,form_style,context,template_pack=TEMPLATE_PACK):
             formset = context[self.formset_name_in_context]
             return render_to_string(self.template,{'formset':formset})
-
-from django.http import JsonResponse
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -518,3 +561,14 @@ def ajax_change_master(request,Attribute_id):
             lookups[a.id]='(None)'
     data['lookups']=lookups
     return JsonResponse(data,encoder=NpEncoder)
+
+def ajax_get_class_data(request,Class_id,filter={}):
+    res={}
+    masterfilter={}
+    if 'filtername' in request.GET:
+        masterfilter = {request.GET['filtername']:request.GET['filtervalue']}
+    qs=create_rawquery_from_attributes(Class_id=Class_id,masterclassfilter=masterfilter)
+    # res['data'] = raw_queryset_as_dict(qs)
+    res['data'] = raw_queryset_as_dict(qs,DT_RowId=True,Actions=False)
+    #print (res['data'])
+    return JsonResponse(res)

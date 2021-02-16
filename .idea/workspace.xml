@@ -22,26 +22,25 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0031_auto_20201219_1852.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0032_values_m2m.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0033_remove_values_manytomany.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0034_auto_20201220_2013.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0035_auto_20201220_2113.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0036_auto_20201222_1020.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0037_auto_20201230_1208.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0038_instances_created.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templatetags/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templatetags/ut_tags.py" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-01-17">
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0039_auto_20210123_1651.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0040_auto_20210124_1043.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/_edit_instance_modal.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/asynctable.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/templatesarchive/showproject_arc.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TheProject/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/tables.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/tables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/edit_instance.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/edit_instance.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/edit_instance_modal.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/loadinstances.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/loadinstances.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/test.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
@@ -56,8 +55,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -75,6 +74,14 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="UPDATE_TYPE" value="MERGE" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="GithubPullRequestsUISettings">
     <option name="hiddenUrls">
@@ -100,9 +107,9 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut/templatetags" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut/templates/ut" />
     <property name="restartRequiresConfirmation" value="false" />
-    <property name="settings.editor.selected.configurable" value="configurable.group.appearance" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -114,21 +121,21 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\TheProject\ut\templatetags" />
       <recent name="C:\TheProject\ut\templates\ut" />
+      <recent name="C:\TheProject\ut\templatetags" />
       <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\templates" />
       <recent name="C:\TheProject\utlogin" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\TheProject\ut\templates\ut\templatesarchive" />
+      <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\TheProject\templates\registration" />
       <recent name="C:\TheProject\ut\templates\ut\registration" />
-      <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\Users\pavel\Anaconda3\TheProject\media" />
     </key>
   </component>
-  <component name="RunManager" selected="Unknown.The Project378003116">
+  <component name="RunManager" selected="Python.shell_plus">
     <configuration name="Unnamed" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="TheProject" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -199,9 +206,6 @@
       <module name="TheProject" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="C:\ProgramData\Anaconda3\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
@@ -264,6 +268,7 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Django Server.The Project" />
       <item itemvalue="Python.Unnamed" />
       <item itemvalue="Python.shell_plus" />
       <item itemvalue="Python.formtemplate" />
@@ -299,7 +304,23 @@
       <workItem from="1608420460034" duration="56915000" />
       <workItem from="1609007530291" duration="21269000" />
       <workItem from="1609889294274" duration="4938000" />
+      <workItem from="1610902729066" duration="20000" />
+      <workItem from="1611198532838" duration="34764000" />
+      <workItem from="1611890287188" duration="1190000" />
+      <workItem from="1612025210412" duration="23616000" />
+      <workItem from="1612156903774" duration="74712000" />
+      <workItem from="1612909927295" duration="23710000" />
+      <workItem from="1613070267078" duration="13490000" />
+      <workItem from="1613104398522" duration="65839000" />
     </task>
+    <task id="LOCAL-00001" summary="2021-01-17">
+      <created>1610902677866</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1610902677866</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -329,6 +350,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="2021-01-17" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-01-17" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -358,6 +381,8 @@
       <configuration name="Python.DjangoServer">
         <watch expression="re.search('$select','select * from abc') == True" language="Python" />
         <watch expression="request.POST.get_list()" language="Python" />
+        <watch expression="self.errors" language="Python" />
+        <watch expression="__py_debug_temp_var_1898434376.'Province' (1394762734448).data" />
       </configuration>
     </watches-manager>
   </component>

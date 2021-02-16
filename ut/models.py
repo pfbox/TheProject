@@ -103,8 +103,11 @@ class Classes(models.Model):
     UseAutoCounter = models.BooleanField(default=False,blank=True)
     Prefix = models.CharField(max_length=10,null=True,blank=True)
     CounterStrLen = models.IntegerField(default=10)
-    ViewGroups = models.ManyToManyField(Group,related_name='+')
-    UpdateGroups = models.ManyToManyField(Group,related_name='+')
+    InsertGroups = models.ManyToManyField(Group,related_name='+',blank=True)
+    ViewGroups = models.ManyToManyField(Group,related_name='+',blank=True)
+    UpdateGroups = models.ManyToManyField(Group,related_name='+',blank=True)
+    DeleteGroups = models.ManyToManyField(Group,related_name='+',blank=True)
+    RightsFilteredByClass = models.ManyToManyField("self",related_name='+',blank=True)
     class Meta:
         verbose_name='Classes'
     def __str__(self):
@@ -363,7 +366,6 @@ class Layouts(models.Model):
     FormLayout  = models.TextField(null=True,blank=True)
     TableLayout = models.TextField(null=True,blank=True)
     ShortLayout = models.TextField(null=True,blank=True)
-
 
     @property
     def form_dict(self):

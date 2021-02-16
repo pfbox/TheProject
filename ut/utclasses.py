@@ -6,11 +6,14 @@ from django_pandas.io import read_frame
 import numpy as np
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 import re
 
 from django_tables2.utils import A
 
 from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget
+
+from django.forms import DateInput,DateTimeInput,TimeInput,SplitDateTimeField,SplitDateTimeWidget
 
 from django.apps import apps
 
@@ -196,10 +199,10 @@ def calculated(dt):
     else:
         return False
 
-def get_options(Attribute_id=0,values={}) :
+def get_options(Attribute_id=0,values={},validation=False) :
     attr=get_attribute(Attribute_id,df_attributes)
     instances={}
-    if attr.MasterAttribute_id > 0:
+    if (attr.MasterAttribute_id>0) and (not validation):
         m_attr=get_attribute(attr.MasterAttribute_id,df_attributes)
         tmp=values.get(m_attr.Attribute)
         if pd.notnull(tmp):
@@ -223,7 +226,7 @@ def get_options(Attribute_id=0,values={}) :
     return instances
 
 from django import forms
-from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput,TimePickerInput
+#from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput,TimePickerInput
 
 def create_form_field_check(attr):
     dt = attr.DataType_id
@@ -233,7 +236,7 @@ def create_form_field_check(attr):
         res=True
     return res
 
-def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={},fn=''):
+def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={},fn='',validation=False):
     if fn == '':
         FieldName=attr.Attribute
     else:
@@ -278,19 +281,14 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     elif dt in [DT_Text]:
         field=forms.CharField(widget=forms.Textarea(attrs={'rows':1}),required=req)
     elif dt in [DT_Date]:
-        field=forms.DateField(required=req, input_formats=['%Y-%m-%d','%m/%d/%Y','%m/%d/%y'],
-                              widget=DatePickerInput(format='%Y-%m-%d')
-        )
+        field=forms.DateField(required=req, widget=DateInput(format=('%Y-%m-%d'),attrs={'class':'datefield','autocomplete': 'off'})
+                              )
     elif dt in [DT_Datetime]:
-        field=forms.DateTimeField(required=req, input_formats=['%Y-%m-%d %H:%M','%m/%d/%Y %H:%M','%m/%d/%y %H:%M'],
-                              widget=DateTimePickerInput(format='%Y-%m-%d %H:%M')
-        )
+        field=forms.DateTimeField(required=req, widget=DateTimeInput(format=('%Y-%m-%d %H:%M:%S'),attrs={'class':'datetimefield','autocomplete': 'off'}))
     elif dt in [DT_Time]:
-        field = forms.TimeField(required=req, input_formats=['%H:%M'],
-                                    widget=DateTimePickerInput(format='%H:%M')
-                                    )
+        field = forms.TimeField(required=req, widget=TimeInput(format=('%H:%M'),attrs={'class':'timefield','autocomplete': 'off'}))
     elif dt in [DT_Instance]:
-        op=get_options(Attribute_id=attr.id,values=values)
+        op=get_options(Attribute_id=attr.id,values=values,validation=validation)
         if usedinfilter:
             ch=[(-1,'(All)')]
         else:
@@ -356,6 +354,7 @@ def set_attributes():
 
     dependancies=df_attr[(df_attr.MasterAttribute_id!=0)&(df_attr.DataType_id==DT_Instance)].groupby(['MasterAttribute_id']).agg({'id': 'max'})\
         .reset_index().rename(columns={'MasterAttribute_id':'id','id':'hierarchy_trigger'})
+
     df_attr = pd.merge(df_attr,dependancies,on=['id'],how='left')
 
     lookups = df_attr[(df_attr.DataType_id==DT_Lookup)&(df_attr.InternalAttribute_id!=0)]\
@@ -364,10 +363,10 @@ def set_attributes():
 
     df_attr = pd.merge(df_attr,lookups,on='id',how='left')
 
-    df_attr['TableName']=df_attr.id.apply(lambda x: '"val{}"'.format(x))
+    df_attr['TableName']=df_attr.id.apply(lambda x: '"val{}"'.format(x)) #check
 
-    df_attr['RefTableName']=df_attr.id.apply(lambda x: '"val_ins{}"'.format(x))
-    df_attr['RefAttrTableName']=df_attr.id.apply(lambda x: '"refval{}"'.format(x))
+    df_attr['RefTableName']=df_attr.id.apply(lambda x: '"val_ins{}"'.format(x)) #check
+    df_attr['RefAttrTableName']=df_attr.id.apply(lambda x: '"refval{}"'.format(x)) #X
 
     df_attr['SelectField']=df_attr.id.apply(lambda x: selectfield(x,df_attr))
     df_attr['ValueField']=df_attr.id.apply(lambda x: valuefield(x,df_attr))
@@ -432,21 +431,20 @@ def get_tableviewlist(Class_id,df_attr):
 def get_fulllist(Class_id,df_attr):
     return df_attr[df_attr.Class_id.isin([Class_id,0])]
 
-def create_rawquery_sql(Class_id=0,filter={}):
-    return create_qs_sql(Class_id) + '\n' + create_filter_for_sql(Class_id, filter)
+def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={}):
+    sql = create_qs_sql(Class_id)['sql'] + '\n' + create_filter_for_sql(Class_id, filter,masterclassfilter)
+    #print (sql)
+    return sql
 
-def create_rawquery_from_attributes(Class_id=0,filter={}):
-    sql=create_rawquery_sql(Class_id,filter)
+def create_rawquery_from_attributes(Class_id=0,filter={},masterclassfilter={}):
+    sql=create_rawquery_sql(Class_id,filter,masterclassfilter)
     qs=Instances.objects.raw(sql)
     return qs
 
-def get_qs_instance_sql():
-    pass
-
 def create_val_sql(Instance_id,Class_id):
     atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
-    ss = {}
-    lo = {}
+    ss = {'id':'ins.id','Code':'ins.Code'}
+    lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
     for i,a in atts.iterrows():
         if a.id != 0:
             for key,val in a.ValueField.items():
@@ -463,17 +461,17 @@ def create_val_sql(Instance_id,Class_id):
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
 
-    sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
-    sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
+    sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
+    sfrom='from ' +'\n'.join(lo.values())
     swhere = 'where ins.id={}'.format(Instance_id)
     return sselect +'\n' + sfrom + '\n' + swhere
-
 
 def create_qs_sql(Class_id=0):
     user_id=get_current_user().id
     atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
-    ss = {}
-    lo = {}
+    #default for instances id, code, and instance table
+    ss = {'id':'ins.id','Code':'ins.Code'}
+    lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
     for i,a in atts.iterrows():
         if a.id != 0:
             for key,val in a.SelectField.items():
@@ -491,43 +489,19 @@ def create_qs_sql(Class_id=0):
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
 
-    sselect = 'select ins.id, ins.Code' +co + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
-    sfrom='from {ins} ins\n'.format(ins=Instances._meta.db_table) +'\n'.join(lo.values())
-    swhere = """
+
+    sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
+    sfrom='from ' + '\n'.join(lo.values())
+    swhere = """ 
     where ins.Class_id={Class_id}
     and 
     (exists (select * from ut_classes_ViewGroups vg, auth_user_groups ug where vg.group_id=ug.group_id and user_id = {user_id})
     or ins.owner_id={user_id}
     )
     """.format(Class_id=Class_id, user_id=user_id)
-    return sselect +'\n' + sfrom + '\n' + swhere
-
-b=""""
-def create_queryset_from_attributes(Class_id):
-    qs=Instances.objects.filter(Class_id=Class_id)
-    sselect={}
-    sfrom  =[]
-    swhere= []
-    fl=fieldlist(Class_id)
-    for i,rec in fl.iterrows():
-        if   rec.DataType_id==1:
-            vfield_name='int_value'
-        elif rec.DataType_id==2:
-            vfield_name='float_value'
-        elif rec.DataType_id ==3:
-            vfield_name='char_value'
-        elif rec.DataType_id==4:
-            vfield_name='text_value'
-        elif rec.DataType_id==5:
-            vfield_name='datetime_value'
-        elif rec.DataType_id==6:
-            vfield_name='instance_value_id'
-        sselect[rec.Attribute] = 'val'+str(rec.id)+'.'+ vfield_name
-        sfrom.append('"ut_values" as "'+'val'+str(rec.id)+'"')
-        swhere.append('val'+str(rec.id)+'.Instance_id="ut_instances".id and val'+str(rec.id)+'.Attribute_id='+str(rec.id))
-
-    return qs.extra(select=sselect,tables=sfrom,where=swhere)
-"""
+    sql=sselect +'\n' + sfrom + '\n' + swhere
+    #print (sql)
+    return {'sql':sql,'columns':ss.keys()}
 
 def get_value(Instance_id,Attribute_id):
     DataType=Attributes.objects.get(pk=Attribute_id).DataType.id
@@ -614,7 +588,11 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
                 v.text_value=None
         elif DataType in [DT_Date,DT_Datetime] : #date,datetime
             if val!='':
-                v.datetime_value=val
+                tz=timezone.utc #!!!need to set up timezone here
+                val=pd.to_datetime(val)
+                if val.tzinfo is None:
+                    val=tz.localize(val)
+                v.datetime_value= val #tz.localize(val)
             else:
                 v.datetime_value=None
         elif DataType in [DT_Time]: #time only
@@ -645,6 +623,7 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
                 v.int_value=None
         v.save()
 
+
 def fieldlist(Class_id):
     output = pd.read_sql('select * from ut_attributes where Class_id={}'.format(Class_id),con)
     #output = df_attributes[df_attributes.Class_id==Class_id] #read_frame(Attributes.objects.filter(Class_id=Class_id))
@@ -665,7 +644,7 @@ def get_val_by_name(key,d={}):
     return res
 
 #this procedure creates a filter for the query that will be executed on the server
-def create_filter_for_sql(Class_id,filter={}):
+def create_filter_for_sql(Class_id,filter={},masterclassfilter={}):
     d={FT_Exact:'FT_Exact',FT_Contains:'FT_Contains',FT_Like:'FT_Like'}
     where = ''
     for key,val in filter.items():
@@ -678,13 +657,19 @@ def create_filter_for_sql(Class_id,filter={}):
             type='FT_Max'
         else:
             name=key
-        f=get_filter(Class_id=Class_id,FilterName=name)
 
+        f=get_filter(Class_id=Class_id,FilterName=name)
         if type=='':
             type=d[f.FilterType]
         #
         if val!='' and (not (val=='-1' and f.DataType_id==6)):
             where = where + f.Expression[type].format(val=val)
+
+    for key,val in masterclassfilter.items():
+        attr=Attributes.objects.filter(Class_id=Class_id,DataType_id=DT_Instance,Attribute=key)
+        tab = attr.values_list('TableName',flat=True)[0]
+        where = where + ' and  {}.instance_value_id={}'.format(tab,val)
+
     return where
 
 def get_next_counter(Class_id):
@@ -732,18 +717,27 @@ def get_column(Class_id,col_name,Instance_id=0,type='FORM'):
     return res
 """
 
-def raw_queryset_as_values_list(raw_qs):
+def raw_queryset_as_values_list_old(raw_qs):
     columns = raw_qs.columns
     for row in raw_qs:
         yield tuple( getattr(row, col) for col in columns )
 
-def raw_queryset_as_dict(raw_qs):
+def raw_queryset_as_values_list(raw_qs):
+    columns = raw_qs.columns
+    res=[]
+    for row in raw_qs:
+        res.append(tuple( getattr(row, col) for col in columns ))
+    return res
+
+def raw_queryset_as_dict(raw_qs,DT_RowId=False,Actions=False):
     res=[]
     columns = raw_qs.columns
     for row in raw_qs:
-        r={}
+        r= {'DT_RowId':row.id} if DT_RowId else {}
         for col in columns:
             r[col]=getattr(row,col)
+        if Actions:
+            r['Actions']=''
         res.append(r)
     return res
 
@@ -766,6 +760,7 @@ def save_instance_byid(Class_id,instance={}):
 
 @transaction.atomic
 def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True,user=None):
+    res=False
     #Class_id=Instances.objects.get(pk=Instance_id).Class.id
     code=instance['Code']
     if code=='':
@@ -778,16 +773,23 @@ def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True,
     else:
         ins=Instances.objects.get(pk=Instance_id)
         ins.Code=code
-    ins.Updated=datetime.now()
+    ins.Updated=datetime.now(tz=timezone.utc)
     if user:
         ins.Updatedby=user
+    if Instance_id==0:
+        #check_insert_rights()
+        pass
+    else:
+        #check_edit_rights()
+        pass
     ins.save()
+    res=ins.id
     fl=get_editfieldlist(Class_id,df_attributes)
     for index,rec in fl.iterrows():
         name=Attributes.objects.get(pk=rec.id).Attribute
         if name in instance.keys() and (index!=0):
             save_attribute(ins.id,rec.id,instance[name],passed_by_name=passed_by_name)
-    return True
+    return res
 
 def dictfetchall(cursor):
     #Return all rows from a cursor as a dict

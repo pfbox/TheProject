@@ -26,8 +26,10 @@ urlpatterns = [
     path('Classes/add/',                    views.ClassesCreateView.as_view(),  name='add_class'),
     path('Attributes/edit/<slug:pk>/',      views.AttributeUpdateView.as_view(),name='edit_attribute'),
     path('Attributes/<int:Class_id>/add/',  views.AttributeCreateView.as_view(),name='add_attribute'),
+    path('update_instances_table/<int:Class_id>/',        views.update_instances_table,      name='update_instances_table'),
     path('ClassIns/<int:Class_id>/',        views.instances,                    name='instances'),
     path('ClassIns/<int:Class_id>/<int:SaveToExl>/',        views.instances,    name='instances'),
+    path('ClassIns/<int:Class_id>/<int:SaveToExl>/<int:Project_id>',        views.instances,    name='instances'),
     path('Classes/view/<int:Class_id>/<int:Instance_id>/', views.view_instance.as_view(),               name='view_instance'),
     path('Classes/edit/<int:Class_id>/<int:Instance_id>/', views.edit_instance.as_view(),               name='edit_instance'),
     path('Classes/delete/<int:Class_id>/<slug:pk>/', views.delete_instance.as_view(), name='delete_instance'),
@@ -38,6 +40,8 @@ urlpatterns = [
     #path('TestModalForm/', views.TestModal.as_view(), name='testmodal'),
     #path('TestFormset/', views.TestFormsetFactory.as_view(), name='change_tabletemplate'),
     path('ajax/change_master/<int:Attribute_id>', views.ajax_change_master, name='ajax_change_master'),
+    path('ajax/classdata/<int:Class_id>', views.ajax_get_class_data, name='ajax_get_class_data'),
+
 ]
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns

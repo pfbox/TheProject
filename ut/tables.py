@@ -57,15 +57,16 @@ from string import Template
 class mytable(tables.Table):
     def __init__(self,Class_id=0,style='TableLayout',*args,**kwargs):
         self.Class_id=Class_id
+        self._meta.attrs={"class": "table table-hover table-striped table-sm table-responsive","id": "class{}".format(Class_id)}
         user=get_current_user()
         showedit=Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists()
         self.Style=style
         self.layout=get_tablelayout(self.Class_id,style)
-        t="""<a href="{% url "ut:view_instance" $classid record.pk %}"><i class="far fa-eye"></i></a>"""
+        t="""<a class="viewinstance" data-form-url="{% url "ut:view_instance" $classid record.pk %}" ><i class="far fa-eye"></i></a>"""
         if showedit:
             t =t+"""
-             <a href="{% url "ut:edit_instance" $classid record.pk %}"><i class="far fa-edit"></i></a>
-             <a onclick="return confirm('Are you sure you want to delete {{record.Code}} code?')" href="{% url "ut:delete_instance" $classid record.pk %}"><i class="far fa-trash-alt"></i></a>  
+             <a class="editinstance" data-form-url="{% url "ut:edit_instance" $classid record.pk %}"><i class="far fa-edit"></i></a>
+             <a class="deleteinstance" onclick="return confirm('Are you sure you want to delete {{record.Code}} code?')" href="{% url "ut:delete_instance" $classid record.pk %}"><i class="far fa-trash-alt"></i></a>  
           """
         a=Template(t).substitute(classid=Class_id)
         t_link = tables.TemplateColumn(a, attrs={'th':{'align':'right'}},orderable=False)
@@ -84,6 +85,7 @@ class mytable(tables.Table):
         template_name = "django_tables2/bootstrap4.html"
         #template_name="django_tables2/semantic.html"
         model=Instances
-        #attrs = {"class": "table table-hover table-striped table-sm table-bordered table-responsive"}
-        attrs = {"class": "table table-hover table-striped table-sm table-responsive"}
+        row_attrs = {
+            "data-id" : lambda record: record.pk,
+        }
         fields=()
