@@ -2,7 +2,7 @@ from django.db import models
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 import pandas as pd
-from django.db.models import Q
+from django.db.models import Q, Max, Min
 from django.conf import settings
 from django.contrib.auth.models import Group
 from datetime import datetime
@@ -37,25 +37,7 @@ FT_MinMax=2
 FT_Contains=3
 FT_Like=4
 
-#ValuesTable
-DT_Value_map={
-DT_Integer : 'Values_Int',
-DT_Float   : 'Values_Float',
-DT_String  : 'Values_Char',
-DT_Text    : 'Values_Text',
-DT_Date    : 'Values_DateTime',
-DT_Instance: 'Values_Instance',
-DT_Datetime: 'Values_DateTime',
-DT_External: '',
-DT_Boolean : 'Values_Int',
-DT_Table   : '',
-DT_Currency: 'Values_Float',
-DT_Email   : 'Values_Char',
-DT_Time    : 'Values_DateTime',
-DT_Calculated : ''
-}
-
-def get_fieldname(dt,attr_id=0):
+def get_fieldname(dt):
     f = 'No fieldName'
     if   dt in [DT_Integer,DT_Boolean]: #int,boolean
         f = 'int_value'
@@ -81,8 +63,8 @@ def get_fieldname(dt,attr_id=0):
 class Reports(models.Model):
     Report = models.CharField(max_length=100,unique=True)
     Description = models.TextField(null=True,blank=True)
-    #ReportType =
     Query = models.TextField(null=True,blank=True)
+    ViewGroups = models.ManyToManyField(Group, related_name='+', blank=True)
     class Meta:
         verbose_name='Reports'
     def __str__(self):
@@ -96,6 +78,18 @@ class SendOuts(models.Model):
     class Meta:
         verbose_name='SendOuts'
 
+
+class ClassManager(models.Manager):
+    def get_queryset(self):
+        qs=super(ClassManager,self).get_queryset()
+        user=get_current_user()
+        if (user is not None) and user.is_authenticated:
+            if user.is_superuser==False:
+                qs=qs.filter(Q(ViewGroups__in=Group.objects.filter(user=user))|Q(id=0))
+        else:
+            qs=qs.filter(id=None)
+        return qs
+
 class Classes(models.Model):
     Class = models.CharField(max_length=50,unique=True)
     Master = models.ForeignKey('self',on_delete=models.PROTECT)
@@ -108,10 +102,23 @@ class Classes(models.Model):
     UpdateGroups = models.ManyToManyField(Group,related_name='+',blank=True)
     DeleteGroups = models.ManyToManyField(Group,related_name='+',blank=True)
     RightsFilteredByClass = models.ManyToManyField("self",related_name='+',blank=True)
+    Class_query = models.TextField(null=True,blank=True)
+    objects= ClassManager()
     class Meta:
         verbose_name='Classes'
     def __str__(self):
         return self.Class
+
+class ProjectManager(models.Manager):
+    def get_queryset(self):
+        qs=super(ProjectManager,self).get_queryset()
+        user=get_current_user()
+        if (user is not None) and user.is_authenticated:
+            if user.is_superuser==False:
+                qs=qs.filter(Q(ViewGroups__in=Group.objects.filter(user=user))|Q(id=0))
+        else:
+            qs=qs.filter(id=None)
+        return qs
 
 class Projects(models.Model):
     Project = models.CharField(max_length=100,unique=True)
@@ -121,19 +128,9 @@ class Projects(models.Model):
     Reports_m2m = models.ManyToManyField(Reports,blank=True)
     ViewGroups = models.ManyToManyField(Group,related_name='+')
     UpdateGroups = models.ManyToManyField(Group,related_name='+')
+    objects=ProjectManager()
     class Meta:
         verbose_name='Projects'
-
-#int,varchar,text,class
-class DataTypes(models.Model):
-    DataType = models.CharField(max_length=50, unique=True)
-    FieldFilter = models.IntegerField(default=0)
-    Filter1stName = models.CharField(default='min', max_length=50)
-    Filter2ndName = models.CharField(default='max', max_length=50)
-    class Meta:
-        verbose_name='DataTypes'
-    def __str__(self):
-        return self.DataType
 
 class InputTypes(models.Model):
     Inputtype = models.CharField(max_length=50,unique=True)
@@ -142,24 +139,145 @@ class InputTypes(models.Model):
     class Meta:
         verbose_name = 'InputTypes'
 
-from django.db.models import F, Func
-
-from django.db.models.functions import Concat
-from django.db.models import Value
+#int,varchar,text,class
+class DataTypes(models.Model):
+    DataType = models.CharField(max_length=50, unique=True)
+    InputTypes=models.ManyToManyField(InputTypes,related_name='+',blank=True)
+    FieldName=models.CharField(max_length=100,blank=True,null=True)
+    class Meta:
+        verbose_name='DataTypes'
+    def __str__(self):
+        return self.DataType
 
 class AttributeManager(models.Manager):
     def get_queryset(self):
-        qs=super(AttributeManager,self).get_queryset()\
-            .annotate(TableName=Concat(Value('"val'),'id',Value('"'),output_field=models.CharField()))\
-            .annotate(RefTableName=Concat(Value('"val_ins'),'id',Value('"'),output_field=models.CharField())) \
-            .annotate(RefAttrTableName=Concat(Value('"val_ins'), 'id', Value('"'), output_field=models.CharField()))\
-            .annotate(Master=F('Ref_Class_id__Master'))
+        qs=super(AttributeManager,self).get_queryset()
+        user=get_current_user()
+        if (user is not None) and user.is_authenticated:
+            if user.is_superuser==False:
+                qs=qs.filter(Q(ViewGroups__in=Group.objects.filter(user=user))|Q(id=0))
+        else:
+            qs=qs.filter(id=None)
         return qs
+
+def valuefield_nd(attr):
+    #attr=Attributes.objects.get(pk=id)
+    id=attr.id
+    dt= attr.DataType_id
+    attribute=attr.Attribute
+    ref_attribute_id=attr.Ref_Attribute_id
+    if id == 0:
+        res='ins.Code'
+    elif dt == DT_Lookup:
+        res='{tab}.{field}'.format(tab=attr.RefAttrTableName, field=get_fieldname(DT_String))
+    elif dt == DT_External:
+        res='{tab}.{field}'.format(tab=attr.ExternalTable, field=attr.ExternalField)
+    elif dt in [DT_Table]:
+        res = '0 as Table__' + str(id) + '__'
+    elif dt in [DT_Calculated]:
+        res = '{formula}'.format(formula=attr.Formula)
+    else:
+        res = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
+    return res
+
+def selectfield_nd(attr):
+    id = attr.id
+    dt= attr.DataType_id
+    ref_attr = Attributes.objects.get(pk=attr.Ref_Attribute_id)
+    attribute=attr.Attribute
+    ref_attribute_id=attr.Ref_Attribute_id
+    if id==0:
+        res = 'ins.Code'
+    elif dt == DT_Instance:
+        if ref_attribute_id == 0:
+            res = '{tab}.{field}'.format(tab=attr.RefTableName, field='"Code"')
+        else:
+            res = '{tab}.{field}' \
+                .format(tab=attr.RefAttrTableName, field=get_fieldname(ref_attr.DataType_id))
+    elif dt == DT_Lookup:
+            res = '{tab}.{field}' \
+                .format(tab=attr.RefAttrTableName, field=get_fieldname(DT_String))
+    elif dt == DT_External:
+        res = '{tab}.{field}'.format(tab=attr.ExternalTable, field=attr.ExternalField)
+    elif dt in [DT_Table]:
+        res = '0 as Table__' + str(id) + '__'
+    elif dt in [DT_Calculated]:
+        res = '{formula}'.format(formula=attr.Formula)
+    else:
+        res = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
+    return res
+
+def valueleftouter(id):
+    attr = Attributes.objects.get(pk=id)
+    dt= attr.DataType_id
+    internal_attr = Attributes.objects.get(pk=attr.InternalAttribute_id)
+    res={}
+    if dt == DT_External:
+        res[attr.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})'\
+            .format(ext=attr.ExternalTable,uq=attr.ExternalUq,loctab=internal_attr.TableName,locfield=get_fieldname(internal_attr.DataType_id))
+    elif dt == DT_Lookup:
+        res[internal_attr.TableName]= 'LEFT OUTER JOIN {val} as {tab} ON ({tab}.Instance_id=ins.id and {tab}.Attribute_id={id}) --{attr} 1'\
+            .format(val=Values._meta.db_table,tab=internal_attr.TableName,id=internal_attr.id,attr=attr.Attribute)
+        res[internal_attr.RefTableName] = 'LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id) --{attr} 2' \
+            .format(ins=Instances._meta.db_table, tab=internal_attr.TableName, reftab=internal_attr.RefTableName,attr=attr.Attribute)
+        res[attr.RefAttrTableName] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt}) --{attr} 3' \
+                .format(val=Values._meta.db_table, refval=attr.RefAttrTableName, refatt=attr.Ref_Attribute_id,
+                        reftab=internal_attr.RefTableName,attr=attr.Attribute)
+    else:
+        res[attr.TableName]= 'LEFT OUTER JOIN {val} as {tab} ON ({tab}.Instance_id=ins.id and {tab}.Attribute_id={id}) --{attr}'\
+            .format(val=Values._meta.db_table,tab=attr.TableName,id=attr.id,attr=attr.Attribute)
+    return res
+
+def leftouter(id):
+    attr = Attributes.objects.get(pk=id)
+    dt= attr.DataType_id
+    internal_attr = Attributes.objects.get(pk=attr.InternalAttribute_id)
+
+    res={}
+
+    if dt == DT_External:
+        res[attr.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})'\
+            .format(ext=attr.ExternalTable,uq=attr.ExternalUq,loctab=internal_attr.TableName,locfield=get_fieldname(internal_attr.DataType_id))
+    elif dt == DT_Lookup:
+        res[internal_attr.TableName]= 'LEFT OUTER JOIN {val} as {tab} ON ({tab}.Instance_id=ins.id and {tab}.Attribute_id={id}) --{attr} 1'\
+            .format(val=Values._meta.db_table,tab=internal_attr.TableName,id=internal_attr.id,attr=attr.Attribute)
+        res[internal_attr.RefTableName] = 'LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id) --{attr} 2' \
+            .format(ins=Instances._meta.db_table, tab=internal_attr.TableName, reftab=internal_attr.RefTableName,attr=attr.Attribute)
+        res[attr.RefAttrTableName] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt}) --{attr} 3' \
+                .format(val=Values._meta.db_table, refval=attr.RefAttrTableName, refatt=attr.Ref_Attribute_id,
+                        reftab=internal_attr.RefTableName,attr=attr.Attribute)
+    else:
+        res[attr.TableName]= 'LEFT OUTER JOIN {val} as {tab} ON ({tab}.Instance_id=ins.id and {tab}.Attribute_id={id}) --{attr}'\
+            .format(val=Values._meta.db_table,tab=attr.TableName,id=attr.id,attr=attr.Attribute)
+        if dt == DT_Instance:
+            res[attr.RefTableName]='LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id) --{attr}'\
+                .format(ins=Instances._meta.db_table,tab=attr.TableName,reftab=attr.RefTableName,attr=attr.Attribute)
+            if attr.Ref_Attribute_id!=0:
+                res[attr.RefAttrTableName] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt}) --{attr}'\
+                    .format(val=Values._meta.db_table,refval=attr.RefAttrTableName,refatt=attr.Ref_Attribute_id,reftab=attr.RefTableName,attr=attr.Attribute)
+
+    return res
+
+def calculated(dt):
+    if dt in [DT_External,DT_Calculated]:
+        return True
+    else:
+        return False
+
+def filter_value(dt):
+    if dt in DT_NUMBERS:
+        res = '{val}'
+    elif dt in DT_LETTERS:
+        res = "'{val}'"
+    else:
+        res = ''
+    return res
 
 class Attributes(models.Model):
     Class = models.ForeignKey(Classes,on_delete=models.PROTECT,related_name='+')
     Attribute = models.CharField(max_length=50)
     DataType = models.ForeignKey(DataTypes,on_delete=models.PROTECT)
+    InputType = models.ForeignKey(InputTypes,default=0,null=False,blank=False,on_delete=models.PROTECT)
     Ref_Class = models.ForeignKey(Classes,on_delete=models.PROTECT,related_name='+',default=0) #zerohere
     Ref_Attribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
     Formula = models.TextField(null=True,blank=True)
@@ -176,12 +294,101 @@ class Attributes(models.Model):
     InternalAttribute = models.ForeignKey('self',on_delete=models.PROTECT,related_name='+', default=0)
     ExternalField = models.CharField(max_length=50,null=True,blank=True)
     ValuesList = models.TextField(null=True,blank=True) #only for char, int & float
+    ## sytem fields used for sql building
+    UseExternalTables=models.BooleanField(default=False) #if you'd like to generate internal fields
     ViewGroups = models.ManyToManyField(Group,related_name='+')
     UpdateGroups = models.ManyToManyField(Group,related_name='+')
-
-    #TableName = models.CharField(max_length=100,null=True,blank=True)
-    #additional fields from adding from AttributeManager
     objects = AttributeManager()
+
+    @property
+    def TableName(self):
+        return '"val{}"'.format(self.id)
+    @property
+    def RefTableName(self):
+        return '"val_ins{}"'.format(self.id)
+    @property
+    def RefAttrTableName(self):
+        return '"refval{}"'.format(self.id)
+    @property
+    def Calcultated(self):
+        return calculated(self.DataType_id)
+    @property
+    def MasterAttribute_id(self):
+        ma = Attributes.objects.exclude(Ref_Class_id=0) \
+            .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id, Class_id=self.Class_id).exists()
+        if ma:
+            return Attributes.objects.exclude(Ref_Class_id=0) \
+                .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id, Class_id=self.Class_id) \
+                .values_list('id').first()[0]
+        else:
+            return 0
+
+    @property
+    def hierarchy_trigger(self):
+        for a in Attributes.objects.exclude(id=self.id).filter(Class_id=self.Class_id):
+            if a.MasterAttribute_id!=0 and a.MasterAttribute_id==self.id:
+                return a.id
+        return 0
+
+    @property
+    def lookup_trigger(self):
+        for a in Attributes.objects.exclude(InternalAttribute=0).filter(DataType_id=DT_Lookup,InternalAttribute_id=self.id):
+            return a.id
+        return 0
+
+    @property
+    def SelectedField(self):
+        return selectfield_nd(self)
+    @property
+    def ValueField(self):
+        return valuefield_nd(self)
+    @property
+    def LeftOuter(self):
+        return leftouter(self.id)
+    @property
+    def ValueLeftOuter(self):
+        return valueleftouter(self.id)
+    @property
+    def FT_Exact(self):
+        return self.ValueField + '=' + filter_value(self.DataType_id)
+    @property
+    def FT_Contains(self):
+        return self.ValueField + " like '%{val}%'"
+    @property
+    def FT_Like(self):
+        return self.ValueField + " like '{val}'"
+    @property
+    def FT_Min(self):
+        return self.ValueField + '>=' + filter_value(self.DataType_id)
+    @property
+    def FT_Max(self):
+        return self.ValueField  + '<=' + filter_value(self.DataType_id)
+
+    @property
+    def sql_field_entry(self):
+        res={}
+        res['TableName'] = '"val{}"'.format(self.id)
+        res['RefTableName'] = '"val_ins{}"'.format(self.id)
+        res['RefAttrTableName'] = '"refval{}"'.format(self.id)
+        res['Calculated'] = calculated(self.DataType_id)
+        # TableColumn= models.CharField(max_length=100,null=True,blank=True) # used for django tables
+        ma=Attributes.objects.exclude(Ref_Class_id=0)\
+            .filter(DataType_id=DT_Instance, Ref_Class_id=self.Class.Master_id, Class_id=self.Class_id).exists()
+        if ma:
+            res['MasterAttribute'] = Attributes.objects.exclude(Ref_Class_id=0) \
+             .get(DataType_id=DT_Instance, Ref_Class_id=self.Class.Master_id, Class_id=self.Class_id)
+        else:
+            res['MasterAttribute_id'] = 0
+
+        res['SelectedField'] = selectfield_nd(self)
+        res['ValueField'] = valuefield_nd(self)
+        res['LeftOuter'] = leftouter(self.id)
+        res['ValueLeftOuter'] = leftouter(self.id)
+        res['FT_Exact'] = res['ValueField'] + '=' + filter_value(self.DataType_id)
+        res['FT_Contains'] = res['ValueField'] + " like '%{val}%'"
+        res['FT_Like'] = res['ValueField'] + " like '{val}'"
+        res['FT_Min'] = res['ValueField']  + '>=' + filter_value(self.DataType_id)
+        res['FT_Max'] = res['ValueField']  + '<=' + filter_value(self.DataType_id)
 
     class Meta:
         unique_together = ('Class','Attribute')
@@ -193,6 +400,16 @@ class Attributes(models.Model):
         else:
             res = self.Class.Class +'-->'+self.Attribute
         return res
+
+from django.dispatch import receiver
+#@receiver(models.signals.post_save, sender=Attributes)
+def update_attributes(sender, instance, **kwargs):
+    global df_attributes
+    global df_filters
+    from .utclasses import set_attributes,set_filters
+    df_attributes=set_attributes()
+    print ('Reset Attributes. ',instance.Attribute,'changed')
+    df_filters = set_filters()
 
 class Filters(models.Model):
     conditions=[('OR','OR'),('AND','AND')]
@@ -213,7 +430,6 @@ class Filters(models.Model):
     class Meta:
         unique_together = ('Class', 'Filter')
 
-
 class Counters(models.Model):
     Class=models.OneToOneField(Classes,on_delete=models.CASCADE)
     CurrentCounter = models.IntegerField(default=0)
@@ -225,7 +441,6 @@ class InstancesManager(models.Manager):
 
 class Instances(models.Model):
     Class = models.ForeignKey(Classes,on_delete=models.PROTECT)
-    #Master = models.ForeignKey('self',on_delete=models.PROTECT,null=True)
     Code = models.CharField(max_length=20)
     Updatedby = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,related_name='+')
     Updated = models.DateTimeField(auto_now_add=True)
@@ -237,25 +452,29 @@ class Instances(models.Model):
         verbose_name='Instances'
     def __str__(self):
         return self.Code
+
     def save(self,*args,**kwargs):
         #check for editing rights
         user=get_current_user()
         Class_id=self.Class_id
-        if Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists():
+        if user.is_superuser or Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists() \
+                or (self.Owner == user and (not self.pk is None)):
             super().save(*args,**kwargs)
         else:
-            raise Exception("User {} does not have rights to update/insert/delete record".format(user.username))
+            if self.pk is None:
+                raise Exception("User {} does not have rights to insert record of class {}".format(user.username,self.Class.Class))
+            else:
+                raise Exception("User {} does not have rights to update record of class {}".format(user.username,self.Class.Class))
+
     def delete(self,*args,**kwargs):
         #check for editing rights
         user=get_current_user()
         Class_id=self.Class_id
-        if Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists():
+        if user.is_superuser or Classes.objects.filter(id=Class_id,UpdateGroups__in=Group.objects.filter(user=user)).exists()\
+                or self.Owner == user:
             super().delete(*args,**kwargs)
         else:
-            raise Exception("User {} does not have rights to update/insert/delete record".format(user.username))
-
-
-
+            raise Exception("User {} does not have rights to delete record".format(user.username))
 
 class Values(models.Model):
     Instance = models.ForeignKey(Instances,on_delete=models.CASCADE, related_name='+')

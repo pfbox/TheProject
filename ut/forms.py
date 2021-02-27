@@ -1,5 +1,4 @@
 from django import forms
-from django import forms
 from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
@@ -35,6 +34,64 @@ class ReportForm(forms.ModelForm):
         self.helper.add_input(Submit('submit', 'Save'))
 
 
+class AttributeForm(forms.ModelForm):
+    class Meta:
+        model=Attributes
+        fields='__all__'
+        widgets = {'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+                   }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
+        #self.Class_id=self.initials['Class_id']
+
+        self.fields['Class'].queryset = Classes.objects.all()
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            self.initial.update({'Class_id':instance.Class.id})
+            self.Class_id=instance.Class.id
+            self.fields['Class'].widget.attrs['disabled'] = 'true'
+            self.fields['Class'].required = False
+            self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(
+                Q(Class_id=self.Ref_Class.id) | Q(Class_id=0))
+            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(
+                Q(Class_id=self.Class.id) | Q(Class_id=0))
+        else:
+            self.fields['Class'].required = False
+            self.fields['Class'].widget.attrs['disabled'] = 'true'
+            self.fields['Ref_Class'].queryset = Classes.objects.all()
+            self.fields['Ref_Attribute'].queryset = Attributes.objects.all()
+            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=kwargs['initial']['Class_id'])| Q(Class_id=0))
+
+
+    def save(self,commit=True):
+        Class_id=self.initial['Class_id'];
+        self.instance.Class=Classes.objects.get(pk=Class_id)
+        return super(AttributeForm, self).save(commit=commit)
+
+class ClassesForm(forms.ModelForm):
+    class Meta:
+        model=Classes
+        fields='__all__'
+        widgets = {
+            'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+            'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
+            'DeleteGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],
+                                                       attrs={'data-minimum-input-length': 0}),
+            'InsertGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],
+                                                       attrs={'data-minimum-input-length': 0}),
+            'RightsFilteredByClass': ModelSelect2MultipleWidget(search_fields=['Class__icontains'],
+                                                       attrs={'data-minimum-input-length': 0})
+                   }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
+
 class FilterEditForm(forms.ModelForm):
     class Meta:
         model = Filters
@@ -65,55 +122,6 @@ class FilterEditForm(forms.ModelForm):
         return super(FilterEditForm, self).save(commit=commit)
 
 
-class AttributeForm(forms.ModelForm):
-    class Meta:
-        model=Attributes
-        fields='__all__'
-        widgets = {'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
-                   'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
-                   }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Save'))
-
-        instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
-            self.initial.update({'Class_id':instance.Class.id})
-            self.Class_id=instance.Class.id
-            self.fields['Class'].widget.attrs['disabled'] = 'true'
-            self.fields['Class'].required = False
-            self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(Q(Class_id=instance.Ref_Class.id)|Q(Class_id=0))
-        else:
-            self.fields['Class'].required = False
-            self.fields['Class'].widget.attrs['disabled'] = 'true'
-    def save(self,commit=True):
-        Class_id=self.initial['Class_id'];
-        self.instance.Class=Classes.objects.get(pk=Class_id)
-        return super(AttributeForm, self).save(commit=commit)
-
-class ClassesForm(forms.ModelForm):
-    class Meta:
-        model=Classes
-        fields='__all__'
-        widgets = {
-            'ViewGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
-            'UpdateGroups' : ModelSelect2MultipleWidget(search_fields=['name__icontains'],attrs={'data-minimum-input-length': 0}),
-            'DeleteGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],
-                                                       attrs={'data-minimum-input-length': 0}),
-            'InsertGroups': ModelSelect2MultipleWidget(search_fields=['name__icontains'],
-                                                       attrs={'data-minimum-input-length': 0}),
-            'RightsFilteredByClass': ModelSelect2MultipleWidget(search_fields=['Class__icontains'],
-                                                       attrs={'data-minimum-input-length': 0})
-                   }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Save'))
-
 from bootstrap_modal_forms.forms import BSModalForm
 class UploadInstances(BSModalForm):
     file = forms.FileField()
@@ -136,6 +144,10 @@ class InstanceForm(forms.Form):
             self.Validation = kwargs.pop('validation')
         if 'next' in kwargs:
             self.Next = kwargs.pop('next')
+        if 'defaults' in kwargs:
+            self.Defaults=kwargs.pop('defaults')
+        else:
+            self.Defaults={}
         super().__init__(*args, **kwargs)
 
         # get form initial values
@@ -146,15 +158,19 @@ class InstanceForm(forms.Form):
                 cursor.execute(sql)
                 initrow=dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
             pass
+        else:
+            if len(self.Defaults)>0:
+                initrow=self.Defaults
 
-        for i,att in get_editfieldlist(self.Class_id,df_attributes).iterrows():
+        for att in get_editfieldlist(self.Class_id):
             if create_form_field_check(att):
                 self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
                 self.fields[att.Attribute].label = att.Attribute
                 self.fields[att.Attribute].widget.attrs['attr_id']=att.id
-                self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
+                if att.MasterAttribute_id > 0:
+                    self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
                 self.fields[att.Attribute].widget.attrs['class']= \
-                    'hierarchy_trigger' if att.hierarchy_trigger>0 else '' +  'lookup_trigger'    if att.lookup_trigger>0 else ''
+                    ' hierarchy_trigger' if att.hierarchy_trigger>0 else ''+  ' lookup_trigger' if att.lookup_trigger>0 else ''
 
                 if self.ReadOnly or att.DataType_id in [DT_Lookup]:
                     self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
@@ -167,8 +183,13 @@ class InstanceForm(forms.Form):
                     else:
                         self.initial[att.Attribute]=initrow[att.Attribute]
                 else:
-                    if att.id==0 and not self.Validation:
-                        self.initial['Code']=get_next_counter(self.Class_id)
+                    if not self.Validation:
+                        if att.id==0:
+                            self.initial['Code']=get_next_counter(self.Class_id)
+                        if len(self.Defaults)>0:
+                            if att.Attribute in self.Defaults:
+                               self.initial[att.Attribute] = self.Defaults[att.Attribute]
+
         #add Save Button
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -179,7 +200,11 @@ class InstanceForm(forms.Form):
         try:
             rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
             NinRow = rawlayout['settings']['NinRow']
-            master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=rawlayout['layout'])
+            lo= []
+            for obj in rawlayout['layout']:
+                if obj['name'] in get_editfieldlist(self.Class_id).values_list('Attribute',flat=True):
+                    lo.append(obj)
+            master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=lo)
             master.split_by_con()
             layout=master.print_elements()
         except:
@@ -219,6 +244,7 @@ class InstanceForm(forms.Form):
         self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
 
 from string import Template
+
 def get_layout(Class_id,layout,mastertype='Row',level=0):
     master=globals()[mastertype]()
     for k,v in layout.items():
@@ -238,6 +264,7 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
                 dt=0
             if dt in [DT_Table]:
                 a=Template("""
+                $attname
                 <table id="table$tb" class="classtable" style="width:100%"  data-class-id="$refclass" 
                         data-ajax-link="{% url "ut:ajax_get_class_data" $refclass %}" 
                         data-ref-attribute="$refattr">
@@ -285,7 +312,7 @@ class InstanceFilterForm(forms.Form):
         self.helper.layout=Layout()
         r=Row()
         for f in Filters.objects.filter(Q(Class_id=self.Class_id)|Q(Class_id=0)):
-            att=get_attribute(f.Attribute1.id,df_attributes)
+            att=get_attribute(f.Attribute1.id)
             Attribute=f.Attribute1.Attribute
             if f.FilterType == FT_MinMax:
                 self.fields['__min__'+f.Filter] = create_form_field(att,usedinfilter=True,fn=f.Filter)

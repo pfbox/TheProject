@@ -94,7 +94,11 @@ class edit_instance_base(View):
     def get(self,request,Modal=True,ReadOnly=False,*args,**kwargs):
         Class_id=kwargs['Class_id']
         Instance_id=kwargs['Instance_id']
-        form = InstanceForm(Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly, validation=False)
+        defaults={}
+        if Instance_id==0:
+            if 'ref_attribute' in request.GET:
+                defaults[request.GET['ref_attribute']]=request.GET['ref_value']
+        form = InstanceForm(defaults=defaults,Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly, validation=False)
         context = get_base_context()
         for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=DT_Table):
             refclass_id = a1.Ref_Class.id
@@ -461,11 +465,11 @@ class ProtectView(LoginRequiredMixin, View) :
 class FormTemplateView(View):
     template = 'ut/formtemplate.html'
     def get(self, request,Class_id):
-        table=get_editfieldlist(Class_id,df_attributes)
+        table=get_editfieldlist(Class_id)
         context=get_base_context()
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=Layouts.objects.get(Class=Class_id).FormLayout
-        context['table']=table.to_dict('records')
+        context['table']=table # .to_dict('records')
         context['Class_id']=Class_id
         return render(request, self.template, context)
 
@@ -485,7 +489,7 @@ class FormTemplateView(View):
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
     def get(self, request,Style,Class_id):
-        table= get_editfieldlist(Class_id,df_attributes).to_dict('records')
+        table= get_editfieldlist(Class_id).to_dict('records')
         context=get_base_context()
         if Layouts.objects.filter(Class=Class_id).exists():
             context['layout']=getattr(Layouts.objects.get(Class=Class_id),Style)
@@ -540,21 +544,24 @@ class NpEncoder(json.JSONEncoder):
 
 def ajax_change_master(request,Attribute_id):
     value = int(request.GET['value'])
-    m_attr=get_attribute(Attribute_id,df_attributes)
-    Ref_Class_id=df_attributes[df_attributes.id==Attribute_id].Ref_Class_id.max()
-    Class_id=df_attributes[df_attributes.id==Attribute_id].Class_id.max()
+    attr=get_attribute(Attribute_id)
+    Ref_Class_id=attr.Ref_Class_id
+    Class_id=attr.Class_id
     data={}
     data['MasterAttribute_id']=Ref_Class_id
     attrs={}
     #find all attributes who depends on that Attribute_id
-    for i,a in df_attributes[(df_attributes.MasterAttribute_id==Attribute_id)&(df_attributes.Class_id==Class_id)].iterrows():
-        instances=get_options(a.id,{m_attr.Attribute:value})
-        attrs[a.id]=instances
+    for a in Attributes.objects.filter(Class_id=Class_id):
+            #df_attributes[(df_attributes.MasterAttribute_id==Attribute_id)&(df_attributes.Class_id==Class_id)].iterrows()
+        if a.MasterAttribute_id==Attribute_id:
+            instances=get_options(a.id,{attr.Attribute:value})
+            attrs[a.id]=instances
     data['attrs']=attrs
 
     #find lookups
     lookups={}
-    for i,a in df_attributes[(df_attributes.DataType_id==DT_Lookup)&(df_attributes.InternalAttribute_id==Attribute_id)].iterrows():
+    for a in Attributes.objects.filter(Class_id=Class_id,DataType_id=DT_Lookup,InternalAttribute_id=Attribute_id):
+            #df_attributes[(df_attributes.DataType_id==DT_Lookup)&(df_attributes.InternalAttribute_id==Attribute_id)].iterrows():
         if value !=0 :
             lookups[a.id]=Values.objects.filter(Attribute_id=a.Ref_Attribute_id,Instance_id=value).values()[0]['char_value']
         else:

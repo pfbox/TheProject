@@ -22,25 +22,15 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-01-17">
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0039_auto_20210123_1651.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0040_auto_20210124_1043.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/_edit_instance_modal.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/asynctable.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/templatesarchive/showproject_arc.html" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-02-15">
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0041_auto_20210216_0141.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0042_auto_20210216_0210.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0043_auto_20210219_2224.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/tables.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/tables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/edit_instance.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/edit_instance.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/edit_instance_modal.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/loadinstances.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/loadinstances.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showproject.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
@@ -135,7 +125,7 @@
       <recent name="C:\Users\pavel\Anaconda3\TheProject\media" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.shell_plus">
+  <component name="RunManager" selected="Django Server.The Project">
     <configuration name="Unnamed" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="TheProject" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -206,6 +196,9 @@
       <module name="TheProject" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="C:\ProgramData\Anaconda3\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
@@ -311,7 +304,9 @@
       <workItem from="1612156903774" duration="74712000" />
       <workItem from="1612909927295" duration="23710000" />
       <workItem from="1613070267078" duration="13490000" />
-      <workItem from="1613104398522" duration="65839000" />
+      <workItem from="1613104398522" duration="100798000" />
+      <workItem from="1613866248871" duration="31404000" />
+      <workItem from="1614286007203" duration="8638000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -320,7 +315,14 @@
       <option name="project" value="LOCAL" />
       <updated>1610902677866</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="2021-02-15">
+      <created>1613437237918</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1613437237918</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -351,7 +353,8 @@
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="2021-01-17" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-01-17" />
+    <MESSAGE value="2021-02-15" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-02-15" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -379,11 +382,16 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="re.search('$select','select * from abc') == True" language="Python" />
+        <watch expression="kwargs" language="Python" />
         <watch expression="request.POST.get_list()" language="Python" />
         <watch expression="self.errors" language="Python" />
         <watch expression="__py_debug_temp_var_1898434376.'Province' (1394762734448).data" />
+        <watch expression="settings" language="Python" />
+        <watch expression="settings.TEMPLATES" />
       </configuration>
     </watches-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/__init___py$shell_plus.coverage" NAME="shell_plus Coverage Results" MODIFIED="1613531655928" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

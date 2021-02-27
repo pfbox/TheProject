@@ -25,7 +25,7 @@ for a in app_models:
 from django.db import connection
 con=connection
 df_classes=pd.DataFrame()#pd.read_sql('select * from ut_classes',con) #.set_index('id')
-df_attributes=pd.DataFrame()#pd.read_sql('select * from ut_attributes',con)#.set_index('id')
+#df_attributes=pd.DataFrame()#pd.read_sql('select * from ut_attributes',con)#.set_index('id')
 df_datatypes=pd.DataFrame()#pd.read_sql('select * from ut_datatypes',con) #.set_index('id')
 df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.set_index('id')
 #df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
@@ -85,7 +85,6 @@ def valuefield_property(attr):
         res[attribute] = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
     return res
 
-
 def valuefield(id,df_attr):
     attr=df_attr[df_attr.id==id].iloc[0]
     dt= attr.DataType_id
@@ -113,7 +112,6 @@ def selectfield(id,df_attr):
     attr=df_attr[df_attr.id==id].iloc[0]
     ref_attr = df_attr[df_attr.id==attr.Ref_Attribute_id].iloc[0]
     internal_attr = df_attr[df_attr.id==attr.InternalAttribute_id].iloc[0]
-
     attribute=attr.Attribute
     ref_attribute_id=attr.Ref_Attribute_id
 
@@ -139,11 +137,10 @@ def selectfield(id,df_attr):
         res[attribute] = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
     return res
 
-def valueleftouter(id,df_attr):
-    attr=df_attr[df_attr.id==id].iloc[0]
+def valueleftouter(id):
+    attr = Attributes.objects.get(pk=id)
     dt= attr.DataType_id
-    ref_attr = df_attr[df_attr.id==attr.Ref_Attribute_id].iloc[0]
-    internal_attr = df_attr[df_attr.id==attr.InternalAttribute_id].iloc[0]
+    internal_attr = attr = Attributes.objects.get(pk=attr.InternalAttribute_id)
 
     res={}
     if dt == DT_External:
@@ -162,11 +159,10 @@ def valueleftouter(id,df_attr):
             .format(val=Values._meta.db_table,tab=attr.TableName,id=attr.id,attr=attr.Attribute)
     return res
 
-def leftouter(id,df_attr):
-    attr=df_attr[df_attr.id==id].iloc[0]
+def leftouter(id):
+    attr = Attributes.objects.get(pk=id)
     dt= attr.DataType_id
-    ref_attr = df_attr[df_attr.id==attr.Ref_Attribute_id].iloc[0]
-    internal_attr = df_attr[df_attr.id==attr.InternalAttribute_id].iloc[0]
+    internal_attr = Attributes.objects.get(pk=attr.InternalAttribute_id)
 
     res={}
 
@@ -200,10 +196,10 @@ def calculated(dt):
         return False
 
 def get_options(Attribute_id=0,values={},validation=False) :
-    attr=get_attribute(Attribute_id,df_attributes)
+    attr=get_attribute(Attribute_id)
     instances={}
     if (attr.MasterAttribute_id>0) and (not validation):
-        m_attr=get_attribute(attr.MasterAttribute_id,df_attributes)
+        m_attr=get_attribute(attr.MasterAttribute_id)
         tmp=values.get(m_attr.Attribute)
         if pd.notnull(tmp):
             m_value=int(tmp)
@@ -273,7 +269,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
             field = forms.FloatField(required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
-    elif dt in [DT_String,DT_Lookup]:
+    elif dt in [DT_String,DT_Lookup,DT_External]:
         if vl=='':
             field = forms.CharField(max_length=255, required=req)
         else:
@@ -416,20 +412,21 @@ def get_filter(Filter_id=-1,Class_id=0,FilterName=''):
         res=df_filters[df_filters.Class_id.isin([Class_id,0])&(df_filters.Filter==FilterName)].iloc[0]
     return res
 
-def get_attribute(id,df_attr=df_attributes):
-    return df_attr[df_attr.id==id].iloc[0]
+def get_attribute(id):
+    return Attributes.objects.get(pk=id)
 
-def get_editfieldlist(Class_id,df_attr):
-    return df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.Calculated)]
+def get_editfieldlist(Class_id):
+    return  Attributes.objects.exclude(DataType_id__in=[DT_Calculated]).filter(Class_id__in=[Class_id,0])
 
-def get_calulatedfieldlist(Class_id,df_attr):
-    return df_attr[(df_attr.Class_id==Class_id)&(df_attr.DataType_id==DT_Calculated)]
+def get_calulatedfieldlist(Class_id):
+    return  Attributes.objects.filter(Class_id__in=[Class_id,0],DataType_id__in=[DT_Calculated])
 
-def get_tableviewlist(Class_id,df_attr):
-    return df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([DT_Table,DT_ManyToMany]))]
+def get_tableviewlist(Class_id):
+    return  Attributes.objects.exclude(DataType_id__in=[DT_Table,DT_ManyToMany]).filter(Class_id__in=[Class_id,0])
+        #df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([DT_Table,DT_ManyToMany]))]
 
-def get_fulllist(Class_id,df_attr):
-    return df_attr[df_attr.Class_id.isin([Class_id,0])]
+def get_fulllist(Class_id):
+    return Attributes.objects.filter(Class_id__in=[Class_id,0])
 
 def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={}):
     sql = create_qs_sql(Class_id)['sql'] + '\n' + create_filter_for_sql(Class_id, filter,masterclassfilter)
@@ -442,25 +439,25 @@ def create_rawquery_from_attributes(Class_id=0,filter={},masterclassfilter={}):
     return qs
 
 def create_val_sql(Instance_id,Class_id):
-    atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
+    atts=get_tableviewlist(Class_id=Class_id)
     ss = {'id':'ins.id','Code':'ins.Code'}
     lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
-    for i,a in atts.iterrows():
+    for a in atts:
         if a.id != 0:
-            for key,val in a.ValueField.items():
-                ss[key]=val
+            ss[a.Attribute]=a.ValueField
             for key,val in a.ValueLeftOuter.items():
                 lo[key]=val
     if len(ss)>0:
         co=','
     else:
         co=''
-    calcfields=get_calulatedfieldlist(Class_id,df_attributes)
-    for i,cf in calcfields.iterrows():
+    calcfields=get_calulatedfieldlist(Class_id)
+    for cf in calcfields:
         for key,val in ss.items():
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
 
+    #print (ss,lo)
     sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
     sfrom='from ' +'\n'.join(lo.values())
     swhere = 'where ins.id={}'.format(Instance_id)
@@ -468,14 +465,13 @@ def create_val_sql(Instance_id,Class_id):
 
 def create_qs_sql(Class_id=0):
     user_id=get_current_user().id
-    atts=get_tableviewlist(Class_id=Class_id,df_attr=df_attributes)
+    atts=get_tableviewlist(Class_id=Class_id)
     #default for instances id, code, and instance table
     ss = {'id':'ins.id','Code':'ins.Code'}
     lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
-    for i,a in atts.iterrows():
+    for a in atts:
         if a.id != 0:
-            for key,val in a.SelectField.items():
-                ss[key]=val
+            ss[a.Attribute]=a.SelectedField
             for key,val in a.LeftOuter.items():
                 lo[key]=val
     if len(ss)>0:
@@ -483,12 +479,11 @@ def create_qs_sql(Class_id=0):
     else:
         co=''
 
-    calcfields=get_calulatedfieldlist(Class_id,df_attributes)
-    for i,cf in calcfields.iterrows():
+    calcfields=get_calulatedfieldlist(Class_id)
+    for cf in calcfields:
         for key,val in ss.items():
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
-
 
     sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
     sfrom='from ' + '\n'.join(lo.values())
@@ -496,7 +491,10 @@ def create_qs_sql(Class_id=0):
     where ins.Class_id={Class_id}
     and 
     (exists (select * from ut_classes_ViewGroups vg, auth_user_groups ug where vg.group_id=ug.group_id and user_id = {user_id})
-    or ins.owner_id={user_id}
+    or 
+    ins.owner_id={user_id}
+    or
+    exists (select * from auth_user where id = {user_id} and is_superuser=1)
     )
     """.format(Class_id=Class_id, user_id=user_id)
     sql=sselect +'\n' + sfrom + '\n' + swhere
@@ -667,7 +665,7 @@ def create_filter_for_sql(Class_id,filter={},masterclassfilter={}):
 
     for key,val in masterclassfilter.items():
         attr=Attributes.objects.filter(Class_id=Class_id,DataType_id=DT_Instance,Attribute=key)
-        tab = attr.values_list('TableName',flat=True)[0]
+        tab = attr[0].TableName
         where = where + ' and  {}.instance_value_id={}'.format(tab,val)
 
     return where
@@ -752,8 +750,8 @@ def save_instance_byid(Class_id,instance={}):
             ins=Instances.objects.get(pk=Instance_id)
             ins.Code=code
         ins.save()
-        fl=get_editfieldlist(Class_id,df_attributes)
-        for index,rec in fl.iterrows():
+        fl=get_editfieldlist(Class_id)
+        for rec in fl:
             if str(rec.id) in instance.keys():
                 save_attribute(ins.id,rec.id,instance[str(rec.id)])
         return True
@@ -776,18 +774,12 @@ def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True,
     ins.Updated=datetime.now(tz=timezone.utc)
     if user:
         ins.Updatedby=user
-    if Instance_id==0:
-        #check_insert_rights()
-        pass
-    else:
-        #check_edit_rights()
-        pass
     ins.save()
     res=ins.id
-    fl=get_editfieldlist(Class_id,df_attributes)
-    for index,rec in fl.iterrows():
+    fl=get_editfieldlist(Class_id)
+    for rec in fl:
         name=Attributes.objects.get(pk=rec.id).Attribute
-        if name in instance.keys() and (index!=0):
+        if name in instance.keys() and (name!='Code'):
             save_attribute(ins.id,rec.id,instance[name],passed_by_name=passed_by_name)
     return res
 
@@ -816,11 +808,11 @@ def get_reporttable(Report_id):
             'ReportName':r.Report}
 
 
-df_attributes=set_attributes()
-df_filters = set_filters()
+#df_attributes=set_attributes()
+#df_filters = set_filters()
 
 from django.dispatch import receiver
-@receiver(models.signals.post_save, sender=Attributes)
+#@receiver(models.signals.post_save, sender=Attributes)
 def update_attributes(sender, instance, **kwargs):
     global df_attributes
     global df_filters
