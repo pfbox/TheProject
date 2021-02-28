@@ -137,6 +137,7 @@ from bootstrap_modal_forms.forms import BSModalForm
 class InstanceForm(forms.Form):
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
     def __init__(self,*args,**kwargs):
+        print (datetime.now(),'form __init__')
         self.Class_id=kwargs.pop('Class_id')
         self.Instance_id = kwargs.pop('Instance_id')
         self.ReadOnly = kwargs.pop('ReadOnly')
@@ -151,7 +152,7 @@ class InstanceForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         # get form initial values
-        initrow={}
+        #initrow={}
         if self.Instance_id!=0:
             sql = create_val_sql(self.Instance_id,self.Class_id)
             with con.cursor() as cursor:
@@ -161,16 +162,17 @@ class InstanceForm(forms.Form):
         else:
             if len(self.Defaults)>0:
                 initrow=self.Defaults
-
-        for att in get_editfieldlist(self.Class_id):
+        old=datetime.now()
+        for att in get_editfieldlist(self.Class_id).iterator():
             if create_form_field_check(att):
                 self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
                 self.fields[att.Attribute].label = att.Attribute
                 self.fields[att.Attribute].widget.attrs['attr_id']=att.id
-                if att.MasterAttribute_id > 0:
-                    self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
-                self.fields[att.Attribute].widget.attrs['class']= \
-                    ' hierarchy_trigger' if att.hierarchy_trigger>0 else ''+  ' lookup_trigger' if att.lookup_trigger>0 else ''
+                if att.DataType_id == DT_Instance:
+                    if att.MasterAttribute_id > 0:
+                        self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
+                    self.fields[att.Attribute].widget.attrs['class']= \
+                        ' hierarchy_trigger' if att.hierarchy_trigger>0 else ''+  ' lookup_trigger' if att.lookup_trigger>0 else ''
 
                 if self.ReadOnly or att.DataType_id in [DT_Lookup]:
                     self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
@@ -189,6 +191,11 @@ class InstanceForm(forms.Form):
                         if len(self.Defaults)>0:
                             if att.Attribute in self.Defaults:
                                self.initial[att.Attribute] = self.Defaults[att.Attribute]
+            new=datetime.now()
+            diff=new-old
+            print (diff,att.Attribute)
+            old=new
+
 
         #add Save Button
         self.helper = FormHelper()
@@ -242,6 +249,7 @@ class InstanceForm(forms.Form):
             )
         self.helper.layout.append(Buttons)
         self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
+        print (datetime.now(),'form created')
 
 from string import Template
 

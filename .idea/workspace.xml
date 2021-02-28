@@ -22,16 +22,16 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-02-15">
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0041_auto_20210216_0141.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0042_auto_20210216_0210.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0043_auto_20210219_2224.py" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-02-27">
+      <change afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/report.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/datatable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/showproject.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showreport.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showreport.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -306,7 +306,7 @@
       <workItem from="1613070267078" duration="13490000" />
       <workItem from="1613104398522" duration="100798000" />
       <workItem from="1613866248871" duration="31404000" />
-      <workItem from="1614286007203" duration="8638000" />
+      <workItem from="1614286007203" duration="34148000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -322,7 +322,14 @@
       <option name="project" value="LOCAL" />
       <updated>1613437237918</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="2021-02-27">
+      <created>1614447329233</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1614447329233</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -343,7 +350,13 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="CUSTOM_BOOLEAN_PROPERTIES">
+                <map>
+                  <entry key="Show.Git.Branches" value="false" />
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
@@ -354,7 +367,8 @@
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="2021-01-17" />
     <MESSAGE value="2021-02-15" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-02-15" />
+    <MESSAGE value="2021-02-27" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-02-27" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -382,12 +396,8 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="kwargs" language="Python" />
-        <watch expression="request.POST.get_list()" language="Python" />
-        <watch expression="self.errors" language="Python" />
-        <watch expression="__py_debug_temp_var_1898434376.'Province' (1394762734448).data" />
-        <watch expression="settings" language="Python" />
-        <watch expression="settings.TEMPLATES" />
+        <watch expression="sql" language="Python" />
+        <watch expression="initrow" language="Python" />
       </configuration>
     </watches-manager>
   </component>

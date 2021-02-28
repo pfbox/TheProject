@@ -41,6 +41,7 @@ urlpatterns = [
     #path('TestFormset/', views.TestFormsetFactory.as_view(), name='change_tabletemplate'),
     path('ajax/change_master/<int:Attribute_id>', views.ajax_change_master, name='ajax_change_master'),
     path('ajax/classdata/<int:Class_id>', views.ajax_get_class_data, name='ajax_get_class_data'),
+    path('ajax/reportdata/<int:Report_id>', views.ajax_get_report_data, name='ajax_get_report_data'),
 
 ]
 

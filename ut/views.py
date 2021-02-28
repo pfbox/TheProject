@@ -576,6 +576,18 @@ def ajax_get_class_data(request,Class_id,filter={}):
         masterfilter = {request.GET['filtername']:request.GET['filtervalue']}
     qs=create_rawquery_from_attributes(Class_id=Class_id,masterclassfilter=masterfilter)
     # res['data'] = raw_queryset_as_dict(qs)
-    res['data'] = raw_queryset_as_dict(qs,DT_RowId=True,Actions=False)
+    res['data'] = raw_queryset_as_dict(qs,DT_RowId=False,Actions=False)
     #print (res['data'])
     return JsonResponse(res)
+
+def ajax_get_report_data (request, Report_id,filter={}):
+    r = Reports.objects.get(pk=Report_id)
+    sql = r.Query
+    cursor = con.cursor()
+    cursor.execute(sql)
+#    desc = cursor.description
+    res={}
+    res['data']=dictfetchall(cursor)
+    res['columns']=[col[0] for col in cursor.description]
+    return JsonResponse(res)
+
