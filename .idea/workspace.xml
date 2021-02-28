@@ -23,16 +23,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-02-27">
-      <change afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/report.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/datatable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showproject.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showreport.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showreport.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -306,7 +297,7 @@
       <workItem from="1613070267078" duration="13490000" />
       <workItem from="1613104398522" duration="100798000" />
       <workItem from="1613866248871" duration="31404000" />
-      <workItem from="1614286007203" duration="34148000" />
+      <workItem from="1614286007203" duration="34466000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
