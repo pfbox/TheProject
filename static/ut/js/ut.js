@@ -10,7 +10,7 @@ $(document).ready(function() {
           "</div>",
           "<script>",
           "$('.alert').fadeTo(2000, 500).slideUp(500, function () {$('.alert').slideUp(500).remove();});",
-          "<\/script>"
+          "</script>"
     ].join("");
     function get_next_instance_id_str(instance_id){
        if (instance_id==0){
@@ -19,7 +19,7 @@ $(document).ready(function() {
            cr = $('tr[data-id=' + instance_id + ']') //current row
            return '&next='+cr.next("tr").data('id')
        }
-    };
+    }
 
     $('#ModalFactory').on('click','.savechanges',function(){
         var btn=$(this)
@@ -55,7 +55,7 @@ $(document).ready(function() {
                     $('#msg').append(asyncSuccessMessage)
                     $('.classtable[data-class-id="'+Class_id+'"]').each(function(i,el){
                         if ($.fn.DataTable.isDataTable($(el))) {
-                            //$(el).DataTable().ajax.reload()
+                            $(el).DataTable().ajax.reload()
                         }
                     })
                 }
@@ -68,6 +68,32 @@ $(document).ready(function() {
     $("#ModalFactory").on('hidden.bs.modal','.modal', function () {
         $('.flatpickr-calendar').toggle() //???
         $(this).remove()
+    });
+    $('#ModalFactory').on('show.bs.modal', '.modal', function (event) {
+            var zIndex = 1040 + (10 * $('.modal:visible').length);
+            $(this).css('z-index', zIndex);
+            setTimeout(function() {
+                $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
+            }, 0);
+    });
+
+    $("#ModalFactory").on('change','.hierarchy_trigger,.lookup_trigger',function () {
+      var attr_id = $(this).attr('attr_id')
+      var master_value  = $(this).val()
+      var parentform=$(this).closest('form')
+      $.ajax({
+        url: "/ajax/change_master/12345".replace(/12345/, attr_id.toString()),
+        data : {'value': master_value,'Attribute_id':attr_id},
+        dataType: 'json',
+        success: function (data) {
+           $.each(data.attrs,function(key, ops){
+                //fill_new_options(parentform,key,ops);
+           });
+           $.each(data.lookups,function(key, value){
+                parentform.find('input[attr_id='+key+']').val(value) //!!! might be a circular reference
+           });
+        },
+      });
     });
 
     function get_hlink(el){
@@ -89,12 +115,21 @@ $(document).ready(function() {
             }
             return el.data('form-url')+eldefaults
         }
-
     }
     //for the table rows
+    $('main').on('change','.filterfield',function(){
+        var attribute_id=$(this).data('attribute-id')
+        var form = $(this).closest('form')
+        var class_id=form.data('class-id')
+        var table = form.closest('.classtable-with-filter').find('#instances'+class_id)
+        if ( $.fn.DataTable.isDataTable($(table))) {
+            table.DataTable().ajax.reload()
+        }
+    })
+
     $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance',function () {
         //elHeight$('#ModalFactory').find('.modal')
-        fmodal = $('<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true"></div>')
+        fmodal = $('<div class="modal fade" role="dialog" aria-hidden="true"></div>')
         mdialog = $('<div class="modal-dialog modal-xl modal-dialog-centered" role="document"></div>')
         mcontext = $('<div class="modal-content"></div>')
         $('#ModalFactory').append(fmodal.append(mdialog.append(mcontext)))
@@ -104,18 +139,13 @@ $(document).ready(function() {
             dataType : 'json',
             success : function (data){
                 fmodal.find('.modal-content').append(data.modalformcontent);
-                set_datatables()
+//                fmodal.find('.django-select2').djangoSelect2()
+                set_datatables(fmodal)
                 set_flatpickr()
+                //fmodal.find('.select2').djangoSelect2()
             }
         })
         $(fmodal).modal('show');
-    });
-    $('#ModalFactory').on('show.bs.modal', '.modal', function (event) {
-            var zIndex = 1040 + (10 * $('.modal:visible').length);
-            $(this).css('z-index', zIndex);
-            setTimeout(function() {
-                $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
-            }, 0);
     });
 
 //    $(".LoadInstances").modalForm({
@@ -142,24 +172,7 @@ $(document).ready(function() {
          });
          empty_child(parentform,attr_id);
     }
-    $("#ModalFactory").on('change','.hierarchy_trigger,.lookup_trigger',function () {
-      var attr_id = $(this).attr('attr_id')
-      var master_value  = $(this).val()
-      var parentform=$(this).closest('form')
-      $.ajax({
-        url: "/ajax/change_master/12345".replace(/12345/, attr_id.toString()),
-        data : {'value': master_value,'Attribute_id':attr_id},
-        dataType: 'json',
-        success: function (data) {
-           $.each(data.attrs,function(key, ops){
-                fill_new_options(parentform,key,ops);
-           });
-           $.each(data.lookups,function(key, value){
-                parentform.find('input[attr_id='+key+']').val(value) //!!! might be a circular reference
-           });
-        },
-      });
-    });
+
     function set_flatpickr() {
         flatpickr(".datetimeinput", {
             enableTime: true,
@@ -189,104 +202,124 @@ $(document).ready(function() {
     $('#ModalFactory').on('shown.bs.modal','.modal',function(){
         //set_flatpickr();
     })
-    function get_table_columns(table){
-        var cols=[]
-        table.find('thead th').each(function(i,el){
-            cols[cols.length]={'data':$(el).text()}
-        })
-        return cols
-    };
 
-    function set_datatables() {
-        $('.classtable').each(function (i, el) {
+    function set_datatables(mel) {
+        $(mel).find('.classtable').each(function (i, el) {
             if ( ! $.fn.DataTable.isDataTable($(el))) {
+                var filter_attr = $(el).data('ref-attribute')
+                var filter_val = $(el).closest('form').data('instance-id')
                 var class_id = $(el).data('class-id')
                 var report_id = $(el).data('report-id')
-                var filter_attr=$(el).data('ref-attribute')
-                var filter_val = $(el).closest('form').data('instance-id')
                 var buttons = []
+                var columnDefs = []
+                var fixedColumns = {}
+                var colReorder = {}
+                var dom = 't'
                 if (class_id) {
-                     buttons= [
-                         {
+                    fixedColumns = true //{leftColumns: 0,rightColumns: 1}
+                    colReorder = true //{ fixedColumnsRight : 1 }
+                    dom = 'lBfrtip'
+                    buttons = [
+                        {
                             extend: 'colvis',
                             collectionLayout: 'two-column',
                             postfixButtons: [
                                 'colvisRestore',
                                 {
-                                    text : 'Add Column',
-                                    action : function (e,dt,node,config){
-                                        onclick(window.location.href='/Attributes/'+class_id+'/add')
+                                    text: 'Add Column',
+                                    action: function (e, dt, node, config) {
+                                        onclick(window.location.href = '/Attributes/' + class_id + '/add')
                                     }
                                 },
                                 {
-                                    text : 'Edit Columns',
-                                    "data-form-url" : '/Attributes/'+class_id,
+                                    text: 'Edit Columns',
+                                    "data-form-url": '/Attributes/' + class_id,
                                 }
                             ],
                             text: "Columns",
-                            },
-                       {
+                        },
+
+                        {
                             text: 'Create',
-                            attr : {class:'createinstance dt-button',
-                                    "data-form-url" : '/Classes/edit/'+class_id+'/0',
-                                    "data-ref-attribute": filter_attr,
-                                    "data-ref-instance-id" : filter_val,
-                                   }
+                            attr: {
+                                class: 'createinstance dt-button',
+                                "data-form-url": '/Classes/edit/' + class_id + '/0',
+                                "data-ref-attribute": filter_attr,
+                                "data-ref-instance-id": filter_val,
+                            }
+                        },
+                        {
+                            text: 'Action',
+                            extend: 'collection',
+                            buttons: [
+                                'copy', 'csv',
+                                {
+                                    extend: 'excelHtml5',
+                                    title: '',
+                                    filename: 'uttable' + class_id
+                                },
+                                'pdf', 'print',
+                                {
+                                    text: 'Load',
+                                    action: function (e, dt, node, config) {
+                                        //This will send the page to the location specified
+                                        window.location.href = '/Load/' + class_id;
+                                    }
+                                },
+                            ]
+
+                        },
+                        {
+                            text: 'Filter',
+                            attr: {
+                                class: "dt-button",
+                                className: "btn btn-link",
+                                'type': "button",
+                                'data-toggle': "collapse",
+                                'data-target': "#collapseOne",
+                                'aria-expanded': "false",
+                                'aria-controls': "collapseOne",
+                            }
+
                         }
                     ]
-                }
-                var ajax_data=[]
-                var columns = [] // get_table_columns($(el));
-                //$(el).preventDefault();
-                var filter_data={}
-                if (filter_attr) {
-                    filter_data= {filtername: filter_attr, filtervalue: filter_val}
-                }
-                $.ajaxSetup({async:false});
-                $.ajax({
-                           "url": $(el).data('ajax-link'),
-                           "data": filter_data,
-                           "success" : function (data){
-                                var hrow=$(el).find('thead tr').first().empty()
-                                $.each(data.data[0], function (key, value) {
-                                    if (! (key in columns)) {
-                                        var my_item = {'data':key};
-                                        columns.push(my_item);
-                                        hrow.append('<th>'+key+'</th>')
-                                    }
-                                });
-                                if (class_id) {
-                                    hrow.append('<th>Action</th>')
-                                    columns.push({'data':'Actions'})
-                                }
-                               ajax_data=data.data;
-                           },
-                           "error" : function(){
-                                alert ('error loading data')
-                           },
-                           async : false,
-                });
-                $.ajaxSetup({async:true});
-                var table=$(el).removeAttr('width').DataTable({
-                    //searchPane:true,
-                    dom: 'lBfrtip',
-                    //scrollX:true,
-                    data: ajax_data,
-                    idSrc: 'id',
-                    columns: columns,
-                    columnDefs: [{
+                    columnDefs = [{
                         "targets": -1,
                         "data": null,
                         "defaultContent": '<a class="viewinstance"><i class="far fa-eye"></i></a>' +
                             '&nbsp<a class="editinstance" ><i class="far fa-edit"></i></a>' +
                             '&nbsp<a class="deleteinstance" ><i class="far fa-trash-alt"></i></a>',
-                        "width":30,
+                        "width": 30,
                         "orderable": false
-                    }],
-                    fixedColumns: true,
+                    }]
+                }
+                //$(el).preventDefault();
+                $.ajaxSetup({async: false});
+                if (true) { // if
+                    var ajax_response = get_table_columns(el)
+                }
+                //var ajax_data=ajax_response.ajax_data
+                var ajax_columns=ajax_response.ajax_columns
+                $.ajaxSetup({async:true});
+                var table=$(el).removeAttr('width').DataTable({
+                    //searchPane:true,
+                    dom: dom,
+                    scrollX:true,
+                    serverSide: true,
+                    ajax : {
+                        url : $(el).data('ajax-link'),
+                        data : function (d){
+                                return $.extend(d,create_filter_data(el))
+                        }
+                    },
+                    //data: ajax_data,
+                    idSrc: 'id',
+                    columns: ajax_columns,
+                    columnDefs: columnDefs,
+                    fixedColumns: fixedColumns,
                     stateSave: true,
                     buttons: buttons,
-                    colReorder: true,
+                    colReorder: colReorder,
                     createdRow: function (row, data,            dataIndex) {
                         $(row).attr('data-id', data.id);
                     },
@@ -294,12 +327,14 @@ $(document).ready(function() {
                         //set_filters(this.api())
                    },
                 });
-                var filter_columns=[];
-                $.each(columns,function(i,e){
-                    filter_columns.push({'column_number':i})
-                })
-                //yadcf.init(table,filter_columns);
-
+                //only search on "Enter" key
+                $(el).closest('.dataTables_wrapper').find(".dataTables_filter input")
+                    .unbind()
+                    .bind('keyup change', function (e) {
+                    if (e.keyCode == 13 || this.value == "") {
+                        table.search(this.value).ajax.reload()
+                    }
+                });
             }
         });
     };
@@ -323,7 +358,48 @@ $(document).ready(function() {
             } );
         } );
     };
-    set_datatables();
+
+    function create_filter_data(el) {
+        var filterform = $(el).closest('.classtable-with-filter').find('.classtablefilter')
+        var filter_val = $(el).closest('form').data('instance-id')
+        var filter_attr = $(el).data('ref-attribute')
+        var class_id = $(el).data('class-id')
+        var report_id = $(el).data('report-id')
+        var filter_data = {filterform: JSON.stringify(filterform.serializeArray())}
+        if (filter_attr) {
+            filter_data['filtername'] = filter_attr
+            filter_data['filtervalue'] = filter_val
+        }
+        return filter_data
+    }
+
+    function get_table_columns(el){
+        var ajax_columns=[]
+        var class_id = $(el).data('class-id')
+        var report_id = $(el).data('report-id')
+        $.ajax({
+            "url": $(el).data('ajax-columns-link'),
+            "success" : function (data){
+                    var hrow = $(el).find('thead tr').first().empty()
+                    $.each(data.columns, function (i,key) {
+                        var my_item = {'data': key};
+                        ajax_columns.push(my_item);
+                        hrow.append('<th>' + key + '</th>')
+                    });
+                    if (class_id) {
+                        hrow.append('<th>Action</th>')
+                        ajax_columns.push({'data': 'Actions'})
+                    }
+                },
+            "error" : function(){
+                alert ('error loading data')
+            },
+            async : false,
+        });
+        return {'ajax_columns':ajax_columns}
+    }
+    set_datatables('main');
+//    create_filter_data('.classtable')
 });
 
 

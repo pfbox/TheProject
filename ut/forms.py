@@ -5,7 +5,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div,ButtonHolder
 from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
 from django.urls import reverse,reverse_lazy
-from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget
+from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget, ModelSelect2Widget
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -51,20 +51,24 @@ class AttributeForm(forms.ModelForm):
         self.fields['Class'].queryset = Classes.objects.all()
         instance = getattr(self, 'instance', None)
         if instance and instance.pk:
+            self.Class_id = self.initial['Class']
+            self.Ref_Class = self.initial['Ref_Class']
             self.initial.update({'Class_id':instance.Class.id})
             self.Class_id=instance.Class.id
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Class'].required = False
             self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(
-                Q(Class_id=self.Ref_Class.id) | Q(Class_id=0))
+                Q(Class_id=self.Ref_Class) | Q(Class_id=0))
             self.fields['InternalAttribute'].queryset = Attributes.objects.filter(
-                Q(Class_id=self.Class.id) | Q(Class_id=0))
+                Q(Class_id=self.Class_id) | Q(Class_id=0))
         else:
+            self.Class_id=0
+            self.Ref_Class=0
             self.fields['Class'].required = False
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Ref_Class'].queryset = Classes.objects.all()
             self.fields['Ref_Attribute'].queryset = Attributes.objects.all()
-            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=kwargs['initial']['Class_id'])| Q(Class_id=0))
+            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id)| Q(Class_id=0))
 
 
     def save(self,commit=True):
@@ -121,10 +125,11 @@ class FilterEditForm(forms.ModelForm):
         self.instance.Class=Classes.objects.get(pk=Class_id)
         return super(FilterEditForm, self).save(commit=commit)
 
-
-from bootstrap_modal_forms.forms import BSModalForm
-class UploadInstances(BSModalForm):
+class UploadInstances(forms.Form):
+    #error_choises=((0,'Ignore'),(1,'Raise'))
     file = forms.FileField()
+    Commit = forms.ChoiceField(choices=((100,'Every 100'),(1000,'Every 1k'),(10000,'Every 10k')))
+    Errors = forms.ChoiceField(choices=(('ignore','Ignore'),('raise','Raise')))
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -132,8 +137,8 @@ class UploadInstances(BSModalForm):
         self.helper.add_input(Submit('submit', 'Upload'))
 
 from .formtemplate import *
-from bootstrap_modal_forms.forms import BSModalForm
 
+from django_select2 import forms as s2forms
 class InstanceForm(forms.Form):
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
     def __init__(self,*args,**kwargs):
@@ -153,32 +158,41 @@ class InstanceForm(forms.Form):
 
         # get form initial values
         #initrow={}
+        it=datetime.now()
         if self.Instance_id!=0:
             sql = create_val_sql(self.Instance_id,self.Class_id)
             with con.cursor() as cursor:
                 cursor.execute(sql)
                 initrow=dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
-            pass
         else:
             if len(self.Defaults)>0:
                 initrow=self.Defaults
+            else:
+                initrow={}
+        print ('initrow done in:',datetime.now()-it)
+
         old=datetime.now()
         for att in get_editfieldlist(self.Class_id).iterator():
             if create_form_field_check(att):
+                print (datetime.now()-old,'--before create field')
                 self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
                 self.fields[att.Attribute].label = att.Attribute
                 self.fields[att.Attribute].widget.attrs['attr_id']=att.id
+                print (datetime.now()-old,'--before masterattribute_id')
                 if att.DataType_id == DT_Instance:
                     if att.MasterAttribute_id > 0:
                         self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
-                    self.fields[att.Attribute].widget.attrs['class']= \
-                        ' hierarchy_trigger' if att.hierarchy_trigger>0 else ''+  ' lookup_trigger' if att.lookup_trigger>0 else ''
-
+                    print(datetime.now() - old, '--before hierarchy and lookup')
+                    widgetclass=self.fields[att.Attribute].widget.attrs.get('class')
+                    widgetclass= '' if pd.isnull(self.fields[att.Attribute].widget.attrs.get('class')) else widgetclass
+                    self.fields[att.Attribute].widget.attrs['class']= widgetclass \
+                        +(' hierarchy_trigger' if att.hierarchy_trigger>0 else '') + (' lookup_trigger' if att.lookup_trigger>0 else '')
+                print (datetime.now()-old,'-- before Readonly')
                 if self.ReadOnly or att.DataType_id in [DT_Lookup]:
                     self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
                     self.fields[att.Attribute].widget.attrs['disabled'] = "disabled"
                     #self.fields[att.Attribute].required = False
-
+                print (datetime.now()-old,'-- before manytomany')
                 if self.Instance_id!=0:
                     if att.DataType_id in [DT_ManyToMany]:
                         self.initial[att.Attribute]=list(Values_m2m.objects.filter(Instance_id=self.Instance_id,Attribute_id=att.id).values_list('instance_value_id',flat=True))
@@ -244,6 +258,7 @@ class InstanceForm(forms.Form):
                 Button(value='Save',name='save',css_class='btn btn-primary savechanges',css_id='save'),
                 Button(value='Save&Next',name='savenext',css_class='btn btn-primary savechanges',css_id='savenext') if self.Instance_id!=0
                 else Button(value='Save&New',css_class='btn btn-primary savechanges',name='savenext',css_id='savenext'),
+                Button(value='SendEmail',name='sendemail',css_class='btn btn-primary sendemail',css_id='sendemail'),
                 Button(value='Close',name='close',css_class='btn-secondary',data_dismiss='modal'),
                 css_class='buttonHolder modal-footer'
             )
@@ -273,27 +288,10 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
             if dt in [DT_Table]:
                 a=Template("""
                 $attname
-                <table id="table$tb" class="classtable" style="width:100%"  data-class-id="$refclass" 
-                        data-ajax-link="{% url "ut:ajax_get_class_data" $refclass %}" 
-                        data-ref-attribute="$refattr">
-                    <thead>
-                        {% for c in columns$tb %}
-                            <th>{{ c }}</th>
-                        {% endfor %}
-                        <th>Actions</th>
-                    </thead>
-                </table>
+                {% with Class_id=$refclass Ref_Attribute="$refattr" %}
+                    {% include "ut/datatable.html" %}
+                {% endwith%}
                 """)
-                old_django_table_template="""
-                {% load render_table from django_tables2 %}
-                <div class="tableishere"><label>$attname</label> 
-                    {% if table$tb %}
-                       {% render_table table$tb  %}
-                    {% else %}
-                       no such table table$tb
-                    {% endif %}                
-                 </div>
-                """
                 master.append(HTML(a.substitute(tb=attr.id,attname=attr.Attribute,refclass=attr.Ref_Class_id,refattr=refattr)))
             elif clname=='Column': #form-group flex-grow-1 d-flex flex-column
                 master.append(cls(v,css_class=cssclass))
@@ -312,25 +310,32 @@ class Subform(forms.Field):
 class InstanceFilterForm(forms.Form):
     def __init__(self,Class_id=0,filter={},*args,**kwargs):
         self.Class_id=Class_id #kwargs.pop('Class_id')
+
         #self.Class_id=kwargs.pop('filter')
         super().__init__(*args, **kwargs)
         #add Save Button
         self.helper = FormHelper()
+        self.helper.attrs = {'class':'classtablefilter','data-class_id':Class_id, 'onsubmit':'return false'}
         self.helper.form_method = 'get'
         self.helper.layout=Layout()
         r=Row()
         for f in Filters.objects.filter(Q(Class_id=self.Class_id)|Q(Class_id=0)):
             att=get_attribute(f.Attribute1.id)
-            Attribute=f.Attribute1.Attribute
             if f.FilterType == FT_MinMax:
                 self.fields['__min__'+f.Filter] = create_form_field(att,usedinfilter=True,fn=f.Filter)
                 self.fields['__min__'+f.Filter].initial=filter.get('__min__'+f.Filter)
                 self.fields['__min__'+f.Filter].label = False
                 self.fields['__min__' + f.Filter].help_text = 'min'
+                self.fields['__min__' + f.Filter].widget.attrs['data-filter-id']=f.id
+                self.fields['__min__' + f.Filter].widget.attrs['data-filter-type'] = 'min'
+                self.fields['__min__' + f.Filter].widget.attrs['class'] = 'filterfield'
                 self.fields['__max__'+f.Filter] = create_form_field(att,usedinfilter=True,fn=f.Filter)
                 self.fields['__max__'+f.Filter].initial = filter.get('__max__' + f.Filter)
                 self.fields['__max__'+f.Filter].label = False
                 self.fields['__max__' + f.Filter].help_text = 'max'
+                self.fields['__max__' + f.Filter].widget.attrs['data-filter-id']=f.id
+                self.fields['__max__' + f.Filter].widget.attrs['data-filter-type'] = 'max'
+                self.fields['__max__' + f.Filter].widget.attrs['class'] = 'filterfield'
                 r.append(Div(HTML('<label>{}</label>'.format(f.Filter)),
                              Row(Column('__min__'+f.Filter),
                                  Column('__max__'+f.Filter)
@@ -339,16 +344,19 @@ class InstanceFilterForm(forms.Form):
             else:
                 self.fields[f.Filter]=create_form_field(att,usedinfilter=True,fn=f.Filter)
                 self.fields[f.Filter].initial = filter.get(f.Filter)
+                self.fields[f.Filter].widget.attrs['data-filter-id']=f.id
+                self.fields[f.Filter].widget.attrs['data-filter-type'] = f.FilterType
+                self.fields[f.Filter].widget.attrs['class'] = 'filterfield'
                 r.append(Column(f.Filter,css_class='col-sm-{}'.format(f.Size)))
 
         self.helper.layout.append(r)
-        self.helper.layout.append(HTML('<input type="hidden" id="sortfield" name="sortfield" value="{{sortfield}}">'))
-        self.helper.add_input(Submit('submit','Filter'))
-        self.helper.add_input(Submit('reset', 'Reset'))
-        self.helper.add_input(Button('cancel', 'Cancel',css_class='btn-primary'))
-        self.helper.add_input(Button('save_to_xls', 'Save to xls',css_class='btn-primary',onclick="location.href='"+str(reverse_lazy('ut:instances',args=(self.Class_id,1)))+"'"))
-        self.helper.add_input(Button('load_from_xls', 'Load from xls',css_class='btn-primary',
-                                     onclick="location.href='"+str(reverse_lazy('ut:loadinstances',args=(self.Class_id,)))+"'"))
+        #self.helper.layout.append(HTML('<input type="hidden" id="sortfield" name="sortfield" value="{{sortfield}}">'))
+        #self.helper.add_input(Submit('submit','Filter'))
+        #self.helper.add_input(Submit('reset', 'Reset'))
+        #self.helper.add_input(Button('cancel', 'Cancel',css_class='btn-primary'))
+        #self.helper.add_input(Button('save_to_xls', 'Save to xls',css_class='btn-primary',onclick="location.href='"+str(reverse_lazy('ut:instances',args=(self.Class_id,1)))+"'"))
+        #self.helper.add_input(Button('load_from_xls', 'Load from xls',css_class='btn-primary',
+        #                             onclick="location.href='"+str(reverse_lazy('ut:loadinstances',args=(self.Class_id,)))+"'"))
 
 
 #from bootstrap_modal_forms.forms import BSModalModelForm
@@ -356,3 +364,29 @@ class InstanceFilterForm(forms.Form):
 #class BookModelForm(BSModalModelForm):
 #    Intfield=forms.IntegerField()
 #    CharField=forms.CharField(max_length=50)
+
+class SendClassEmailForm(forms.Form):
+    to = forms.EmailField(required=True)
+    cc = forms.EmailField(required=False)
+    subject = forms.CharField(required=True,max_length=255)
+    text_body = forms.CharField(widget=forms.Textarea(attrs={'rows':10}),required=False)
+    def __init__(self,*args,**kwargs):
+        self.Class_id=kwargs.pop('Class_id')
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.attrs = {'class':'sendemail','data-class_id':self.Class_id}
+        self.helper = FormHelper()
+        Buttons = ButtonHolder(
+            Submit('submit','Send', css_class='btn btn-primary savechanges', css_id='save'),
+            Button(value='Cancel', name='cancel', css_class='btn-secondary', data_dismiss='modal'),
+            css_class='buttonHolder modal-footer'
+        )
+        self.helper.layout=Layout()
+        self.helper.layout.append(Row('to'))
+        self.helper.layout.append(Row('cc'))
+        self.helper.layout.append(Row('subject'))
+        self.helper.layout.append(Row('text_body'))
+        self.helper.layout.append(Buttons)
+
+
+

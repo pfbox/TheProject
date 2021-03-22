@@ -16,15 +16,18 @@
     <div class="container">
         <div class="row">
         {% if projects%}
-            {% for p in projects%}
+            {% for p in projects %}
                     <div class="col">
                       <div class="card mb-2 box-shadow">
                         <!--img class="card-img-top" src="https://upload.wikimedia.org/wikipedia/en/e/ec/Soccer_ball.svg" alt="Card image cap"-->
                         <div class="card-body">
                           <h5 class="card-title">{{p.Project}}</h5>
                           <p class="card-text">{{p.Description}}</p>
-                          {% render_table defaultreports|lookup:p.id %}
-                          <div class="d-flex justify-content">
+                                {% with Report_id=p.DefaultReport_id %}
+                                    {% include "ut/report.html" %}
+                                {% endwith %}
+
+                            <div class="d-flex justify-content">
                             <div>
                             <ul class="list-group" >
                                 <h6>Reports</h6>

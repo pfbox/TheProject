@@ -8,10 +8,13 @@ from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 import re
+from django.urls import reverse,reverse_lazy
+from .widgets import utHeavyWidget
 
 from django_tables2.utils import A
 
-from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget
+from django_select2.forms import Select2MultipleWidget
+
 
 from django.forms import DateInput,DateTimeInput,TimeInput,SplitDateTimeField,SplitDateTimeWidget
 
@@ -31,16 +34,19 @@ df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.se
 #df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
 df_filters=pd.DataFrame()
 
-select_options_sql="""
+select_options_sql=r"""
 select 
 i.id, i.Code,v2.char_value from ut_instances i, ut_values v , ut_values v2
 WHERE 
-v.Instance_id=i.id and 
+ v.Instance_id=i.id and 
 v2.Instance_id=i.id and
 i.Class_id = {cl} and
 v.instance_value_id={val} and
-v2.Attribute_id={att} 
+v2.Attribute_id={att}
+and v2.char_value like '%term%'
 """
+
+#Values.objects(Attribute_id=Attribute_id,char_value__icontains=term, )
 
 select_simple_options_sql="""
 select 
@@ -195,10 +201,10 @@ def calculated(dt):
     else:
         return False
 
-def get_options(Attribute_id=0,values={},validation=False) :
+def get_options(Attribute_id=0,SelectedInstance_id=None,values={},validation=False,term='') :
     attr=get_attribute(Attribute_id)
     instances={}
-    if (attr.MasterAttribute_id>0) and (not validation):
+    if False: #(attr.MasterAttribute_id>0) and (not validation):
         m_attr=get_attribute(attr.MasterAttribute_id)
         tmp=values.get(m_attr.Attribute)
         if pd.notnull(tmp):
@@ -210,14 +216,22 @@ def get_options(Attribute_id=0,values={},validation=False) :
             for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id):
                 instances[r.Instance_id]=r.Instance.Code
         else:
-            for r in Instances.objects.raw(select_options_sql.format(val=m_value  ,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id)):
+            for r in Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id)):
                 instances[r.id]=r.char_value
     else:
         if attr.Ref_Attribute_id == 0:
-            for r in Instances.objects.filter(Class_id=attr.Ref_Class_id):
+            if pd.isnull(SelectedInstance_id):
+                filter=Q(Class_id=attr.Ref_Class_id)
+            else:
+                filter = Q(Class_id=attr.Ref_Class_id)&Q(id=SelectedInstance_id)
+            for r in Instances.objects.filter(filter):
                 instances[r.id]=r.Code
         else:
-            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id):
+            if pd.isnull(SelectedInstance_id):
+                filter=Q(Attribute_id=attr.Ref_Attribute_id)
+            else:
+                filter = Q(Attribute_id=attr.Ref_Attribute_id)&Q(Instance_id=SelectedInstance_id)
+            for r in Values.objects.filter(filter):
                 instances[r.Instance_id]=r.char_value
     return instances
 
@@ -232,6 +246,12 @@ def create_form_field_check(attr):
         res=True
     return res
 
+from django.forms import ModelChoiceField
+
+class MyModelChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.char_value
+
 def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={},fn='',validation=False):
     if fn == '':
         FieldName=attr.Attribute
@@ -240,6 +260,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     dt=attr.DataType_id
     if usedinfilter:
         req=False
+        fclass='filterfield'
     else:
         req=attr.NotNullAtt
     valueslist=attr.ValuesList
@@ -259,7 +280,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                 vl=json.loads(valueslist)
             except:
                 print ('Could not load list of values for field',FieldName,'Class =',attr.Class_id,' String=',valueslist)
-    if dt in [DT_Integer]:
+    if dt in [DT_Integer,DT_Boolean]:
         if vl=='':
             field=forms.IntegerField(required=req)
         else:
@@ -284,13 +305,28 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     elif dt in [DT_Time]:
         field = forms.TimeField(required=req, widget=TimeInput(format=('%H:%M'),attrs={'class':'timefield','autocomplete': 'off'}))
     elif dt in [DT_Instance]:
-        op=get_options(Attribute_id=attr.id,values=values,validation=validation)
-        if usedinfilter:
-            ch=[(-1,'(All)')]
+        if validation:
+            field = forms.IntegerField(required=req)
         else:
-            ch=[]
-        ch=ch+[(0,'(None)')]+[(k, v) for k, v in op.items()]
-        field=forms.ChoiceField(choices=ch,required=req)
+            if True : #usedinfilter: attr.InputType_id==IT_Select2:
+                if usedinfilter:
+                    op = {}
+                else:
+                    op = get_options(Attribute_id=attr.id,SelectedInstance_id=values.get(attr.Attribute),values=values, validation=validation)
+                ch = [(k, v) for k, v in op.items()]
+                field = forms.ChoiceField(choices=ch,required=req,
+                    widget= utHeavyWidget(data_url=reverse_lazy('ut:ajax_get_attribute_options',kwargs={'Class_id':attr.Class_id,'Attribute_id':attr.id})
+                                               ,attrs={"data-minimum-input-length": 0}
+                                               ,dependent_fields= (attr.dependent_fields if not usedinfilter else None),
+                ))
+            else:
+                op = get_options(Attribute_id=attr.id, values=values, validation=validation)
+                if usedinfilter:
+                    ch = [(-1, '(All)')]
+                else:
+                    ch = []
+                ch = ch + [(0, '(None)')] + [(k, v) for k, v in op.items()]
+                field=forms.ChoiceField(choices=ch,required=req)
     elif dt == [DT_Datetime]:
         field = forms.DateTimeField(required=req)
     elif dt == DT_Boolean: #boolean
@@ -383,8 +419,7 @@ def set_attributes():
     return df_attr
 
 
-att_columns=['id','DataType_id','FT_Exact','FT_Contains','FT_Like','FT_Min','FT_Max']
-filter_expression_columns=['FT_Exact','FT_Contains','FT_Like','FT_Min','FT_Max']
+
 def make_filter_expression(f):
     res={}
     for ft in filter_expression_columns:
@@ -396,20 +431,11 @@ def make_filter_expression(f):
         res[ft] = ' and ('+expr+')'
     return res
 
-def set_filters():
-    ft_sql="select * from ut_filters"
-    df_filters=pd.read_sql(ft_sql, con)
-    df_filters = pd.merge(df_filters,df_attributes[att_columns],left_on='Attribute1_id',right_on='id',how='left',suffixes=['','_at1'])
-    df_filters = pd.merge(df_filters,df_attributes[att_columns],left_on='Attribute2_id',right_on='id',how='left',suffixes=['','_at2'])
-    df_filters = pd.merge(df_filters,df_attributes[att_columns],left_on='Attribute2_id',right_on='id',how='left',suffixes=['','_at3'])
-    df_filters['Expression']=df_filters.apply(lambda x: make_filter_expression(x),axis=1)
-    return df_filters
-
 def get_filter(Filter_id=-1,Class_id=0,FilterName=''):
     if Filter_id!=-1:
-        res=df_filters[df_filters.id==Filter_id].iloc[0]
+        res=Filters.objects.get(pk=Filter_id)
     else:
-        res=df_filters[df_filters.Class_id.isin([Class_id,0])&(df_filters.Filter==FilterName)].iloc[0]
+        res=Filters.objects.get(Class_id__in=[Class_id,0],Filter=FilterName)
     return res
 
 def get_attribute(id):
@@ -428,15 +454,52 @@ def get_tableviewlist(Class_id):
 def get_fulllist(Class_id):
     return Attributes.objects.filter(Class_id__in=[Class_id,0])
 
-def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={}):
-    sql = create_qs_sql(Class_id)['sql'] + '\n' + create_filter_for_sql(Class_id, filter,masterclassfilter)
+
+def create_orderby(Class_id,orderby):
+    res=''
+    ord=[]
+    for key,val in orderby.items():
+        ord.append(' "{}" {}'.format(key,val))
+    if len(ord)>0:
+        res='Order by' + ','.join(ord)
+    return res
+
+def create_limit_offset(Class_id,limit=None,offset=None):
+    lostr=''
+    if not pd.isnull(limit):
+        lostr=lostr + ' LIMIT {}'.format(limit)
+    if not pd.isnull(offset):
+        lostr=lostr + ' OFFSET {}'.format(offset)
+    return lostr
+
+def create_search_all(columns,search=''):
+    tmp=[]
+    for c in columns:
+        tmp.append("{f} like '%{s}%'".format(f=c,s=search))
+    return ' and (' +' or '.join(tmp) + ')'
+
+def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={},orderby={},search='',limit=None,offset=None):
+    sql_col= create_qs_sql(Class_id)
+    columns= sql_col['selectfields'] #real db field (not aliases)
+    # order by create by aliases
+    # searchig all fields only if search > ''
+    sql = sql_col['sql'] + '\n' \
+          + create_filter_for_sql(Class_id=Class_id, filter=filter,masterclassfilter=masterclassfilter) + '\n' \
+          + ( create_search_all(columns=columns,search=search) if search!='' else '' ) +'\n' \
+          + create_orderby(Class_id=Class_id,orderby=orderby) + '\n' \
+          + create_limit_offset(Class_id=Class_id,limit=limit,offset=offset)
     #print (sql)
     return sql
 
-def create_rawquery_from_attributes(Class_id=0,filter={},masterclassfilter={}):
-    sql=create_rawquery_sql(Class_id,filter,masterclassfilter)
+def create_rawquery_from_attributes(Class_id=0,filter={},masterclassfilter={},orderby={},search='',offset=None,limit=None):
+    sql=create_rawquery_sql(Class_id,filter,masterclassfilter,orderby=orderby,search=search,offset=offset,limit=limit)
     qs=Instances.objects.raw(sql)
     return qs
+
+def create_count_sql(Class_id=0,filter={},masterclassfilter={},search=''):
+    sql = create_rawquery_sql(Class_id=Class_id, filter=filter, masterclassfilter=masterclassfilter,search=search)
+    sql = 'select 0 as id, count(*) as Count from (' + sql + ') ct'
+    return sql
 
 def create_val_sql(Instance_id,Class_id):
     atts=get_tableviewlist(Class_id=Class_id)
@@ -499,7 +562,7 @@ def create_qs_sql(Class_id=0):
     """.format(Class_id=Class_id, user_id=user_id)
     sql=sselect +'\n' + sfrom + '\n' + swhere
     #print (sql)
-    return {'sql':sql,'columns':ss.keys()}
+    return {'sql':sql,'columns':ss.keys(),'selectfields':ss.values()}
 
 def get_value(Instance_id,Attribute_id):
     DataType=Attributes.objects.get(pk=Attribute_id).DataType.id
@@ -660,7 +723,7 @@ def create_filter_for_sql(Class_id,filter={},masterclassfilter={}):
         if type=='':
             type=d[f.FilterType]
         #
-        if val!='' and (not (val=='-1' and f.DataType_id==6)):
+        if val!='' and (not (val=='-1' and f.Attribute1.DataType.id==6)):
             where = where + f.Expression[type].format(val=val)
 
     for key,val in masterclassfilter.items():
@@ -727,16 +790,13 @@ def raw_queryset_as_values_list(raw_qs):
         res.append(tuple( getattr(row, col) for col in columns ))
     return res
 
-def raw_queryset_as_dict(raw_qs,DT_RowId=False,Actions=False):
+def raw_queryset_as_dict(sql):
     res=[]
-    columns = raw_qs.columns
-    for row in raw_qs:
-        r= {'DT_RowId':row.id} if DT_RowId else {}
-        for col in columns:
-            r[col]=getattr(row,col)
-        if Actions:
-            r['Actions']=''
-        res.append(r)
+    #columns = raw_qs.columns
+    with con.cursor() as cursor:
+        cursor.execute(sql)
+        columns=cursor.description
+        res = dictfetchall(cursor)
     return res
 
 @transaction.atomic
@@ -757,10 +817,11 @@ def save_instance_byid(Class_id,instance={}):
         return True
 
 @transaction.atomic
-def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True,user=None):
+def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True):
     res=False
+    user = get_current_user()
     #Class_id=Instances.objects.get(pk=Instance_id).Class.id
-    code=instance['Code']
+    code=instance.get('Code')
     if code=='':
         code=None
     if (Instance_id==0) and (passed_by_name) and pd.isnull(code):
@@ -806,28 +867,3 @@ def get_reporttable(Report_id):
     extra_columns = [(c[0], tables.Column()) for c in cursor.description]
     return {'table': ReportTable(data=t,extra_columns=extra_columns),
             'ReportName':r.Report}
-
-
-#df_attributes=set_attributes()
-#df_filters = set_filters()
-
-from django.dispatch import receiver
-#@receiver(models.signals.post_save, sender=Attributes)
-def update_attributes(sender, instance, **kwargs):
-    global df_attributes
-    global df_filters
-    from .utclasses import set_attributes,set_filters
-    df_attributes=set_attributes()
-    print ('Reset Attributes. ',instance.Attribute,'changed')
-    df_filters = set_filters()
-
-
-
-
-
-
-
-
-
-
-

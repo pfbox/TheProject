@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load render_table from django_tables2 %}
+
+{% block content %}
+
+{% load crispy_forms_tags %}
+
+<div class="container-fluid">
+<div class="col-md-12">
+        {% crispy form %}
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+
+<div id="ModalFactory">
+</div>
+
+{% endblock %}

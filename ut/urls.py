@@ -39,10 +39,13 @@ urlpatterns = [
     path('Template/<str:Style>/<int:Class_id>/', views.TableTemplateView.as_view(), name='change_tabletemplate'),
     #path('TestModalForm/', views.TestModal.as_view(), name='testmodal'),
     #path('TestFormset/', views.TestFormsetFactory.as_view(), name='change_tabletemplate'),
-    path('ajax/change_master/<int:Attribute_id>', views.ajax_change_master, name='ajax_change_master'),
-    path('ajax/classdata/<int:Class_id>', views.ajax_get_class_data, name='ajax_get_class_data'),
-    path('ajax/reportdata/<int:Report_id>', views.ajax_get_report_data, name='ajax_get_report_data'),
-
+    path('ajax/change_master/<int:Attribute_id>/', views.ajax_change_master, name='ajax_change_master'),
+    path('ajax/classdata/<int:Class_id>/', views.ajax_get_class_data, name='ajax_get_class_data'),
+    path('ajax/classcolumns/<int:Class_id>/', views.ajax_get_class_columns, name='ajax_get_class_columns'),
+    path('ajax/reportdata/<int:Report_id>/', views.ajax_get_report_data, name='ajax_get_report_data'),
+    path('ajax/reportcolumns/<int:Report_id>/', views.ajax_get_report_columns, name='ajax_get_report_columns'),
+    path('ajax/get_attribute_options/<int:Class_id>/<int:Attribute_id>/', views.ajax_get_attribute_options, name='ajax_get_attribute_options'),
+    path('sendclassemail/<int:Class_id>/',views.send_class_email_view.as_view(),name='send_class_email_view'),
 ]
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns

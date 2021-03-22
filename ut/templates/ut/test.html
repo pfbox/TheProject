@@ -1,7 +1,7 @@
-{% load render_table from django_tables2 %}
-
-{% if table %}
-   {% render_table table  %}
-{% else %}
-   'no such table'
-{% endif %}
+    $('main').on('change','.filterfield',function(){
+        var attribute_id=$(this).data('attribute-id')
+        var form = $(this).closest('form')
+        var class_id=form.data('class_id')
+        var table = $('#instances'+class_id)
+        //var ajax_data=get_table_data(table,true,form=none)
+    })

@@ -22,7 +22,7 @@ def index(request):
     default_reports=Projects.objects.filter(DefaultReport__isnull=False)
     dr = {}
     for r in default_reports:
-        dr[r.id]=get_reporttable(r.DefaultReport_id)['table']
+        dr[r.id]=r.DefaultReport.id #get_reporttable(r.DefaultReport_id)['table']
     context=get_base_context()
     #context={'table_list':am.to_dict('records')}
     context['classes']=Classes.objects.all()
@@ -132,7 +132,7 @@ class edit_instance_base(View):
         res = {}
         if form.is_valid():
             try:
-                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False,user=request.user)
+                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
                 res['success'] = True
                 if request.POST.get('action')=='savenext':
                     #newrequest = RequestFactory().get('/')
@@ -221,27 +221,17 @@ class ReportRun(View):
         t=dictfetchall(cursor)
         extra_columns=[(c[0], tables.Column()) for c in cursor.description]
         context=get_base_context()
-        context['table']=ReportTable(data=t,extra_columns=extra_columns)
+        #context['table']=ReportTable(data=t,extra_columns=extra_columns)
         context['Report_id']=Report_id
         context['ReportName']=r.Report
         return render(request, self.template, context)
 
 def instances(request,Class_id,SaveToExl=False,Project_id=0):
-    if Class_id==0 and Project_id!=0:
-        Class_id=Projects.objects.filter(id=Project_id).values_list('Classes_m2m').first()[0]
-    filter = {}
-    sort=None
-    if request.method=='GET':
-        if request.GET.get('sort'):
-            sort=request.GET.get('sort')
-        else:
-            sort = request.GET.get('sortfield')
-        for key, value in request.GET.items():
-            if (value!='')&(key not in ['sort','page','submit','sortfield']):
-                filter[key]=value
+    if Class_id == 0 and Project_id != 0:
+        Class_id = Projects.objects.filter(id=Project_id).values_list('Classes_m2m').first()[0]
 
-    filterform= InstanceFilterForm(Class_id=Class_id,filter=filter) #create_filter_set(Class_id,filter)
-
+    defaultfiler = {}
+    filterform = InstanceFilterForm(Class_id=Class_id, filter=defaultfiler)  # create_filter_set(Class_id,filter)
 
     if SaveToExl:
         qs = create_rawquery_from_attributes(Class_id, filter)
@@ -249,8 +239,8 @@ def instances(request,Class_id,SaveToExl=False,Project_id=0):
     else:
         pass
 
-    context = get_base_context({'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform,'sortfield':sort})
-    context['columns']=create_qs_sql(Class_id)['columns']
+    context = get_base_context({'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform})
+    #context['columns']=create_qs_sql(Class_id)['columns']
 
     if Project_id!=0:
         context['Project']=Projects.objects.get(pk=Project_id)
@@ -442,16 +432,74 @@ def export_instances_xls_2(request,raw_qs):
 
 #from somewhere import handle_uploaded_file
 
-def handle_uploaded_file(f,Class_id):
-    ins=pd.read_excel(f).to_dict('records')
-    for rec in ins:
-        save_instance_byname(Class_id=Class_id,instance=rec)
+from django.db.models import Count, F
+from django.db import transaction
+#@transaction.atomic
+def handle_uploaded_file(f,Class_id,commitevery=0,errors='raise'):
+    ignore_conflicts= (errors=='ignore')
+    totalins=pd.read_excel(f)
+    totallen=len(totalins)
+    ranges=[]
+    if commitevery==0:
+        ranges.append([0,len(totallen)])
+    else:
+        rnum= totallen // commitevery
+        rres= totallen % commitevery
+        for i in range(0,rnum):
+            ranges.append([i*commitevery,(i+1)*commitevery])
+        if rres > 0:
+            ranges.append([rnum*commitevery,rnum*commitevery+rres])
+
+    for irange in ranges:
+        print ('saving class',Class_id,'from',irange[0],'to',irange[1])
+        with transaction.atomic():
+            ins=totalins[irange[0]:irange[1]]
+            user=get_current_user()
+            ctime=datetime.now()
+            if not ('Code' in ins.columns):
+                ins['Code']=ins.apply(lambda x: get_next_counter(Class_id))
+            newinstances=ins.Code.apply(lambda x: Instances(Class_id=Class_id,Code=x,Updatedby=user,Updated=ctime))
+            Instances.objects.bulk_create(list(newinstances),ignore_conflicts=ignore_conflicts)
+            ids = pd.DataFrame(list(Instances.objects.filter(Class_id=Class_id,Code__in=list(ins.Code)).values()))
+            ins=pd.merge(ins,ids[['id','Code']],on='Code',how='inner')
+
+            #print ([r for r in ins.iterrows()])
+            fl=get_editfieldlist(Class_id)
+            for attr in fl:
+                #att=Attributes.objects.get(pk=rec.id).Attribute
+                if attr.Attribute in ins.columns and (attr.Attribute!='Code'):
+                    dt=attr.DataType_id
+                    fieldname=get_fieldname(dt)
+                    ins_name=attr.Attribute
+                    if dt in DTG_Instance:
+                        if attr.Ref_Attribute_id == 0:
+                            attids = pd.DataFrame(list(Instances.objects.filter(Class_id=attr.Ref_Class_id, Code__in=list(ins[attr.Attribute]))).values('id', 'Code'))
+                            attids = attids.rename(columns={'Code': attr.Attribute, 'id': attr.Attribute + '_id'})
+                            ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
+                        else:
+                            attids = pd.DataFrame(list(Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,char_value__in=list(ins[attr.Attribute])).values('Instance_id', 'char_value')))
+                            attids = attids.rename(columns={'char_value': attr.Attribute, 'Instance_id': attr.Attribute + '_id'})
+                            ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
+                        values=list(ins.apply(lambda x: Values(**{'Instance_id':x.id, 'Attribute_id':attr.id, 'instance_value_id': x[attr.Attribute + '_id']}),axis=1))
+                    else:
+                        if dt in DTG_Int:
+                            ins[attr.Attribute]=ins[attr.Attribute].apply(lambda x: int(x) if pd.notnull(x) else x)
+                        elif dt in DTG_Date:
+                            ins[attr.Attribute]=ins[attr.Attribute].apply(lambda x: pd.to_datetime(x).replace(tzinfo=pytz.UTC))
+
+                        values=list(ins.apply(lambda x: Values(**{'Instance_id':x.id,'Attribute_id':attr.id,fieldname.replace('"',''):x[attr.Attribute]}),axis=1))
+                    Values.objects.bulk_create(values,ignore_conflicts=ignore_conflicts)
 
 def load_instances(request,Class_id=0):
     if request.method == 'POST':
         form = UploadInstances(request.POST, request.FILES)
         if form.is_valid() and request.FILES['file']:
-            handle_uploaded_file(request.FILES['file'],Class_id)
+            commitevery=request.POST.get('Commit')
+            if commitevery.isnumeric():
+                commitevery = int(commitevery)
+            else:
+                commitevery = 0
+            handle_uploaded_file(request.FILES['file'],Class_id,commitevery,errors=request.POST.get('Errors'))
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
     else:
         form = UploadInstances()
@@ -543,7 +591,11 @@ class NpEncoder(json.JSONEncoder):
             return super(NpEncoder, self).default(obj)
 
 def ajax_change_master(request,Attribute_id):
-    value = int(request.GET['value'])
+    value = request.GET['value']
+    if value.isnumeric():
+        value=int(value)
+    else:
+        value = 0
     attr=get_attribute(Attribute_id)
     Ref_Class_id=attr.Ref_Class_id
     Class_id=attr.Class_id
@@ -554,7 +606,7 @@ def ajax_change_master(request,Attribute_id):
     for a in Attributes.objects.filter(Class_id=Class_id):
             #df_attributes[(df_attributes.MasterAttribute_id==Attribute_id)&(df_attributes.Class_id==Class_id)].iterrows()
         if a.MasterAttribute_id==Attribute_id:
-            instances=get_options(a.id,{attr.Attribute:value})
+            instances=get_options(a.id,values={attr.Attribute:value})
             attrs[a.id]=instances
     data['attrs']=attrs
 
@@ -569,18 +621,13 @@ def ajax_change_master(request,Attribute_id):
     data['lookups']=lookups
     return JsonResponse(data,encoder=NpEncoder)
 
-def ajax_get_class_data(request,Class_id,filter={}):
-    res={}
-    masterfilter={}
-    if 'filtername' in request.GET:
-        masterfilter = {request.GET['filtername']:request.GET['filtervalue']}
-    qs=create_rawquery_from_attributes(Class_id=Class_id,masterclassfilter=masterfilter)
-    # res['data'] = raw_queryset_as_dict(qs)
-    res['data'] = raw_queryset_as_dict(qs,DT_RowId=False,Actions=False)
-    #print (res['data'])
-    return JsonResponse(res)
+def ajax_get_class_columns(request,Class_id):
+    cqs = Instances.objects.raw(create_qs_sql(Class_id=Class_id)['sql'] + ' limit 0')
+    return JsonResponse({'columns':cqs.columns})
 
-def ajax_get_report_data (request, Report_id,filter={}):
+from querystring_parser import parser
+
+def ajax_get_report_data (request, Report_id,sample=0, filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = r.Query
     cursor = con.cursor()
@@ -588,6 +635,117 @@ def ajax_get_report_data (request, Report_id,filter={}):
 #    desc = cursor.description
     res={}
     res['data']=dictfetchall(cursor)
+    res['recordsTotal']=len(res['data'])
+    res['recordsFiltered'] = len(res['data'])
+    #res['columns']=[col[0] for col in cursor.description]
+    return JsonResponse(res)
+
+def ajax_get_report_columns (request, Report_id,filter={}):
+    r = Reports.objects.get(pk=Report_id)
+    sql = 'select * from (' + r.Query + ') original limit 0'
+    cursor = con.cursor()
+    cursor.execute(sql)
+#    desc = cursor.description
+    res={}
+    #res['data']=dictfetchall(cursor)
     res['columns']=[col[0] for col in cursor.description]
     return JsonResponse(res)
 
+
+def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
+    validation=False
+    values=request.GET
+    term=values.get('term')
+    if pd.isnull(term):
+        term = ''
+    attr=get_attribute(Attribute_id)
+    instances=[]
+    if (attr.MasterAttribute_id>0):
+        m_attr=get_attribute(attr.MasterAttribute_id)
+        tmp=values.get(m_attr.Attribute)
+        if pd.notnull(tmp):
+            m_value=int(tmp)
+        else:
+            m_value=0
+        if attr.Ref_Attribute_id == 0:
+            for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id,Instance__Code__icontains=term)[0:maxrecords]:
+                instances.append({'id':r.Instance_id,'text':r.Instance.Code})
+        else:
+            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,char_value__icontains=term,
+                    Instance_id__in=Values.objects.filter(instance_value_id=m_value,Instance__Class_id=attr.Ref_Class_id).values_list('Instance_id',flat=True))[0:maxrecords]:
+                instances.append({'id': r.Instance_id, 'text': r.char_value})
+
+                #Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id) + " and  v2.char_value like '%{}%'".format(term))[0:maxrecords]:
+                #instances.append({'id': r.id, 'text': r.char_value})
+    else:
+        if attr.Ref_Attribute_id == 0:
+            for r in Instances.objects.filter(Class_id=attr.Ref_Class_id,Code__icontains=term)[0:maxrecords]:
+                instances.append({'id': r.id, 'text': r.Code})
+        else:
+            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,char_value__icontains=term)[0:maxrecords]:
+                instances.append({'id': r.Instance_id, 'text': r.char_value})
+    return JsonResponse({'success':True,'results': instances,'pagination':{'more':True}})
+
+def ajax_get_class_data(request,Class_id):
+    res={}
+    masterfilter={}
+    if 'filtername' in request.GET:
+        masterfilter = {request.GET['filtername']:request.GET['filtervalue']}
+    filter={}
+    if 'filterform' in request.GET:
+        if len(request.GET['filterform'])>0:
+            filterform=json.loads(request.GET['filterform'])
+            for f in filterform:
+                filter[f['name']]=f['value']
+    offset=None
+    limit=None
+    search=''
+    draw=0
+    ssargs = parser.parse(request.META['QUERY_STRING'])
+    if 'start' in request.GET:
+        offset=int(ssargs.get('start'))
+        limit=int(ssargs.get('length'))
+        draw=int(ssargs.get('draw'))
+        search=ssargs['search']['value']
+
+    orderby={}
+    for key,val in ssargs.get('order').items():
+        orderby[ssargs['columns'][int(val['column'])]['data']]=val['dir']
+
+    sql=create_rawquery_sql(Class_id=Class_id,filter=filter,masterclassfilter=masterfilter,orderby=orderby,
+                                       search=search,offset=offset,limit=limit)
+
+    count_sql=create_count_sql(Class_id=Class_id
+                               ,filter=filter,masterclassfilter=masterfilter,search=search
+                               )
+    with con.cursor() as cursor:
+        cursor.execute(count_sql)
+        rec=cursor.fetchone()
+    recordsTotal= rec[1]
+
+    res['data'] = raw_queryset_as_dict(sql)
+    res['recordsTotal']=recordsTotal
+    res['recordsFiltered'] = recordsTotal #len(res['data']) #len(res['data'])
+    #recordsFiltered
+    res['draw']=draw+1
+    return JsonResponse(res)
+
+from .sendouts import send_mail
+
+class send_class_email_view(View):
+    def get(self,request,Class_id,*args,**kwargs):
+        form=SendClassEmailForm(Class_id=Class_id)
+        context = get_base_context()
+        context['form']=form
+        context['Class_id']=Class_id
+        return render(request, 'ut/showclassemail.html',context)
+
+    def post(self,request,Class_id):
+        form=SendClassEmailForm(request.POST,Class_id=Class_id)
+        if form.is_valid():
+            email_subject= request.POST['subject']
+            email_body = request.POST['text_body']
+            to_list = [request.POST['to']]
+            send_mail(email_subject,email_body,settings.EMAIL_HOST_USER,to_list)
+            print ('email sent')
+        return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))

@@ -8,8 +8,13 @@ from django.contrib.auth.models import Group
 from datetime import datetime
 from django_currentuser.middleware import get_current_user, get_current_authenticated_user
 from django_currentuser.db.models import CurrentUserField
-
+from django.template.loader import render_to_string
+import pytz
 # Create your models here.
+
+#Input Types
+IT_Default = 0
+IT_Select2 = 1
 
 #Datatype Constants
 DT_Integer = 1
@@ -30,7 +35,16 @@ DT_Lookup=15
 DT_ManyToMany=16
 
 DT_NUMBERS = [DT_Integer,DT_Float,DT_Date,DT_Instance,DT_Datetime,DT_Boolean,DT_Currency]
-DT_LETTERS = [DT_String,DT_Text,DT_External,DT_Email,DT_Lookup,DT_Calculated]
+DT_LETTERS = [DT_String,DT_Text,DT_External,DT_Email,DT_Lookup,DT_Calculated,DT_Time]
+
+DTG_Int = [DT_Integer,DT_Boolean] #1
+DTG_Float = [DT_Float,DT_Currency] #2
+DTG_String = [DT_String,DT_Email,DT_Lookup,DT_Time] #3
+DTG_Text = [DT_Text] #4
+DTG_Instance = [DT_Instance] #5
+DTG_Date = [DT_Date,DT_Datetime] #5
+DTG_ManyToMany = [DT_ManyToMany ] #6
+
 
 FT_Exact=1
 FT_MinMax=2
@@ -65,6 +79,11 @@ class Reports(models.Model):
     Description = models.TextField(null=True,blank=True)
     Query = models.TextField(null=True,blank=True)
     ViewGroups = models.ManyToManyField(Group, related_name='+', blank=True)
+    @property
+    def render_to_string(self):
+        context={'Report_id':self.id}
+        return render_to_string('ut/report.html',context)
+
     class Meta:
         verbose_name='Reports'
     def __str__(self):
@@ -86,8 +105,8 @@ class ClassManager(models.Manager):
         if (user is not None) and user.is_authenticated:
             if user.is_superuser==False:
                 qs=qs.filter(Q(ViewGroups__in=Group.objects.filter(user=user))|Q(id=0))
-        else:
-            qs=qs.filter(id=None)
+        #else:
+        #    qs=qs.filter(id=None)
         return qs
 
 class Classes(models.Model):
@@ -313,15 +332,30 @@ class Attributes(models.Model):
     def Calcultated(self):
         return calculated(self.DataType_id)
     @property
-    def MasterAttribute_id(self):
+    def MasterAttribute(self):
         ma = Attributes.objects.exclude(Ref_Class_id=0) \
             .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id, Class_id=self.Class_id).exists()
         if ma:
             return Attributes.objects.exclude(Ref_Class_id=0) \
-                .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id, Class_id=self.Class_id) \
-                .values_list('id').first()[0]
+                .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id, Class_id=self.Class_id).first()
+        else:
+            return None
+    @property
+    def MasterAttribute_id(self):
+        if self.MasterAttribute:
+            return self.MasterAttribute.id
         else:
             return 0
+
+    @property
+    def dependent_fields(self):
+        res={}
+        ma=self
+        while pd.notnull(ma.MasterAttribute):
+            res[ma.MasterAttribute.Attribute]=ma.MasterAttribute.Attribute
+            ma=ma.MasterAttribute
+            #break
+        return res
 
     @property
     def hierarchy_trigger(self):
@@ -335,7 +369,6 @@ class Attributes(models.Model):
         for a in Attributes.objects.exclude(InternalAttribute=0).filter(DataType_id=DT_Lookup,InternalAttribute_id=self.id):
             return a.id
         return 0
-
     @property
     def SelectedField(self):
         return selectfield_nd(self)
@@ -411,6 +444,9 @@ def update_attributes(sender, instance, **kwargs):
     print ('Reset Attributes. ',instance.Attribute,'changed')
     df_filters = set_filters()
 
+att_columns=['id','DataType_id','FT_Exact','FT_Contains','FT_Like','FT_Min','FT_Max']
+filter_expression_columns=['FT_Exact','FT_Contains','FT_Like','FT_Min','FT_Max']
+
 class Filters(models.Model):
     conditions=[('OR','OR'),('AND','AND')]
     fieldsizes=[(1,1),(2,2),(3,3),(4,4),(6,6),(12,12)]
@@ -427,6 +463,17 @@ class Filters(models.Model):
     Formula = models.TextField(null=True,blank=True)
     ViewGroups = models.ManyToManyField(Group,related_name='+')
     UpdateGroups = models.ManyToManyField(Group,related_name='+')
+    @property
+    def Expression(self):
+        res = {}
+        for ft in filter_expression_columns:
+            expr = getattr(self.Attribute1,ft)
+            if self.Attribute2.id != 0:
+                expr = expr + ' ' + self.Condition1 + ' ' + getattr(self.Attribute2,ft)
+            if self.Attribute3.id != 0:
+                expr = expr + ' ' + self.Condition2 + ' ' + getattr(self.Attribute3,ft)
+            res[ft] = ' and (' + expr + ')'
+        return res
     class Meta:
         unique_together = ('Class', 'Filter')
 
@@ -486,6 +533,9 @@ class Values(models.Model):
     float_value= models.FloatField(null=True)
     datetime_value = models.DateTimeField(null=True)
     instance_value = models.ForeignKey(Instances,on_delete=models.PROTECT, related_name='+',null=True)
+    def __str__(self):
+        return self.char_value if not pd.isnull(self.char_value) else 'Object {}'.format(self.id)
+
     class Meta:
 #        abstract = True
         unique_together = ('Instance','Attribute')
@@ -607,5 +657,3 @@ class FormLayouts(models.Model):
     Attribute = models.ForeignKey(Attributes,on_delete=models.PROTECT)
     Row = models.IntegerField(default=0)
     Column = models.IntegerField(default=0)
-
-

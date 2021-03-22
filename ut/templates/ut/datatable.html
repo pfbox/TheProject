@@ -1,8 +1,17 @@
 <div id="external_filter_container"></div>
 
-<table id="instances{{ Class_id }}" class="classtable display table-striped"
+<table id="instances{{ Class_id }}"
+       class="classtable display table-striped"
        style="width:100%"
-       data-class-id="{{ Class_id }}" data-ajax-link="{% url "ut:ajax_get_class_data" Class_id %}" >
+       data-class-id="{{ Class_id }}"
+       data-ajax-link="{% url "ut:ajax_get_class_data" Class_id %}"
+       data-ajax-columns-link="{% url "ut:ajax_get_class_columns" Class_id %}"
+       {% if Ref_Attribute %}
+            data-ref-attribute="{{ Ref_Attribute }}"
+      {% endif %}>
+
+
+
     <thead>
         <tr>
             {% for c in columns %}

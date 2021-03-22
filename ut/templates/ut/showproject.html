@@ -26,47 +26,34 @@
     </ul>
 {% endif %}
 
+<div class="classtable-with-filter">
   {% if filterform %}
     <div class="card">
-      <div class="card-header" id="headingOne">
-        <h5 class="mb-0">
-          <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-            Filter and Actions {{filter_desc}}
-          </button>
-        </h5>
-      </div>
-
       <div id="collapseOne" class="collapse" aria-labelledby="headingOne">
         <div class="card-body">
               {% crispy filterform %}
         </div>
       </div>
     </div>
+    <br>
   {% endif %}
 
+    <div class="container-fluid">
+        <div class="col-md-12">
+
+        {% include "ut/datatable.html" %}
+
+        </div>
+    </div>
+</div>
+
+</div>
 </div>
 </div>
 
-<div class="container-fluid">
-<div class="col-md-12">
 
-{% csrf_token %}
-
-{% include "ut/datatable.html" %}
-
-{% if Class_id %}
-<div class="createbuttons">
-    <input type="button" class="createinstance btn btn-primary" data-form-url="{% url 'ut:edit_instance' Class_id 0 %}" value="New Instance" />
-    <input type="button" class="btn btn-primary" id="LoadInstances" value="Load from File" />
-</div>
-{% endif %}
-</div>
-</div>
 
 <div id="ModalFactory">
 </div>
 
-{% endblock %}
-{% block javascript %}
-<script src="{% static '/ut/js/ut.js' %}"></script>
 {% endblock %}
