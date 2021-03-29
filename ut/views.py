@@ -12,6 +12,7 @@ from django.db.models import Exists, OuterRef
 import json
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+from django.utils.html import strip_tags
 
 from .utclasses import *
 from django_tables2 import RequestConfig
@@ -114,7 +115,7 @@ class edit_instance_base(View):
             table = mytable(Class_id=refclass_id, style='ShortLayout', data=qs)
             context['table' + str(a1.id) + ''] = table
         context['form'] = form
-        context['Modal']=True
+        context['Modal']=Modal
         context['Class_id']=Class_id
         context['Instance_id']=Instance_id
         if Modal:
@@ -732,20 +733,61 @@ def ajax_get_class_data(request,Class_id):
 
 from .sendouts import send_mail
 
-class send_class_email_view(View):
-    def get(self,request,Class_id,*args,**kwargs):
-        form=SendClassEmailForm(Class_id=Class_id)
+class send_instance_email(View):
+    def get(self,request,Class_id,Modal=True,*args,**kwargs):
+        Instance_id = request.GET.get('Instance_id')
+        if pd.isnull(Instance_id) or Instance_id == 0:
+            instance=request.GET
+        else:
+            instance=get_instance(Class_id,Instance_id)
+        #adjust names for the template
+        instance_adj={}
+        for k,v in instance.items():
+            instance_adj[k.replace(' ','_')]=v
+        form=SendInstanceEmailForm(Class_id=Class_id,instance=instance_adj)
         context = get_base_context()
         context['form']=form
         context['Class_id']=Class_id
-        return render(request, 'ut/showclassemail.html',context)
+        if Modal:
+            data={}
+            data['success']=True
+            data['modalformcontent']=render_to_string('ut/showclassemail.html',context=context,request=request)
+            return JsonResponse(data)
+        else:
+            return render(request, 'ut/showclassemail.html',context)
 
-    def post(self,request,Class_id):
-        form=SendClassEmailForm(request.POST,Class_id=Class_id)
+    def post(self,request,Class_id,Instance_id=0, Modal=True,*args,**kwargs):
+        form=SendInstanceEmailForm(request.POST,Class_id=Class_id,instance={ })
         if form.is_valid():
             email_subject= request.POST['subject']
-            email_body = request.POST['text_body']
+            html_body = request.POST['text_body']
+            plain_body = strip_tags(html_body)
             to_list = [request.POST['to']]
-            send_mail(email_subject,email_body,settings.EMAIL_HOST_USER,to_list)
+            send_mail(email_subject,plain_body,settings.EMAIL_HOST_USER,to_list,html_message=html_body)
             print ('email sent')
-        return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+        if Modal:
+            return JsonResponse({'success':True,'data':None})
+        else:
+            return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+
+class emailtemplates_view(View):
+    def get(self,request,*args,**kwargs):
+        tlist=EmailTemplates.objects.all()
+        table = EmailTemplateTable(tlist)
+        RequestConfig(request, paginate={"per_page": 20}).configure(table)
+        context=get_base_context({'table':table})
+        return render(request,'ut/templates.html',context)
+
+class EmailTemplateCreateView(BaseContext,LoginRequiredMixin,CreateView):
+    model = EmailTemplates
+    template_name = 'ut/edit_attribute.html'
+    form_class = EmailTemplateForm
+    def get_success_url(self):
+        return reverse_lazy('ut:templates_view')
+
+class EmailTemplateUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
+    model = EmailTemplates
+    template_name = 'ut/edit_attribute.html'
+    form_class = EmailTemplateForm
+    def get_success_url(self):
+        return reverse_lazy('ut:templates_view')

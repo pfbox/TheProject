@@ -21,7 +21,7 @@
                       <div class="card mb-2 box-shadow">
                         <!--img class="card-img-top" src="https://upload.wikimedia.org/wikipedia/en/e/ec/Soccer_ball.svg" alt="Card image cap"-->
                         <div class="card-body">
-                          <h5 class="card-title">{{p.Project}}</h5>
+                            <h5 class="card-title"><a href="{% url 'ut:instances' 0 0 p.id %}">{{p.Project}}</a></h5>
                           <p class="card-text">{{p.Description}}</p>
                                 {% with Report_id=p.DefaultReport_id %}
                                     {% include "ut/report.html" %}
@@ -98,7 +98,6 @@
     {% endif %}
      </div>
      </div>
-
 </div>
 
 {% endblock%}

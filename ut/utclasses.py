@@ -56,12 +56,32 @@ WHERE
 i.Class_id={Class_id} 
 """
 
+def value_if_null(x,val):
+    if pd.isnull(x):
+        return val
+    else:
+        return x
+
+def get_instance(Class_id,Instance_id):
+    sql=create_qs_sql(Class_id,Instance_id)['sql']
+    with con.cursor() as cursor:
+        cursor.execute(sql)
+        instance = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
+    return instance
+
+
+def get_instance_values(Class_id,Instance_id):
+    sql = create_val_sql(Class_id,Instance_id)
+    with con.cursor() as cursor:
+        cursor.execute(sql)
+        initrow = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
+    return initrow
+
 def get_simple_options(Class_id,Attribute_id):
     with con.cursor() as cursor:
         cursor.execute(select_simple_options_sql.format(Class_id=Class_id,Attribute_id=Attribute_id))
         dict=cursor.fetchall()
     return dict
-
 
 def create_table_column(dt,width=50,attr={}):
     if dt in [5]:
@@ -201,7 +221,7 @@ def calculated(dt):
     else:
         return False
 
-def get_options(Attribute_id=0,SelectedInstance_id=None,values={},validation=False,term='') :
+def get_options(Attribute_id=0,SelectedInstance_id=0,values={},validation=False,term='') :
     attr=get_attribute(Attribute_id)
     instances={}
     if False: #(attr.MasterAttribute_id>0) and (not validation):
@@ -312,7 +332,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                 if usedinfilter:
                     op = {}
                 else:
-                    op = get_options(Attribute_id=attr.id,SelectedInstance_id=values.get(attr.Attribute),values=values, validation=validation)
+                    op = get_options(Attribute_id=attr.id,SelectedInstance_id=value_if_null(values.get(attr.Attribute),0),values=values, validation=validation)
                 ch = [(k, v) for k, v in op.items()]
                 field = forms.ChoiceField(choices=ch,required=req,
                     widget= utHeavyWidget(data_url=reverse_lazy('ut:ajax_get_attribute_options',kwargs={'Class_id':attr.Class_id,'Attribute_id':attr.id})
@@ -501,7 +521,7 @@ def create_count_sql(Class_id=0,filter={},masterclassfilter={},search=''):
     sql = 'select 0 as id, count(*) as Count from (' + sql + ') ct'
     return sql
 
-def create_val_sql(Instance_id,Class_id):
+def create_val_sql(Class_id,Instance_id):
     atts=get_tableviewlist(Class_id=Class_id)
     ss = {'id':'ins.id','Code':'ins.Code'}
     lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
@@ -526,7 +546,7 @@ def create_val_sql(Instance_id,Class_id):
     swhere = 'where ins.id={}'.format(Instance_id)
     return sselect +'\n' + sfrom + '\n' + swhere
 
-def create_qs_sql(Class_id=0):
+def create_qs_sql(Class_id=0,Instance_id=0):
     user_id=get_current_user().id
     atts=get_tableviewlist(Class_id=Class_id)
     #default for instances id, code, and instance table
@@ -550,8 +570,11 @@ def create_qs_sql(Class_id=0):
 
     sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
     sfrom='from ' + '\n'.join(lo.values())
+    ins_condition=''
+    if Instance_id!=0:
+        ins_condition=' and ins.id={}'.format(Instance_id)
     swhere = """ 
-    where ins.Class_id={Class_id}
+    where ins.Class_id={Class_id} {instance}
     and 
     (exists (select * from ut_classes_ViewGroups vg, auth_user_groups ug where vg.group_id=ug.group_id and user_id = {user_id})
     or 
@@ -559,7 +582,7 @@ def create_qs_sql(Class_id=0):
     or
     exists (select * from auth_user where id = {user_id} and is_superuser=1)
     )
-    """.format(Class_id=Class_id, user_id=user_id)
+    """.format(Class_id=Class_id, user_id=user_id,instance=ins_condition)
     sql=sselect +'\n' + sfrom + '\n' + swhere
     #print (sql)
     return {'sql':sql,'columns':ss.keys(),'selectfields':ss.values()}

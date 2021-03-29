@@ -9,6 +9,12 @@ class AttributeTable(tables.Table):
         model=Attributes
         template_name = "django_tables2/bootstrap4.html"
 
+class EmailTemplateTable(tables.Table):
+    h_link = tables.LinkColumn('ut:edit_template', text='Edit', args=[A('pk'),], attrs={'a':{'class':'btn'}}, orderable=False)
+    class Meta:
+        model=EmailTemplates
+        template_name = "django_tables2/bootstrap4.html"
+
 class FilterTable(tables.Table):
     h_link = tables.LinkColumn('ut:edit_filter', text='Edit', args=[A('pk'),], attrs={'a':{'class':'btn'}}, orderable=False)
     class Meta:

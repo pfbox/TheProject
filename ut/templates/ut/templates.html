@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% load render_table from django_tables2 %}
+
+{% block content %}
+        {% render_table table %}
+
+<input id='create_template' type="button" value="New Template" onclick="location.href='{% url 'ut:add_template' %}'" >
+
+{% endblock %}

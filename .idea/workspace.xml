@@ -4,46 +4,30 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BranchesTreeState">
-    <expand>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-    </expand>
+    <expand />
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-02-27">
-      <change afterPath="$PROJECT_DIR$/static/ut/js/django_select2.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/showclassemail.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/widgets.py" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-03-22">
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0044_auto_20210322_2229.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0045_auto_20210323_2207.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0046_emailtemplates.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0047_auto_20210323_2256.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0048_auto_20210327_1659.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0049_auto_20210328_1307.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/templates.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TheProject/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/_edit_instance_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/_edit_instance_modal.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/tables.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/tables.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/datatable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/edit_attribute.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/edit_attribute.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/edit_instance.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/edit_instance.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/loadinstances.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/loadinstances.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/report.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/report.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showproject.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showreport.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showreport.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showtable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showtable.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/templatesarchive/showproject_arc.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/templatesarchive/showproject_arc.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/test.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showclassemail.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showclassemail.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
@@ -323,7 +307,9 @@
       <workItem from="1614286007203" duration="44372000" />
       <workItem from="1614824301807" duration="9220000" />
       <workItem from="1615147091740" duration="119235000" />
-      <workItem from="1615948213568" duration="92230000" />
+      <workItem from="1615948213568" duration="98941000" />
+      <workItem from="1616548088729" duration="33753000" />
+      <workItem from="1616808963012" duration="23006000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -346,7 +332,14 @@
       <option name="project" value="LOCAL" />
       <updated>1614447329233</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="2021-03-22">
+      <created>1616386548147</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1616386548147</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -385,7 +378,8 @@
     <MESSAGE value="2021-01-17" />
     <MESSAGE value="2021-02-15" />
     <MESSAGE value="2021-02-27" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-02-27" />
+    <MESSAGE value="2021-03-22" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-03-22" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -398,16 +392,10 @@
           <url>file://$PROJECT_DIR$/ut/test.py</url>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
-          <line>24</line>
-          <option name="timeStamp" value="27" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
-          <line>80</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="52" />
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
+          <line>342</line>
+          <option name="timeStamp" value="90" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -424,7 +412,7 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="ins.GameStatus" language="Python" />
+        <watch expression="Classes.objects.get(id=self.Class_id).DefaultEmailTemplate.TemplateName" language="Python" />
         <watch expression="values[0].int_value" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
@@ -433,6 +421,7 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/__init___py$Unnamed.coverage" NAME="Unnamed Coverage Results" MODIFIED="1616552327112" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/__init___py$shell_plus.coverage" NAME="shell_plus Coverage Results" MODIFIED="1613531655928" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

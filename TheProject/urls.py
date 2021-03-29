@@ -26,6 +26,7 @@ urlpatterns = [
     path('',include('ut.urls')),
     path('examples/', include('examples.urls')),
     path("select2/", include("django_select2.urls")),
+    path('tinymce/', include('tinymce.urls')),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

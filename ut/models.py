@@ -83,20 +83,27 @@ class Reports(models.Model):
     def render_to_string(self):
         context={'Report_id':self.id}
         return render_to_string('ut/report.html',context)
-
     class Meta:
         verbose_name='Reports'
     def __str__(self):
         return self.Report
 
+from tinymce.models import HTMLField
+
+class EmailTemplates(models.Model):
+    TemplateName = models.CharField(max_length=100,unique=True,null=False,blank=False)
+    ToTemplate= models.CharField(max_length=255,null=True,blank=True)
+    CcTemplate= models.CharField(max_length=255,null=True,blank=True)
+    SubjectTemplate = models.CharField(max_length=255,null=True,blank=True)
+    Template = HTMLField(null=True,blank=True)
+
 class SendOuts(models.Model):
     Query = models.TextField(null=True,blank=True)
     EmailField = models.CharField(max_length=50,null=False)
     EmailGroupFields = models.TextField(null=True,blank=True)
-    EmailTemplate = models.TextField(null=True,blank=True)
+    EmailTemplate = models.ForeignKey(EmailTemplates,related_name='+',null=True,blank=True,on_delete=models.PROTECT)
     class Meta:
         verbose_name='SendOuts'
-
 
 class ClassManager(models.Manager):
     def get_queryset(self):
@@ -116,6 +123,7 @@ class Classes(models.Model):
     UseAutoCounter = models.BooleanField(default=False,blank=True)
     Prefix = models.CharField(max_length=10,null=True,blank=True)
     CounterStrLen = models.IntegerField(default=10)
+    DefaultEmailTemplate =models.ForeignKey(EmailTemplates,related_name='+',blank=True,null=True,on_delete=models.PROTECT)
     InsertGroups = models.ManyToManyField(Group,related_name='+',blank=True)
     ViewGroups = models.ManyToManyField(Group,related_name='+',blank=True)
     UpdateGroups = models.ManyToManyField(Group,related_name='+',blank=True)
@@ -318,7 +326,6 @@ class Attributes(models.Model):
     ViewGroups = models.ManyToManyField(Group,related_name='+')
     UpdateGroups = models.ManyToManyField(Group,related_name='+')
     objects = AttributeManager()
-
     @property
     def TableName(self):
         return '"val{}"'.format(self.id)
@@ -346,7 +353,6 @@ class Attributes(models.Model):
             return self.MasterAttribute.id
         else:
             return 0
-
     @property
     def dependent_fields(self):
         res={}
@@ -356,7 +362,6 @@ class Attributes(models.Model):
             ma=ma.MasterAttribute
             #break
         return res
-
     @property
     def hierarchy_trigger(self):
         for a in Attributes.objects.exclude(id=self.id).filter(Class_id=self.Class_id):
@@ -433,16 +438,6 @@ class Attributes(models.Model):
         else:
             res = self.Class.Class +'-->'+self.Attribute
         return res
-
-from django.dispatch import receiver
-#@receiver(models.signals.post_save, sender=Attributes)
-def update_attributes(sender, instance, **kwargs):
-    global df_attributes
-    global df_filters
-    from .utclasses import set_attributes,set_filters
-    df_attributes=set_attributes()
-    print ('Reset Attributes. ',instance.Attribute,'changed')
-    df_filters = set_filters()
 
 att_columns=['id','DataType_id','FT_Exact','FT_Contains','FT_Like','FT_Min','FT_Max']
 filter_expression_columns=['FT_Exact','FT_Contains','FT_Like','FT_Min','FT_Max']
@@ -537,7 +532,6 @@ class Values(models.Model):
         return self.char_value if not pd.isnull(self.char_value) else 'Object {}'.format(self.id)
 
     class Meta:
-#        abstract = True
         unique_together = ('Instance','Attribute')
         verbose_name='Values'
 

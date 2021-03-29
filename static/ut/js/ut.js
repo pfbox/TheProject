@@ -12,6 +12,7 @@ $(document).ready(function() {
           "$('.alert').fadeTo(2000, 500).slideUp(500, function () {$('.alert').slideUp(500).remove();});",
           "</script>"
     ].join("");
+
     function get_next_instance_id_str(instance_id){
        if (instance_id==0){
            return '&next=0'
@@ -20,6 +21,23 @@ $(document).ready(function() {
            return '&next='+cr.next("tr").data('id')
        }
     }
+
+    $('#ModalFactory').on('click','.send-instance-email-btn',function(){
+        form=$(this).closest('form')
+        $.ajax({
+            type : 'POST',
+            url : form.data('send-instance-email-link'),
+            data : form.serialize(),
+            success : function (data) {
+                var mymodal = form.closest('.modal')
+                mymodal.modal('hide');
+            },
+            error : function () {
+                alert ('Error sending email!')
+            }
+        })
+    })
+
 
     $('#ModalFactory').on('click','.savechanges',function(){
         var btn=$(this)
@@ -42,7 +60,6 @@ $(document).ready(function() {
                     }
                 } else {
             // Here you can show the user a success message or do whatever you need
-                    //$('#instanceform').find('.success-message').show();
                     if ('form_html' in data) {
                         form.replaceWith(data['form_html']);
                         if (data['form_errors']) {
@@ -65,6 +82,7 @@ $(document).ready(function() {
             }
         })
     });
+
     $("#ModalFactory").on('hidden.bs.modal','.modal', function () {
         $('.flatpickr-calendar').toggle() //???
         $(this).remove()
@@ -76,6 +94,41 @@ $(document).ready(function() {
                 $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
             }, 0);
     });
+
+
+    $("main").on('click','.send-instance-email',function(){
+        var input_data = {}
+        var ajax_url = ''
+        var Instance_id=$(this).closest('tr').data('id')
+        var form = null
+        if (Instance_id){
+            elements={Instance_id:Instance_id}
+            ajax_url= $(this).closest('.classtable').data('send-instance-email-link')
+        } else {
+            form = $(this).closest('form')
+            elements = form.serializeArray()
+            $.each(elements,function(key,el){
+                svalue=$('select[name="'+el.name+'"] option:selected').html()
+                if (svalue) {
+                    elements[key].value=svalue
+                }
+            })
+            ajax_url=form.data('send-instance-email-link')
+        }
+        fmodal = create_modal_form_wrap()
+        $('#ModalFactory').append(fmodal)
+        $.ajax({
+            url : ajax_url ,
+            data : elements,
+            success : function (data) {
+                fmodal.find('.modal-content').append(data.modalformcontent);
+            },
+            error : function(){
+                alert ('error')
+            }
+        })
+        $(fmodal).modal('show');
+    })
 
     $("#ModalFactory").on('change','.hierarchy_trigger,.lookup_trigger',function () {
       var attr_id = $(this).attr('attr_id')
@@ -127,12 +180,20 @@ $(document).ready(function() {
         }
     })
 
-    $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance',function () {
-        //elHeight$('#ModalFactory').find('.modal')
+    function create_modal_form_wrap(){
         fmodal = $('<div class="modal fade" role="dialog" aria-hidden="true"></div>')
         mdialog = $('<div class="modal-dialog modal-xl modal-dialog-centered" role="document"></div>')
         mcontext = $('<div class="modal-content"></div>')
-        $('#ModalFactory').append(fmodal.append(mdialog.append(mcontext)))
+        return fmodal.append(mdialog.append(mcontext))
+    }
+
+    $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance',function () {
+        //elHeight$('#ModalFactory').find('.modal')
+        fmodal = create_modal_form_wrap()
+        //fmodal = $('<div class="modal fade" role="dialog" aria-hidden="true"></div>')
+        //mdialog = $('<div class="modal-dialog modal-xl modal-dialog-centered" role="document"></div>')
+        //mcontext = $('<div class="modal-content"></div>')
+        $('#ModalFactory').append(fmodal)
         $.ajax({
             url :  get_hlink($(this)),
             data : {},
@@ -216,8 +277,8 @@ $(document).ready(function() {
                 var colReorder = {}
                 var dom = 't'
                 if (class_id) {
-                    fixedColumns = true //{leftColumns: 0,rightColumns: 1}
-                    colReorder = true //{ fixedColumnsRight : 1 }
+                    fixedColumns = {leftColumns: 0,rightColumns: 1}
+                    colReorder = { fixedColumnsRight : 1 }
                     dom = 'lBfrtip'
                     buttons = [
                         {
@@ -286,10 +347,12 @@ $(document).ready(function() {
                     columnDefs = [{
                         "targets": -1,
                         "data": null,
-                        "defaultContent": '<a class="viewinstance"><i class="far fa-eye"></i></a>' +
-                            '&nbsp<a class="editinstance" ><i class="far fa-edit"></i></a>' +
-                            '&nbsp<a class="deleteinstance" ><i class="far fa-trash-alt"></i></a>',
-                        "width": 30,
+                        "defaultContent": '<a class="viewinstance"><i class="far fa-eye"></i></a>'
+                            + '&nbsp<a class="editinstance" ><i class="far fa-edit"></i></a>'
+                            + '&nbsp<a class="deleteinstance" ><i class="far fa-trash-alt"></i></a>'
+                            + '&nbsp<a class="send-instance-email" ><i class="far fa-envelope-open"></i></a>'
+                        ,
+                        "width": 64,
                         "orderable": false
                     }]
                 }

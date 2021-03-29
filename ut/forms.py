@@ -3,9 +3,12 @@ from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div,ButtonHolder
-from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
+#from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
 from django.urls import reverse,reverse_lazy
 from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget, ModelSelect2Widget
+from django.template import Template, Context
+from tinymce.widgets import TinyMCE
+
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -160,10 +163,7 @@ class InstanceForm(forms.Form):
         #initrow={}
         it=datetime.now()
         if self.Instance_id!=0:
-            sql = create_val_sql(self.Instance_id,self.Class_id)
-            with con.cursor() as cursor:
-                cursor.execute(sql)
-                initrow=dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
+            initrow=get_instance_values(self.Class_id,self.Instance_id)
         else:
             if len(self.Defaults)>0:
                 initrow=self.Defaults
@@ -210,11 +210,11 @@ class InstanceForm(forms.Form):
             print (diff,att.Attribute)
             old=new
 
-
         #add Save Button
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.attrs = {'id':'instanceform','data_instance_id':'{}'.format(self.Instance_id),'data_class_id':'{}'.format(self.Class_id)}
+        self.helper.attrs = {'data-instance-id':'{}'.format(self.Instance_id),'data-class-id':'{}'.format(self.Class_id),
+                             'data-send-instance-email-link':reverse_lazy('ut:send_instance_email_modal',args=(self.Class_id,))}
         self.helper.form_class = 'instanceform'
         self.helper.labels_uppercase = True
         layout={}
@@ -258,7 +258,7 @@ class InstanceForm(forms.Form):
                 Button(value='Save',name='save',css_class='btn btn-primary savechanges',css_id='save'),
                 Button(value='Save&Next',name='savenext',css_class='btn btn-primary savechanges',css_id='savenext') if self.Instance_id!=0
                 else Button(value='Save&New',css_class='btn btn-primary savechanges',name='savenext',css_id='savenext'),
-                Button(value='SendEmail',name='sendemail',css_class='btn btn-primary sendemail',css_id='sendemail'),
+                Button(value='Send e-mail',name='sendemail',css_class='btn btn-primary send-instance-email',css_id='sendemail'),
                 Button(value='Close',name='close',css_class='btn-secondary',data_dismiss='modal'),
                 css_class='buttonHolder modal-footer'
             )
@@ -266,7 +266,7 @@ class InstanceForm(forms.Form):
         self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
         print (datetime.now(),'form created')
 
-from string import Template
+from string import Template as strTemplate
 
 def get_layout(Class_id,layout,mastertype='Row',level=0):
     master=globals()[mastertype]()
@@ -286,7 +286,7 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
                 id=0
                 dt=0
             if dt in [DT_Table]:
-                a=Template("""
+                a=strTemplate("""
                 $attname
                 {% with Class_id=$refclass Ref_Attribute="$refattr" %}
                     {% include "ut/datatable.html" %}
@@ -365,28 +365,71 @@ class InstanceFilterForm(forms.Form):
 #    Intfield=forms.IntegerField()
 #    CharField=forms.CharField(max_length=50)
 
-class SendClassEmailForm(forms.Form):
+
+class SendInstanceEmailForm(forms.Form):
     to = forms.EmailField(required=True)
     cc = forms.EmailField(required=False)
     subject = forms.CharField(required=True,max_length=255)
-    text_body = forms.CharField(widget=forms.Textarea(attrs={'rows':10}),required=False)
+    text_body = forms.CharField(widget=TinyMCE(),required=False)
     def __init__(self,*args,**kwargs):
         self.Class_id=kwargs.pop('Class_id')
+        if 'instance' in kwargs.keys():
+            self.instance=kwargs.pop('instance')
+
+
+        self.ToTemplate=''
+        self.CcTemplate=''
+        self.SubjectTemplate=''
+        self.BodyTemplate=''
+
+        try:
+            self.Template=Classes.objects.get(id=self.Class_id).DefaultEmailTemplate
+            fieldmatch=re.compile(r'{{ *(".*?") *}}')
+            self.ToTemplate=fieldmatch.sub(lambda x: '{{ '+x.group(1).replace(" ","_").replace('"','') + ' }}',value_if_null(self.Template.ToTemplate,''))
+            self.CcTemplate=fieldmatch.sub(lambda x: '{{ '+x.group(1).replace(" ","_").replace('"','') + ' }}',value_if_null(self.Template.CcTemplate,''))
+            self.SubjectTemplate=fieldmatch.sub(lambda x: '{{ '+x.group(1).replace(" ","_").replace('"','') + ' }}',value_if_null(self.Template.SubjectTemplate,''))
+            self.BodyTemplate=fieldmatch.sub(lambda x: '{{ '+x.group(1).replace(" ","_").replace('"','') + ' }}',value_if_null(self.Template.Template,''))
+        except:
+            pass
+
+
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.attrs = {'class':'sendemail','data-class_id':self.Class_id}
-        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.attrs = {'class':'sendemail','data-class-id':self.Class_id,'onsubmit':'return false',
+                             'data-send-instance-email-link':reverse_lazy('ut:send_instance_email_modal',args=(self.Class_id,))}
+        self.fields['to'].initial = Template(self.ToTemplate).render(context=Context(self.instance))
+        self.fields['cc'].initial = Template(self.CcTemplate).render(context=Context(self.instance))
+        self.fields['subject'].initial = Template(self.SubjectTemplate).render(context=Context(self.instance))
+        self.fields['text_body'].initial = Template(self.BodyTemplate).render(context=Context(self.instance))
+        #self.fields['text_body'].widget =
+
+        self.helper.layout=Layout()
+        self.helper.layout=Layout(HTML("""
+        <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Send Instance Email </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        """))
+
+        self.helper.layout.append(Fieldset('','to','cc','subject','text_body',css_class='modal-body'))
+
         Buttons = ButtonHolder(
-            Submit('submit','Send', css_class='btn btn-primary savechanges', css_id='save'),
+            Button(value='Send', name='send', css_class='btn btn-primary send-instance-email-btn', css_id='save'),
             Button(value='Cancel', name='cancel', css_class='btn-secondary', data_dismiss='modal'),
             css_class='buttonHolder modal-footer'
         )
-        self.helper.layout=Layout()
-        self.helper.layout.append(Row('to'))
-        self.helper.layout.append(Row('cc'))
-        self.helper.layout.append(Row('subject'))
-        self.helper.layout.append(Row('text_body'))
         self.helper.layout.append(Buttons)
 
-
+class EmailTemplateForm(forms.ModelForm):
+    class Meta:
+        model = EmailTemplates
+        fields = '__all__'
+        widgets = {'text_body': TinyMCE}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
 
