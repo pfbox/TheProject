@@ -703,6 +703,7 @@ def ajax_get_class_data(request,Class_id):
     search=''
     draw=0
     ssargs = parser.parse(request.META['QUERY_STRING'])
+    print ('META.query_string',request.META['QUERY_STRING'])
     if 'start' in request.GET:
         offset=int(ssargs.get('start'))
         limit=int(ssargs.get('length'))
