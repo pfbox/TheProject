@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var asyncSuccessMessage = [
+    var  asyncSuccessMessage = [
           "<div ",
           "style='position:fixed;top:0;z-index:10000;width:100%;border-radius:0;' ",
           "class='alert alert-icon alert-success alert-dismissible fade show mb-0' role='alert'>",
