@@ -711,8 +711,9 @@ def ajax_get_class_data(request,Class_id):
         search=ssargs['search']['value']
 
     orderby={}
-    for key,val in ssargs.get('order').items():
-        orderby[ssargs['columns'][int(val['column'])]['data']]=val['dir']
+    if ssargs:
+        for key,val in ssargs.get('order').items():
+            orderby[ssargs['columns'][int(val['column'])]['data']]=val['dir']
 
     sql=create_rawquery_sql(Class_id=Class_id,filter=filter,masterclassfilter=masterfilter,orderby=orderby,
                                        search=search,offset=offset,limit=limit)

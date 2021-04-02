@@ -26,5 +26,15 @@
         </introspection-scope>
       </schema-mapping>
     </data-source>
+    <data-source name="MySQL for UT" uuid="fd4f8837-3275-41dd-ab6a-2688071b6cc4">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="MYSQL" exact-version="0" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>pfbox</user-name>
+      <schema-mapping />
+      <ssh-properties>
+        <enabled>true</enabled>
+        <ssh-config-id>0b49f357-33c0-4c1f-b01c-174c7cbb71e8</ssh-config-id>
+      </ssh-properties>
+    </data-source>
   </component>
 </project>

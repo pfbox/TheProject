@@ -9,9 +9,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-03-22">
-      <change afterPath="$PROJECT_DIR$/db.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/fontawesome/svgs/solid/search-dollar.svg" beforeDir="false" afterPath="$PROJECT_DIR$/static/fontawesome/svgs/solid/search-dollar.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -78,7 +81,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
-    <property name="DatabaseDriversLRU" value="sqlite" />
+    <property name="DatabaseDriversLRU" value="sqlite&#10;mysql" />
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
@@ -328,7 +331,21 @@
       <option name="project" value="LOCAL" />
       <updated>1616386548147</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="2021-29-03 v3">
+      <created>1617067846706</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1617067846706</updated>
+    </task>
+    <task id="LOCAL-00006" summary="2021-29-03 v3">
+      <created>1617067883662</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1617067883662</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -368,9 +385,9 @@
     <MESSAGE value="2021-02-15" />
     <MESSAGE value="2021-02-27" />
     <MESSAGE value="2021-03-22" />
-    <MESSAGE value="2021-29-03 v3" />
     <MESSAGE value="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
-    <option name="LAST_COMMIT_MESSAGE" value="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
+    <MESSAGE value="2021-29-03 v3" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-29-03 v3" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
