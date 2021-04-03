@@ -1,89 +1,69 @@
-a="""
-class container():
-    def __init__(self,parent=None,el={'top':0,'left':0,'width':0,'height':0},rawlayout=[]):
-        if pd.isnull(parent):
-            self.type='master'
-        self.split1='top'
-        self.split2='left'
-        self.parent = parent
-        self.elements = []
-        self.elids = []
-        self.containers = []
-        self.top = el['top'];
-        self.left = el['left'];
-        self.height = el['height']
-        self.width = el['width']
-        self.y2=self.top+self.height
-        self.x2=self.width+self.left
-        if len(rawlayout)>0:
-            for el in rawlayout:
-                self.add(el)
-    def add(self,el):
-        if len(self.elements)==0:
-            self.top=el['top']
-            self.left=el['left']
-            self.width=el['width']
-            self.height= el['height']
-        self.y2=max(self.y2,el['top']+el['height'])
-        self.x2=max(self.x2,el['left']+el['width'])
-        self.elements.append(el)
-        self.elids.append(el['name'])
-    def incontainer(self,el):
-        if not el['name'] in self.elids:
-            return (el['top']>=self.top) and (el['top']+el['height']<=self.y2) and (el['left']>=self.left) and (el['left']+ el['width']<=self.x2)
-        return False
-    def check(self,el):
-        return (getattr(self,self.split2)==el[self.split2]) or (len(self.elements)==0)
-    def split_by_con(self):
-        layout = sorted(self.elements, key=lambda k: (k[self.split1], k[self.split2]),reverse=True)
-        while len(layout)>0:
-            if self.type!='row':
-                con = row(parent=self)
-            else:
-                con = column(parent=self)
-            #need 2 rounds
-            for i in range(len(layout)-1,-1,-1):
-                el=layout[i]
-                if con.check(el):
-                    con.add(el)
-                    layout.pop(i)
-            for i in range(len(layout)-1,-1,-1):
-                el=layout[i]
-                if con.incontainer(el):
-                    con.add(el)
-                    layout.pop(i)
-            self.containers.append(con)
-            if len(con.elements)>1:
-                con.split_by_con();
-    def print_elements(self,level=0,shift=0):
-        lodict={}
-        i=1;
-        if len(self.containers)>0:
-            for con in self.containers:
-                print (' '*shift+str(level*100+i)+' '+con.type+':'+str(con.elids))
-                lodict[con.type+':'+str(level*100+i)]=con.print_elements(level*100+i,shift+1)
-                i=i+1
-            return lodict
-        else:
-            return self.elids
+import sqlite3
+from sqlite3 import Error
+import pandas as pd
 
-class row(container):
-    def __init__(self,parent=None,el={'top':0,'left':0,'width':0,'height':0}):
-        super(row,self).__init__(parent,el)
-        self.split1='left'
-        self.split2='top'
-        self.type='row'
+def value_if_null(x,val):
+    if pd.isnull(x):
+        return val
+    else:
+        return x
 
-class column(container):
-    def __init__(self,parent,el={'top':0,'left':0,'width':0,'height':0}):
-        super(column,self).__init__(parent,el)
-        self.split1='top'
-        self.split2='left'
-        self.type='column'
 
-layout=[{'name': 'att2', 'top': 0, 'height': 50, 'left': 0, 'width': 100}, {'name': 'att3', 'top': 0, 'height': 50, 'left': 100, 'width': 100}, {'name': 'att4', 'top': 0, 'height': 50, 'left': 200, 'width': 100}, {'name': 'att5', 'top': 0, 'height': 50, 'left': 300, 'width': 100}, {'name': 'att11', 'top': 0, 'height': 50, 'left': 300, 'width': 100}, {'name': 'att6', 'top': 50, 'height': 50, 'left': 0, 'width': 100}, {'name': 'att12', 'top': 50, 'height': 50, 'left': 100, 'width': 100}, {'name': 'att10', 'top': 50, 'height': 50, 'left': 200, 'width': 100}, {'name': 'att13', 'top': 50, 'height': 50, 'left': 300, 'width': 100}, {'name': 'att7', 'top': 100, 'height': 50, 'left': 0, 'width': 100}]
+conn = sqlite3.connect('C:\TheProject\db.sqlite3')
 
-master=container(el={'top':0,'left':0,'width':1200,'height':1200},rawlayout=layout)
-master.split_by_con()
-master.print_elements()
+ssql="""
+SELECT name,tbl_name FROM sqlite_master
+WHERE type='table' and name like 'ut_%' and name not in ('ut_cache_table','ut_instances','ut_values')
+ORDER BY name;
 """
+df=pd.read_sql(ssql,conn)
+
+print (df)
+
+
+
+import mysql.connector
+from pandas.io import sql
+
+mydb = mysql.connector.connect(
+    host="127.0.0.1",
+    user="pfbox",
+    password="admin_pqv34433_GAS",
+    database = 'pfbox$ut'
+)
+
+from pandas.io import sql
+import pymysql
+from sqlalchemy import create_engine
+
+engine = create_engine("mysql+pymysql://{user}:{pw}@localhost/{db}"
+                       .format(user="pfbox",
+                               pw="admin_pqv34433_GAS",
+                               db="pfbox$ut"))
+
+cur=engine
+cur.execute('SET FOREIGN_KEY_CHECKS=0;')
+
+for i,r in df.iterrows():
+    print ('deleting from {}'.format(r.tbl_name))
+    cur.execute('delete from {} where id>-100'.format(r.tbl_name))
+
+for i,r in df.iterrows():
+    print (r.tbl_name)
+    cur.execute ('alter table {} modify id int(11)'.format(r.tbl_name))
+    table=pd.read_sql('select * from {}'.format(r.tbl_name),conn)
+    table.loc[table.id==0,'id']=-1
+    if r.tbl_name in ['ut_attributes','ut_inputtypes','ut_filters']:
+        for c in table.columns:
+            if c in ['InputType_id','Ref_Class_id','Ref_Attribute_id','InternalAttribute_id',
+                     'Attribute1_id','Attribute2_id','Attribute3_id','Class_id']:
+                table.loc[table[c]==0,c]=-1
+    print (table)
+
+    table.to_sql(con=engine, name=r.tbl_name, if_exists='append',index=False)
+    cur.execute ('alter table {} modify id int(11) auto_increment, auto_increment = {}'.format(r.tbl_name,max(value_if_null(table.id.max(),0),0)+1))
+    #cur.execute ('alter table {} modify id int(11) auto_increment'.format(r.tbl_name))
+
+cur = mydb.cursor().execute('SET FOREIGN_KEY_CHECKS=1;')
+
+

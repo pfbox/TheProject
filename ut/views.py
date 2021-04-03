@@ -26,7 +26,7 @@ def index(request):
         dr[r.id]=r.DefaultReport.id #get_reporttable(r.DefaultReport_id)['table']
     context=get_base_context()
     #context={'table_list':am.to_dict('records')}
-    context['classes']=Classes.objects.all()
+    context['classes']=Classes.objects.filter(id__gte=0)
     context['projects']=projects
     context['reports']=Reports.objects.all()
     context['defaultreports']=dr
@@ -40,8 +40,8 @@ def get_base_context(c={}):
         context={}
     else:
         context=c
-    context['base_classes']=Classes.objects.all()
-    context['base_projects']=Projects.objects.all()
+    context['base_classes']=Classes.objects.filter(id__gte=0)
+    context['base_projects']=Projects.objects.filter(id__gte=0)
     return context
 
 def table(request,tablename):

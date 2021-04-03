@@ -50,7 +50,7 @@ and v2.char_value like '%term%'
 
 select_simple_options_sql="""
 select 
-i.id, case when {Attribute_id}=0 then i.Code else v2.char_value end options  from ut_instances i
+i.id, case when {Attribute_id}=-1 then i.Code else v2.char_value end options  from ut_instances i
 left outer join ut_values v2 on v2.Instance_id = i.id and v2.Attribute_id = {Attribute_id}
 WHERE
 i.Class_id={Class_id} 
@@ -96,60 +96,8 @@ def valuefield_property(attr):
     dt= attr.DataType.id
     attribute = attr.Attribute
     res = {}
-    if id == 0:
+    if attr.id == Default_Attribute:
         res[attribute] = 'ins.Code'
-    elif dt == DT_Lookup:
-            res[attribute] = '{tab}.{field}' \
-                .format(tab=attr.RefAttrTableName, field=get_fieldname(DT_String))
-    elif dt == DT_External:
-        res[attribute] = '{tab}.{field}'.format(tab=attr.ExternalTable, field=attr.ExternalField)
-    elif dt in [DT_Table]:
-        res[attribute] = '0 as Table__' + str(id) + '__'
-    elif dt in [DT_Calculated]:
-        res[attribute] = '{formula}'.format(formula=attr.Formula)
-    else:
-        res[attribute] = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
-    return res
-
-def valuefield(id,df_attr):
-    attr=df_attr[df_attr.id==id].iloc[0]
-    dt= attr.DataType_id
-    attribute=attr.Attribute
-    ref_attribute_id=attr.Ref_Attribute_id
-    res = {}
-    if id == 0:
-        res[attribute] = 'ins.Code'
-    elif dt == DT_Lookup:
-            res[attribute] = '{tab}.{field}' \
-                .format(tab=attr.RefAttrTableName, field=get_fieldname(DT_String))
-    elif dt == DT_External:
-        res[attribute] = '{tab}.{field}'.format(tab=attr.ExternalTable, field=attr.ExternalField)
-    elif dt in [DT_Table]:
-        res[attribute] = '0 as Table__' + str(id) + '__'
-    elif dt in [DT_Calculated]:
-        res[attribute] = '{formula}'.format(formula=attr.Formula)
-    else:
-        res[attribute] = '{tab}.{field}'.format(tab=attr.TableName, id=id,field=get_fieldname(dt))
-    return res
-
-def selectfield(id,df_attr):
-    attr=df_attr[df_attr.id==id].iloc[0]
-    dt= attr.DataType_id
-    attr=df_attr[df_attr.id==id].iloc[0]
-    ref_attr = df_attr[df_attr.id==attr.Ref_Attribute_id].iloc[0]
-    internal_attr = df_attr[df_attr.id==attr.InternalAttribute_id].iloc[0]
-    attribute=attr.Attribute
-    ref_attribute_id=attr.Ref_Attribute_id
-
-    res = {}
-    if id==0:
-        res[attribute] = 'ins.Code'
-    elif dt == DT_Instance:
-        if ref_attribute_id == 0:
-            res[attribute] = '{tab}.{field}'.format(tab=attr.RefTableName, field='"Code"')
-        else:
-            res[attribute] = '{tab}.{field}' \
-                .format(tab=attr.RefAttrTableName, field=get_fieldname(ref_attr.DataType_id))
     elif dt == DT_Lookup:
             res[attribute] = '{tab}.{field}' \
                 .format(tab=attr.RefAttrTableName, field=get_fieldname(DT_String))
@@ -167,7 +115,6 @@ def valueleftouter(id):
     attr = Attributes.objects.get(pk=id)
     dt= attr.DataType_id
     internal_attr = attr = Attributes.objects.get(pk=attr.InternalAttribute_id)
-
     res={}
     if dt == DT_External:
         res[attr.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})'\
@@ -189,9 +136,7 @@ def leftouter(id):
     attr = Attributes.objects.get(pk=id)
     dt= attr.DataType_id
     internal_attr = Attributes.objects.get(pk=attr.InternalAttribute_id)
-
     res={}
-
     if dt == DT_External:
         res[attr.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})'\
             .format(ext=attr.ExternalTable,uq=attr.ExternalUq,loctab=internal_attr.TableName,locfield=get_fieldname(internal_attr.DataType_id))
@@ -209,7 +154,7 @@ def leftouter(id):
         if dt == DT_Instance:
             res[attr.RefTableName]='LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id) --{attr}'\
                 .format(ins=Instances._meta.db_table,tab=attr.TableName,reftab=attr.RefTableName,attr=attr.Attribute)
-            if attr.Ref_Attribute_id!=0:
+            if attr.Ref_Attribute_id!=Default_Attribute:
                 res[attr.RefAttrTableName] = 'LEFT OUTER JOIN {val} as {refval} ON ({refval}.Instance_id = {reftab}.id and {refval}.Attribute_id = {refatt}) --{attr}'\
                     .format(val=Values._meta.db_table,refval=attr.RefAttrTableName,refatt=attr.Ref_Attribute_id,reftab=attr.RefTableName,attr=attr.Attribute)
 
@@ -232,14 +177,14 @@ def get_options(Attribute_id=0,SelectedInstance_id=0,values={},validation=False,
         else:
             m_value=0
 
-        if attr.Ref_Attribute_id == 0:
+        if attr.Ref_Attribute_id == Default_Attribute:
             for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id):
                 instances[r.Instance_id]=r.Instance.Code
         else:
             for r in Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id)):
                 instances[r.id]=r.char_value
     else:
-        if attr.Ref_Attribute_id == 0:
+        if attr.Ref_Attribute_id == Default_Attribute:
             if pd.isnull(SelectedInstance_id):
                 filter=Q(Class_id=attr.Ref_Class_id)
             else:
@@ -381,98 +326,39 @@ def filter_value(attr):
         res = ''
     return res
 
-def set_attributes():
-    old_sql_to_delete = """
-    select at.*, mat.id as MasterAttribute_id, dcl.id as dependancies
-    from ut_attributes at, ut_classes cl
-    left outer join ut_attributes mat on (mat.DataType_id=6 and mat.Class_id=at.Class_id and mat.Ref_Class_id=cl.Master_id and mat.Ref_Class_id<>0)
-    left outer join ut_classes dcl on (dcl.Master_id=at.Ref_Class_id and dcl.Master_id<>0)
-    where at.Ref_Class_id=cl.id
-    """
-
-    at_sql="select * from ut_attributes"
-    cl_sql="select * from ut_classes"
-
-    df_attr = pd.read_sql(at_sql, con)
-    df_cl   = pd.read_sql(cl_sql, con)
-
-    df_attr = pd.merge(df_attr, df_cl[['id', 'Master_id']].rename(columns={'id':'Ref_Class_id'}),
-                       on='Ref_Class_id', how='inner')
-
-    df_attr_ref=df_attr.loc[(df_attr.DataType_id==DT_Instance)&(df_attr.Ref_Class_id!=0),['id','Class_id','Ref_Class_id']].rename(
-                columns={'id':'MasterAttribute_id','Ref_Class_id':'Master_id'})
-
-    df_attr = pd.merge(df_attr,df_attr_ref,on=['Class_id','Master_id'],how='left').astype({'MasterAttribute_id':'Int64'})
-
-    dependancies=df_attr[(df_attr.MasterAttribute_id!=0)&(df_attr.DataType_id==DT_Instance)].groupby(['MasterAttribute_id']).agg({'id': 'max'})\
-        .reset_index().rename(columns={'MasterAttribute_id':'id','id':'hierarchy_trigger'})
-
-    df_attr = pd.merge(df_attr,dependancies,on=['id'],how='left')
-
-    lookups = df_attr[(df_attr.DataType_id==DT_Lookup)&(df_attr.InternalAttribute_id!=0)]\
-        .groupby('InternalAttribute_id').agg({'id':'max'}).reset_index()\
-        .rename(columns={'id':'lookup_trigger','InternalAttribute_id':'id'})
-
-    df_attr = pd.merge(df_attr,lookups,on='id',how='left')
-
-    df_attr['TableName']=df_attr.id.apply(lambda x: '"val{}"'.format(x)) #check
-
-    df_attr['RefTableName']=df_attr.id.apply(lambda x: '"val_ins{}"'.format(x)) #check
-    df_attr['RefAttrTableName']=df_attr.id.apply(lambda x: '"refval{}"'.format(x)) #X
-
-    df_attr['SelectField']=df_attr.id.apply(lambda x: selectfield(x,df_attr))
-    df_attr['ValueField']=df_attr.id.apply(lambda x: valuefield(x,df_attr))
-
-    df_attr['LeftOuter'] = df_attr.id.apply(lambda x: leftouter(x,df_attr))
-    df_attr['ValueLeftOuter']=df_attr.id.apply(lambda x: valueleftouter(x,df_attr))
-
-    df_attr['Calculated'] = df_attr.DataType_id.apply(lambda x: calculated(x))
-    df_attr['TableColumn']=df_attr.apply(lambda x: tables.Column )
-    df_attr['MasterAttribute_id']=df_attr['MasterAttribute_id'].apply(lambda x:  0 if pd.isnull(x) else int(x))
-
-    df_attr['FT_Exact']=df_attr.apply(lambda x: x.ValueField[x.Attribute]+ '=' + filter_value(x),axis=1)
-    df_attr['FT_Contains'] = df_attr.apply(lambda x: x.ValueField[x.Attribute]+ " like '%{val}%'",axis=1)
-    df_attr['FT_Like']= df_attr.apply(lambda x: x.ValueField[x.Attribute]+ " like '{val}'",axis=1)
-    df_attr['FT_Min'] = df_attr.apply(lambda x: x.ValueField[x.Attribute]+ '>=' + filter_value(x),axis=1)
-    df_attr['FT_Max'] = df_attr.apply(lambda x: x.ValueField[x.Attribute]+ '<=' + filter_value(x),axis=1)
-
-    return df_attr
-
-
-
 def make_filter_expression(f):
     res={}
     for ft in filter_expression_columns:
         expr =  f[ft]
-        if f.Attribute2_id !=0:
+        if f.Attribute2_id != Default_Attribute:
             expr = expr + ' ' + f.Condition1 + ' ' + f[ft+'_at2']
-        if f.Attribute3_id !=0:
+        if f.Attribute3_id != Default_Attribute:
             expr = expr + ' ' + f.Condition2 + ' ' + f[ft+'_at3']
         res[ft] = ' and ('+expr+')'
     return res
 
-def get_filter(Filter_id=-1,Class_id=0,FilterName=''):
-    if Filter_id!=-1:
+def get_filter(Filter_id=0,Class_id=0,FilterName=''):
+    if Filter_id!=0:
         res=Filters.objects.get(pk=Filter_id)
     else:
-        res=Filters.objects.get(Class_id__in=[Class_id,0],Filter=FilterName)
+        res=Filters.objects.get(Class_id__in=[Class_id,Default_Class],Filter=FilterName)
     return res
 
 def get_attribute(id):
     return Attributes.objects.get(pk=id)
 
 def get_editfieldlist(Class_id):
-    return  Attributes.objects.exclude(DataType_id__in=[DT_Calculated]).filter(Class_id__in=[Class_id,0])
+    return  Attributes.objects.exclude(DataType_id__in=[DT_Calculated]).filter(Class_id__in=[Class_id,Default_Class])
 
 def get_calulatedfieldlist(Class_id):
-    return  Attributes.objects.filter(Class_id__in=[Class_id,0],DataType_id__in=[DT_Calculated])
+    return  Attributes.objects.filter(Class_id__in=[Class_id,Default_Class],DataType_id__in=[DT_Calculated])
 
 def get_tableviewlist(Class_id):
-    return  Attributes.objects.exclude(DataType_id__in=[DT_Table,DT_ManyToMany]).filter(Class_id__in=[Class_id,0])
+    return  Attributes.objects.exclude(DataType_id__in=[DT_Table,DT_ManyToMany]).filter(Class_id__in=[Class_id,Default_Class])
         #df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([DT_Table,DT_ManyToMany]))]
 
 def get_fulllist(Class_id):
-    return Attributes.objects.filter(Class_id__in=[Class_id,0])
+    return Attributes.objects.filter(Class_id__in=[Class_id,Default_Class])
 
 
 def create_orderby(Class_id,orderby):
@@ -522,11 +408,12 @@ def create_count_sql(Class_id=0,filter={},masterclassfilter={},search=''):
     return sql
 
 def create_val_sql(Class_id,Instance_id):
+    t=datetime.now()
     atts=get_tableviewlist(Class_id=Class_id)
     ss = {'id':'ins.id','Code':'ins.Code'}
     lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
     for a in atts:
-        if a.id != 0:
+        if a.id != Default_Attribute:
             ss[a.Attribute]=a.ValueField
             for key,val in a.ValueLeftOuter.items():
                 lo[key]=val
@@ -541,9 +428,10 @@ def create_val_sql(Class_id,Instance_id):
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
 
     #print (ss,lo)
-    sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
+    sselect = 'select ' + ',\n'.join(["{}  as '{}'".format(ss[i],i) for i in ss ])
     sfrom='from ' +'\n'.join(lo.values())
     swhere = 'where ins.id={}'.format(Instance_id)
+    print ('query build in:',datetime.now()-t)
     return sselect +'\n' + sfrom + '\n' + swhere
 
 def create_qs_sql(Class_id=0,Instance_id=0):
@@ -553,7 +441,7 @@ def create_qs_sql(Class_id=0,Instance_id=0):
     ss = {'id':'ins.id','Code':'ins.Code'}
     lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
     for a in atts:
-        if a.id != 0:
+        if a.id != Default_Attribute:
             ss[a.Attribute]=a.SelectedField
             for key,val in a.LeftOuter.items():
                 lo[key]=val
@@ -568,7 +456,7 @@ def create_qs_sql(Class_id=0,Instance_id=0):
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
 
-    sselect = 'select ' + ',\n'.join(['{}  as "{}"'.format(ss[i],i) for i in ss ])
+    sselect = 'select ' + ',\n'.join(["{}  as '{}'".format(ss[i],i) for i in ss ])
     sfrom='from ' + '\n'.join(lo.values())
     ins_condition=''
     if Instance_id!=0:
@@ -692,7 +580,7 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
                 if passed_by_name:
                     ref_class=Attributes.objects.get(pk=Attribute_id).Ref_Class.id
                     ref_attr=Attributes.objects.get(pk=Attribute_id).Ref_Attribute.id
-                    if ref_attr==0:
+                    if ref_attr==Default_Attribute:
                         val=Instances.objects.get(Class_id=ref_class,Code=value).id
                     else:
                         val=Values.objects.get(Attribute_id=ref_attr,char_value=value).Instance.id

@@ -8,13 +8,63 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-03-22">
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-04-02">
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/fontawesome/svgs/solid/search-dollar.svg" beforeDir="false" afterPath="$PROJECT_DIR$/static/fontawesome/svgs/solid/search-dollar.svg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/migrations/0001_initial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0002_auto_20191011_2225.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0003_auto_20191011_2226.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0004_auto_20191012_1041.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0005_auto_20191012_1103.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0006_attributes_showintable.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0007_attributes_ref_attribute.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0008_auto_20191014_0910.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0009_auto_20191014_0915.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0010_auto_20191015_2342.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0011_layouts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0012_attributes_uniqueatt.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0013_attributes_notnullatt.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0014_formlayouts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0015_auto_20200105_1016.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0016_instances_master.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0017_remove_instances_master.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0018_auto_20200507_0127.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0019_layouts_shortlayout.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0020_projectclassconn_projectreportconn_projects_reports.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0021_auto_20200712_0800.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0022_projectreportconn_default.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0023_sendouts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0024_attributes_formula.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0025_filters.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0026_auto_20201209_2332.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0027_auto_20201209_2340.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0028_auto_20201209_2340.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0029_auto_20201210_1028.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0030_auto_20201210_1439.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0031_auto_20201219_1852.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0032_values_m2m.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0033_remove_values_manytomany.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0034_auto_20201220_2013.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0035_auto_20201220_2113.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0036_auto_20201222_1020.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0037_auto_20201230_1208.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0038_instances_created.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0039_auto_20210123_1651.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0040_auto_20210124_1043.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0041_auto_20210216_0141.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0042_auto_20210216_0210.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0043_auto_20210219_2224.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0044_auto_20210322_2229.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0045_auto_20210323_2207.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0046_emailtemplates.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0047_auto_20210323_2256.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0048_auto_20210327_1659.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/migrations/0049_auto_20210328_1307.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -302,6 +352,7 @@
       <workItem from="1615948213568" duration="98941000" />
       <workItem from="1616548088729" duration="33753000" />
       <workItem from="1616808963012" duration="23006000" />
+      <workItem from="1617372350017" duration="20592000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -345,7 +396,14 @@
       <option name="project" value="LOCAL" />
       <updated>1617067883662</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="2021-04-02">
+      <created>1617337049199</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1617337049199</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -387,7 +445,8 @@
     <MESSAGE value="2021-03-22" />
     <MESSAGE value="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <MESSAGE value="2021-29-03 v3" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-29-03 v3" />
+    <MESSAGE value="2021-04-02" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-04-02" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -397,13 +456,9 @@
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/test.py</url>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>342</line>
-          <option name="timeStamp" value="90" />
+          <line>135</line>
+          <option name="timeStamp" value="108" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -420,16 +475,12 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="Classes.objects.get(id=self.Class_id).DefaultEmailTemplate.TemplateName" language="Python" />
+        <watch expression="sql_col['sql']" language="Python" />
         <watch expression="values[0].int_value" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
         <watch expression="__py_debug_temp_var_1064192193.'Province' (2281442867440)" />
       </configuration>
     </watches-manager>
-  </component>
-  <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/__init___py$Unnamed.coverage" NAME="Unnamed Coverage Results" MODIFIED="1616552327112" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/__init___py$shell_plus.coverage" NAME="shell_plus Coverage Results" MODIFIED="1613531655928" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
