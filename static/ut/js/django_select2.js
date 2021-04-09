@@ -17,6 +17,7 @@
   var initHeavy = function ($element, options) {
     var settings = $.extend({
       ajax: {
+        delay : 300,//
         data: function (params) {
           var result = {
             term: params.term,
@@ -57,10 +58,11 @@
       } else {
         init($element, settings)
       }
-      $element.on('select2:select', function (e) {
+      $element.on('select2:select select2:clear', function (e) {
         var name = $(e.currentTarget).attr('name')
         $('[data-select2-dependent-fields*=' + name + ']').each(function () {
           $(this).val('').trigger('change')
+          console.log('im here')
         })
       })
     })
@@ -69,7 +71,7 @@
 
   $(function () {
     $('.django-select2').djangoSelect2()
+    console.log('i was here!')
   })
-
   return $.fn.djangoSelect2
 }))

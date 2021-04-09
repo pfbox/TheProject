@@ -61,18 +61,17 @@ class AttributeForm(forms.ModelForm):
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Class'].required = False
             self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(
-                Q(Class_id=self.Ref_Class) | Q(Class_id=0))
+                Q(Class_id=self.Ref_Class) | Q(Class_id=Default_Class))
             self.fields['InternalAttribute'].queryset = Attributes.objects.filter(
-                Q(Class_id=self.Class_id) | Q(Class_id=0))
+                Q(Class_id=self.Class_id) | Q(Class_id=Default_Class))
         else:
             self.Class_id=0
-            self.Ref_Class=0
+            self.Ref_Class=-1
             self.fields['Class'].required = False
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Ref_Class'].queryset = Classes.objects.all()
             self.fields['Ref_Attribute'].queryset = Attributes.objects.all()
-            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id)| Q(Class_id=0))
-
+            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id)| Q(Class_id=Default_Class))
 
     def save(self,commit=True):
         Class_id=self.initial['Class_id'];
@@ -116,9 +115,9 @@ class FilterEditForm(forms.ModelForm):
         else:
             self.Class_id = kwargs['initial']['Class_id']
 
-        self.fields['Attribute1'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
-        self.fields['Attribute2'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
-        self.fields['Attribute3'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=0))
+        self.fields['Attribute1'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=Default_Class))
+        self.fields['Attribute2'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=Default_Class))
+        self.fields['Attribute3'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id) | Q(Class_id=Default_Class))
 
         self.fields['Class'].widget.attrs['disabled'] = 'true'
         self.fields['Class'].required = False
@@ -145,7 +144,8 @@ from django_select2 import forms as s2forms
 class InstanceForm(forms.Form):
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
     def __init__(self,*args,**kwargs):
-        print (datetime.now(),'form __init__')
+        #t0=datetime.now()
+        #print (t0,'form __init__')
         self.Class_id=kwargs.pop('Class_id')
         self.Instance_id = kwargs.pop('Instance_id')
         self.ReadOnly = kwargs.pop('ReadOnly')
@@ -161,7 +161,6 @@ class InstanceForm(forms.Form):
 
         # get form initial values
         #initrow={}
-        it=datetime.now()
         if self.Instance_id!=0:
             initrow=get_instance_values(self.Class_id,self.Instance_id)
         else:
@@ -169,30 +168,25 @@ class InstanceForm(forms.Form):
                 initrow=self.Defaults
             else:
                 initrow={}
-        print ('initrow done in:',datetime.now()-it)
+        #print ('initrow done in:',datetime.now()-it,datetime.now())
 
         old=datetime.now()
         for att in get_editfieldlist(self.Class_id).iterator():
             if create_form_field_check(att):
-                print (datetime.now()-old,'--before create field')
                 self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
                 self.fields[att.Attribute].label = att.Attribute
                 self.fields[att.Attribute].widget.attrs['attr_id']=att.id
-                print (datetime.now()-old,'--before masterattribute_id')
                 if att.DataType_id == DT_Instance:
                     if att.MasterAttribute_id > 0:
                         self.fields[att.Attribute].widget.attrs['masterattr_id']=att.MasterAttribute_id
-                    print(datetime.now() - old, '--before hierarchy and lookup')
                     widgetclass=self.fields[att.Attribute].widget.attrs.get('class')
                     widgetclass= '' if pd.isnull(self.fields[att.Attribute].widget.attrs.get('class')) else widgetclass
                     self.fields[att.Attribute].widget.attrs['class']= widgetclass \
                         +(' hierarchy_trigger' if att.hierarchy_trigger>0 else '') + (' lookup_trigger' if att.lookup_trigger>0 else '')
-                print (datetime.now()-old,'-- before Readonly')
                 if self.ReadOnly or att.DataType_id in [DT_Lookup]:
                     self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
                     self.fields[att.Attribute].widget.attrs['disabled'] = "disabled"
                     #self.fields[att.Attribute].required = False
-                print (datetime.now()-old,'-- before manytomany')
                 if self.Instance_id!=0:
                     if att.DataType_id in [DT_ManyToMany]:
                         self.initial[att.Attribute]=list(Values_m2m.objects.filter(Instance_id=self.Instance_id,Attribute_id=att.id).values_list('instance_value_id',flat=True))
@@ -200,14 +194,14 @@ class InstanceForm(forms.Form):
                         self.initial[att.Attribute]=initrow[att.Attribute]
                 else:
                     if not self.Validation:
-                        if att.id==0:
+                        if att.id==Default_Attribute:
                             self.initial['Code']=get_next_counter(self.Class_id)
                         if len(self.Defaults)>0:
                             if att.Attribute in self.Defaults:
                                self.initial[att.Attribute] = self.Defaults[att.Attribute]
             new=datetime.now()
             diff=new-old
-            print (diff,att.Attribute)
+#            print (diff,att.Attribute,datetime.now())
             old=new
 
         #add Save Button
@@ -217,37 +211,42 @@ class InstanceForm(forms.Form):
                              'data-send-instance-email-link':reverse_lazy('ut:send_instance_email_modal',args=(self.Class_id,))}
         self.helper.form_class = 'instanceform'
         self.helper.labels_uppercase = True
-        layout={}
-        try:
-            rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
-            NinRow = rawlayout['settings']['NinRow']
-            lo= []
-            for obj in rawlayout['layout']:
-                if obj['name'] in get_editfieldlist(self.Class_id).values_list('Attribute',flat=True):
-                    lo.append(obj)
-            master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=lo)
-            master.split_by_con()
-            layout=master.print_elements()
-        except:
-            print ("layout for the class "+ str(self.Class_id) + " was not found")
 
-        self.helper.layout=Layout(HTML("""
-        <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Edit instance </h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        """))
-        try:
-            self.helper.layout.append(Div(get_layout(self.Class_id,layout,'Layout'),css_class='modal-body'))
-        except:
-            print ("layout for the class "+ str(self.Class_id) + " didn't work")
-            raise
-            #raise
-        #self.helper.layout.append(lo)
-        a=""""""
-            #self.helper.layout.append(layout_row)
-        b=""""""
+        layout={}
+
+        lo=memory_cache.get('lo-{}'.format(self.Class_id))
+        if not lo:
+            try:
+                rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
+                NinRow = rawlayout['settings']['NinRow']
+                lo= []
+                available_columns=get_editfieldlist(self.Class_id).values_list('Attribute',flat=True)
+                for obj in rawlayout['layout']:
+                    if obj['name'] in available_columns:
+                        lo.append(obj)
+                master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=lo)
+                master.split_by_con()
+                layout=master.print_elements()
+            except:
+                print ("layout for the class "+ str(self.Class_id) + " was not found")
+
+            try:
+                lo=get_layout(self.Class_id, layout, 'Layout')
+                memory_cache.set('lo-{}'.format(self.Class_id),lo)
+            except:
+                print ("layout for the class "+ str(self.Class_id) + " didn't work")
+                lo=None
+                #raise
+        if lo:
+            self.helper.layout = Layout(HTML("""
+            <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Edit instance </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            """))
+            self.helper.layout.append(Div(lo, css_class='modal-body'))
+
         if self.ReadOnly:
             Buttons = ButtonHolder(
                 Button(value='Close',name='close',css_class='btn-secondary',data_dismiss='modal'),
@@ -264,7 +263,6 @@ class InstanceForm(forms.Form):
             )
         self.helper.layout.append(Buttons)
         self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
-        print (datetime.now(),'form created')
 
 from string import Template as strTemplate
 
@@ -279,13 +277,13 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
             master.append(get_layout(Class_id,v,clname,level+1))
         else:
             try:
-                attr=Attributes.objects.get(Class_id=Class_id,Attribute=v)
-                refattr=Attributes.objects.get(id=attr.Ref_Attribute_id).Attribute
+                attr=Attributes.allobjects.get(Class_id=Class_id,Attribute=v)
                 dt=attr.DataType.id
             except ObjectDoesNotExist:
                 id=0
                 dt=0
             if dt in [DT_Table]:
+                refattr=Attributes.allobjects.get(id=attr.Ref_Attribute_id).Attribute
                 a=strTemplate("""
                 $attname
                 {% with Class_id=$refclass Ref_Attribute="$refattr" %}
@@ -319,7 +317,7 @@ class InstanceFilterForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.layout=Layout()
         r=Row()
-        for f in Filters.objects.filter(Q(Class_id=self.Class_id)|Q(Class_id=0)):
+        for f in Filters.objects.filter(Q(Class_id=self.Class_id)|Q(Class_id=Default_Class)):
             att=get_attribute(f.Attribute1.id)
             if f.FilterType == FT_MinMax:
                 self.fields['__min__'+f.Filter] = create_form_field(att,usedinfilter=True,fn=f.Filter)

@@ -90,15 +90,23 @@ WSGI_APPLICATION = 'TheProject.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'super',
+        'PASSWORD': 'admin_postgres_pqv3',
+        'HOST': '127.0.0.1',
+        'PORT': '9999',
+    },
     'sqlite3': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     },
-    'default': {
+    'mysql': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pfbox$ut',
         'USER': 'pfbox',
-        'PASSWORD': 'admin_pqv34433_GAS',
+        'PASSWORD': 'admin_mysql_pqv3',
         'HOST': '127.0.0.1', #'pfbox.mysql.pythonanywhere-services.com',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -172,6 +180,9 @@ CACHES = {
     "select2": {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'ut_cache_table',
+    },
+    "memory": {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
     }
 }
 

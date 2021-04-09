@@ -19,7 +19,7 @@ from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 def index(request):
-    projects=Projects.objects.all()
+    projects=Projects.objects.filter(id__gte=0)
     default_reports=Projects.objects.filter(DefaultReport__isnull=False)
     dr = {}
     for r in default_reports:
@@ -99,7 +99,8 @@ class edit_instance_base(View):
         if Instance_id==0:
             if 'ref_attribute' in request.GET:
                 defaults[request.GET['ref_attribute']]=request.GET['ref_value']
-        form = InstanceForm(defaults=defaults,Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly, validation=False)
+        form = InstanceForm(defaults=defaults,Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly,
+                            validation=False)
         context = get_base_context()
         for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=DT_Table):
             refclass_id = a1.Ref_Class.id
@@ -129,11 +130,13 @@ class edit_instance_base(View):
         Class_id=kwargs['Class_id']
         Instance_id=kwargs['Instance_id']
         Next_id=request.POST.get('next','0')
-        form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly=False,validation=True)
+        form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly=False,
+                          validation=True)
         res = {}
         if form.is_valid():
             try:
-                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,passed_by_name=False)
+                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,
+                                     passed_by_name=False)
                 res['success'] = True
                 if request.POST.get('action')=='savenext':
                     #newrequest = RequestFactory().get('/')
@@ -145,7 +148,8 @@ class edit_instance_base(View):
                         res['success']=False
                     else:
                         Next_id = int(Next_id)
-                        form = InstanceForm(Class_id=Class_id, Instance_id=Next_id, ReadOnly=False,validation=False)
+                        form = InstanceForm(Class_id=Class_id, Instance_id=Next_id, ReadOnly=False,
+                                            validation=False)
                         form_html = render_crispy_form(form, context=ctx)
                         res['form_html']=form_html
             except BaseException as e:
@@ -193,7 +197,7 @@ def projects_view(request):
 
 def classes_view(request,Project_id=0):
     if Project_id==0:
-        table = ClassesTable(Classes.objects.all())
+        table = ClassesTable(Classes.objects.filter(id__gte=0))
     else:
         vl = Reports.objects.filter(id=Project_id).values_list('Classes_m2m', flat=True)
         table =  ClassesTable(Classes.objects.filter(id__in=vl))
@@ -216,7 +220,7 @@ class ReportRun(View):
     template='ut/showreport.html'
     def get(self,request,Report_id,*args,**kwargs):
         r=Reports.objects.get(pk=Report_id)
-        sql=r.Query
+        sql=r.QueryAdj
         cursor=con.cursor()
         cursor.execute(sql)
         t=dictfetchall(cursor)
@@ -473,7 +477,7 @@ def handle_uploaded_file(f,Class_id,commitevery=0,errors='raise'):
                     fieldname=get_fieldname(dt)
                     ins_name=attr.Attribute
                     if dt in DTG_Instance:
-                        if attr.Ref_Attribute_id == 0:
+                        if attr.Ref_Attribute_id == Default_Attribute:
                             attids = pd.DataFrame(list(Instances.objects.filter(Class_id=attr.Ref_Class_id, Code__in=list(ins[attr.Attribute]))).values('id', 'Code'))
                             attids = attids.rename(columns={'Code': attr.Attribute, 'id': attr.Attribute + '_id'})
                             ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
@@ -630,7 +634,7 @@ from querystring_parser import parser
 
 def ajax_get_report_data (request, Report_id,sample=0, filter={}):
     r = Reports.objects.get(pk=Report_id)
-    sql = r.Query
+    sql = r.QueryAdj
     cursor = con.cursor()
     cursor.execute(sql)
 #    desc = cursor.description
@@ -643,7 +647,7 @@ def ajax_get_report_data (request, Report_id,sample=0, filter={}):
 
 def ajax_get_report_columns (request, Report_id,filter={}):
     r = Reports.objects.get(pk=Report_id)
-    sql = 'select * from (' + r.Query + ') original limit 0'
+    sql = 'select * from (' + r.QueryAdj + ') original limit 0'
     cursor = con.cursor()
     cursor.execute(sql)
 #    desc = cursor.description
@@ -668,7 +672,7 @@ def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
             m_value=int(tmp)
         else:
             m_value=0
-        if attr.Ref_Attribute_id == 0:
+        if attr.Ref_Attribute_id == Default_Attribute:
             for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id,Instance__Code__icontains=term)[0:maxrecords]:
                 instances.append({'id':r.Instance_id,'text':r.Instance.Code})
         else:
@@ -679,7 +683,7 @@ def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
                 #Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id) + " and  v2.char_value like '%{}%'".format(term))[0:maxrecords]:
                 #instances.append({'id': r.id, 'text': r.char_value})
     else:
-        if attr.Ref_Attribute_id == 0:
+        if attr.Ref_Attribute_id == Default_Attribute:
             for r in Instances.objects.filter(Class_id=attr.Ref_Class_id,Code__icontains=term)[0:maxrecords]:
                 instances.append({'id': r.id, 'text': r.Code})
         else:
@@ -703,7 +707,7 @@ def ajax_get_class_data(request,Class_id):
     search=''
     draw=0
     ssargs = parser.parse(request.META['QUERY_STRING'])
-    print ('META.query_string',request.META['QUERY_STRING'])
+    #print ('META.query_string',request.META['QUERY_STRING'])
     if 'start' in request.GET:
         offset=int(ssargs.get('start'))
         limit=int(ssargs.get('length'))

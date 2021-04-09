@@ -6,8 +6,9 @@ class utHeavyWidget(HeavySelect2Widget):
     @property
     def media(self):
         m = Media()
-        m._css_lists.append({'screen':['https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css']})
-        m._js_lists.append(['https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js', '/static/ut/js/django_select2.js'])
+        #m._css_lists.append({'screen':['https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css']})
+        m._js_lists.append([#'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js',
+                            '/static/ut/js/django_select2.js'])
         return m
 
 class DataAttributesSelect(Select):

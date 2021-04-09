@@ -69,13 +69,16 @@ def get_instance(Class_id,Instance_id):
         instance = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
     return instance
 
-
 def get_instance_values(Class_id,Instance_id):
-    sql = create_val_sql(Class_id,Instance_id)
-    with con.cursor() as cursor:
-        cursor.execute(sql)
-        initrow = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
-    return initrow
+    values=memory_cache.get('instance-values-{}'.format(Instance_id))
+    if not values:
+        sql = create_val_sql(Class_id,Instance_id)
+        with con.cursor() as cursor:
+            cursor.execute(sql)
+            values = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
+        memory_cache.set('instance-values-{}'.format(Instance_id),values)
+    return values
+
 
 def get_simple_options(Class_id,Attribute_id):
     with con.cursor() as cursor:
@@ -281,7 +284,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                 ch = [(k, v) for k, v in op.items()]
                 field = forms.ChoiceField(choices=ch,required=req,
                     widget= utHeavyWidget(data_url=reverse_lazy('ut:ajax_get_attribute_options',kwargs={'Class_id':attr.Class_id,'Attribute_id':attr.id})
-                                               ,attrs={"data-minimum-input-length": 0}
+                                               ,attrs={"data-minimum-input-length": 2}
                                                ,dependent_fields= (attr.dependent_fields if not usedinfilter else None),
                 ))
             else:
@@ -350,6 +353,10 @@ def get_attribute(id):
 def get_editfieldlist(Class_id):
     return  Attributes.objects.exclude(DataType_id__in=[DT_Calculated]).filter(Class_id__in=[Class_id,Default_Class])
 
+def get_updatefieldlist(Class_id):
+    return  Attributes.allobjects.exclude(DataType_id__in=[DT_Calculated,DT_Lookup]).filter(Class_id__in=[Class_id,Default_Class])
+
+
 def get_calulatedfieldlist(Class_id):
     return  Attributes.objects.filter(Class_id__in=[Class_id,Default_Class],DataType_id__in=[DT_Calculated])
 
@@ -365,7 +372,7 @@ def create_orderby(Class_id,orderby):
     res=''
     ord=[]
     for key,val in orderby.items():
-        ord.append(' "{}" {}'.format(key,val))
+        ord.append(" {di}{key}{di} {val}".format(key=key,val=val,di=Default_Identifier))
     if len(ord)>0:
         res='Order by' + ','.join(ord)
     return res
@@ -391,11 +398,11 @@ def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={},orderby={},sea
     # searchig all fields only if search > ''
     sql = sql_col['sql'] + '\n' \
           + create_filter_for_sql(Class_id=Class_id, filter=filter,masterclassfilter=masterclassfilter) + '\n' \
-          + ( create_search_all(columns=columns,search=search) if search!='' else '' ) +'\n' \
+          + (create_search_all(columns=columns,search=search) if search!='' else '' ) +'\n' \
           + create_orderby(Class_id=Class_id,orderby=orderby) + '\n' \
           + create_limit_offset(Class_id=Class_id,limit=limit,offset=offset)
     #print (sql)
-    return sql
+    return sql.replace(Default_Identifier,Current_Identifier)
 
 def create_rawquery_from_attributes(Class_id=0,filter={},masterclassfilter={},orderby={},search='',offset=None,limit=None):
     sql=create_rawquery_sql(Class_id,filter,masterclassfilter,orderby=orderby,search=search,offset=offset,limit=limit)
@@ -408,38 +415,39 @@ def create_count_sql(Class_id=0,filter={},masterclassfilter={},search=''):
     return sql
 
 def create_val_sql(Class_id,Instance_id):
-    t=datetime.now()
-    atts=get_tableviewlist(Class_id=Class_id)
-    ss = {'id':'ins.id','Code':'ins.Code'}
-    lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
-    for a in atts:
-        if a.id != Default_Attribute:
-            ss[a.Attribute]=a.ValueField
-            for key,val in a.ValueLeftOuter.items():
-                lo[key]=val
-    if len(ss)>0:
-        co=','
-    else:
-        co=''
-    calcfields=get_calulatedfieldlist(Class_id)
-    for cf in calcfields:
-        for key,val in ss.items():
-            if ('"'+key+'"') in ss[cf.Attribute]:
-                ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
-
-    #print (ss,lo)
-    sselect = 'select ' + ',\n'.join(["{}  as '{}'".format(ss[i],i) for i in ss ])
-    sfrom='from ' +'\n'.join(lo.values())
-    swhere = 'where ins.id={}'.format(Instance_id)
-    print ('query build in:',datetime.now()-t)
-    return sselect +'\n' + sfrom + '\n' + swhere
+    sql=memory_cache.get('val-sql-{}'.format(Class_id))
+    if not sql:
+        atts=get_tableviewlist(Class_id=Class_id)
+        ss = {'id':'ins.id','Code':'ins."Code"'}
+        lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
+        for a in atts:
+            if a.id != Default_Attribute:
+                ss[a.Attribute]=a.ValueField
+                for key,val in a.ValueLeftOuter.items():
+                    lo[key]=val
+        if len(ss)>0:
+            co=','
+        else:
+            co=''
+        calcfields=get_calulatedfieldlist(Class_id)
+        for cf in calcfields:
+            for key,val in ss.items():
+                if ('"'+key+'"') in ss[cf.Attribute]:
+                    ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
+        #print (ss,lo)
+        sselect = 'select ' + ',\n'.join(["{f}  as {di}{a}{di}".format(f=ss[i],a=i,di=Default_Identifier) for i in ss ])
+        sfrom='from ' +'\n'.join(lo.values())
+        swhere = 'where ins.id={}'
+        sql=sselect +'\n' + sfrom + '\n' + swhere
+        memory_cache.set('val-sql-{}'.format(Class_id),sql)
+    return sql.format(Instance_id)
 
 def create_qs_sql(Class_id=0,Instance_id=0):
     user_id=get_current_user().id
     atts=get_tableviewlist(Class_id=Class_id)
     #default for instances id, code, and instance table
-    ss = {'id':'ins.id','Code':'ins.Code'}
-    lo = {'ins' : '{} ins '.format(Instances._meta.db_table)}
+    ss = {'id':'ins.id','Code':'ins."Code"'}
+    lo = {'ins' : '"{}" ins '.format(Instances._meta.db_table)}
     for a in atts:
         if a.id != Default_Attribute:
             ss[a.Attribute]=a.SelectedField
@@ -456,21 +464,21 @@ def create_qs_sql(Class_id=0,Instance_id=0):
             if ('"'+key+'"') in ss[cf.Attribute]:
                 ss[cf.Attribute]=ss[cf.Attribute].replace('"'+key+'"',val)
 
-    sselect = 'select ' + ',\n'.join(["{}  as '{}'".format(ss[i],i) for i in ss ])
+    sselect = 'select ' + ',\n'.join(["{f}  as {di}{a}{di}".format(f=ss[i],a=i,di=Default_Identifier) for i in ss ])
     sfrom='from ' + '\n'.join(lo.values())
     ins_condition=''
     if Instance_id!=0:
-        ins_condition=' and ins.id={}'.format(Instance_id)
+        ins_condition=' and ins."id"={}'.format(Instance_id)
     swhere = """ 
-    where ins.Class_id={Class_id} {instance}
+    where ins."Class_id"={Class_id} {instance}
     and 
-    (exists (select * from ut_classes_ViewGroups vg, auth_user_groups ug where vg.group_id=ug.group_id and user_id = {user_id})
+    (exists (select * from "ut_classes_ViewGroups" vg, auth_user_groups ug where vg.group_id=ug.group_id and user_id = {user_id})
     or 
-    ins.owner_id={user_id}
+    ins."Owner_id"={user_id}
     or
-    exists (select * from auth_user where id = {user_id} and is_superuser=1)
+    exists (select * from auth_user where id = {user_id} and is_superuser={true})
     )
-    """.format(Class_id=Class_id, user_id=user_id,instance=ins_condition)
+    """.format(Class_id=Class_id, user_id=user_id,instance=ins_condition,true='true')
     sql=sselect +'\n' + sfrom + '\n' + swhere
     #print (sql)
     return {'sql':sql,'columns':ss.keys(),'selectfields':ss.values()}
@@ -515,8 +523,11 @@ def qs_to_table(qs,m,url,args=[A('pk'),]):
     return h_table(qs)
 
 def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
+    t0=datetime.now()
+    print (t0,'internal save')
     at=Attributes.objects.get(pk=Attribute_id)
     DataType = at.DataType.id
+    print (datetime.now()-t0, 'after get attribute')
     if DataType==DT_ManyToMany:
         if type(value)==list:
             int_values = [int(i) for i in value]
@@ -530,70 +541,64 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
                 if not old_i in int_values:
                     Values_m2m.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id,instance_value_id=old_i).delete()
     else:
+        defaults={}
         if pd.isnull(value):
             val = ''
         else:
             val = value
-        if not Values.objects.filter(Instance_id=Instance_id,Attribute_id=Attribute_id).exists():
-            v = Values(Instance_id=Instance_id,Attribute_id=Attribute_id)
-        else:
-            v = Values.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id)
-        if DataType == DT_Integer: #int
-            if val!='':
-                v.int_value=int(val)
-            else:
-                v.int_value=None
+#        if not Values.objects.filter(Instance_id=Instance_id,Attribute_id=Attribute_id).exists():
+#            v = Values(Instance_id=Instance_id,Attribute_id=Attribute_id)
+#        else:
+#            v = Values.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id)
+
+        if DataType in [DT_Integer,DT_Boolean]: #int
+            if val=='':
+                val=None
+            defaults={'int_value':val}
         elif DataType in [DT_Float,DT_Currency]: #float, currency
-            if val!='':
-                v.float_value=float(val)
-            else:
-                v.float_value=None
+            if val=='':
+                val=None
+            defaults={'float_value':val}
         elif DataType in [DT_String,DT_Email]: #char,email
-            if val!='':
-                v.char_value=val
-            else:
-                v.char_value=None
+            if val=='':
+                val=None
+            defaults={'char_value':val}
         elif DataType == DT_Text: #text
-            if val!='':
-                v.text_value=val
-            else:
-                v.text_value=None
+            if val=='':
+                val=None
+            defaults={'text_value':val}
         elif DataType in [DT_Date,DT_Datetime] : #date,datetime
             if val!='':
                 tz=timezone.utc #!!!need to set up timezone here
                 val=pd.to_datetime(val)
                 if val.tzinfo is None:
                     val=tz.localize(val)
-                v.datetime_value= val #tz.localize(val)
             else:
-                v.datetime_value=None
+                val=None
+            defaults={'datetime_value':val}
         elif DataType in [DT_Time]: #time only
             if val!='':
                 val=val.strftime('%H:%M:%S')
-                v.char_value=val
             else:
-                v.char_value=None
+                val=None
+            defaults={'char_value':val}
         elif DataType == DT_Instance: #instance
             if val=='':
-                v.instance_value = None
+                val = None
             else:
                 if passed_by_name:
-                    ref_class=Attributes.objects.get(pk=Attribute_id).Ref_Class.id
-                    ref_attr=Attributes.objects.get(pk=Attribute_id).Ref_Attribute.id
+                    ref_class=at.Ref_Class.id
+                    ref_attr= at.Ref_Attribute.id
                     if ref_attr==Default_Attribute:
                         val=Instances.objects.get(Class_id=ref_class,Code=value).id
                     else:
                         val=Values.objects.get(Attribute_id=ref_attr,char_value=value).Instance.id
-                try:
-                    v.instance_value=Instances.objects.get(pk=int(val))
-                except Instances.DoesNotExist:
-                    v.instance_value=None
-        elif DataType == DT_Boolean: #boolean
-            if val!='':
-                v.int_value=int(val)
-            else:
-                v.int_value=None
-        v.save()
+            defaults={'instance_value_id':val}
+        print(datetime.now() - t0, 'before save')
+        Values.objects.update_or_create(Instance_id=Instance_id, Attribute_id=Attribute_id, defaults=defaults)
+        print(datetime.now() - t0, 'after save',at.Attribute)
+        #v.save()
+
 
 
 def fieldlist(Class_id):
@@ -721,38 +726,64 @@ def save_instance_byid(Class_id,instance={}):
             ins=Instances.objects.get(pk=Instance_id)
             ins.Code=code
         ins.save()
-        fl=get_editfieldlist(Class_id)
+        fl=get_updatefieldlist(Class_id)
         for rec in fl:
             if str(rec.id) in instance.keys():
                 save_attribute(ins.id,rec.id,instance[str(rec.id)])
         return True
 
+def get_difference(new={},old={},key_list=[]):
+    diff={}
+    for key,val in new.items():
+        if key in key_list:
+            if val=='':
+                new_val=None
+            else:
+                new_val=val
+            old_val = old.get(key)
+            if old_val == '':
+                old_value=None
+            equal = (old_val==new_val) or (pd.isnull(old_val) and pd.isnull(new_val))
+            if not equal:
+                diff[key]=new_val
+    return diff
+
 @transaction.atomic
 def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True):
     res=False
     user = get_current_user()
-    #Class_id=Instances.objects.get(pk=Instance_id).Class.id
-    code=instance.get('Code')
-    if code=='':
-        code=None
-    if (Instance_id==0) and (passed_by_name) and pd.isnull(code):
-        code=get_next_counter(Class_id)
-#    Instance_id
+    fl=get_updatefieldlist(Class_id)
+    upd_attributes=dict((x.Attribute,x.pk) for x in fl)
+    keys_list=upd_attributes.keys()
     if Instance_id==0:
-        ins=Instances(Class_id=Class_id,Code=code,Owner=user)
+        old_instance={}
     else:
-        ins=Instances.objects.get(pk=Instance_id)
-        ins.Code=code
-    ins.Updated=datetime.now(tz=timezone.utc)
-    if user:
-        ins.Updatedby=user
-    ins.save()
-    res=ins.id
-    fl=get_editfieldlist(Class_id)
-    for rec in fl:
-        name=Attributes.objects.get(pk=rec.id).Attribute
-        if name in instance.keys() and (name!='Code'):
-            save_attribute(ins.id,rec.id,instance[name],passed_by_name=passed_by_name)
+        old_instance = get_instance_values(Class_id, Instance_id)
+    for_update=get_difference(instance,old_instance,keys_list)
+    if for_update=={}:
+        return Instance_id
+    else:
+        code=instance.get('Code')
+        if code=='':
+            code=None
+        if (Instance_id==0) and (passed_by_name) and pd.isnull(code):
+            code=get_next_counter(Class_id)
+    #    Instance_id
+        if Instance_id==0:
+            ins=Instances(Class_id=Class_id,Code=code,Owner=user)
+        else:
+            ins=Instances.objects.get(pk=Instance_id)
+            if for_update.get('Code'):
+                ins.Code=code
+                for_update.pop('Code')
+        ins.Updated=datetime.now(tz=timezone.utc)
+        if user:
+            ins.Updatedby=user
+        ins.save()
+        res=ins.id
+        for name,value in for_update.items():
+            save_attribute(ins.id,upd_attributes[name],value,passed_by_name=passed_by_name)
+    memory_cache.set('instance-values-{}'.format(Instance_id),instance)
     return res
 
 def dictfetchall(cursor):

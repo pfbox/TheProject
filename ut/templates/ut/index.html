@@ -23,10 +23,6 @@
                         <div class="card-body">
                             <h5 class="card-title"><a href="{% url 'ut:instances' 0 0 p.id %}">{{p.Project}}</a></h5>
                           <p class="card-text">{{p.Description}}</p>
-                            {% with Report_id=p.DefaultReport_id %}
-                                {% include "ut/report.html" %}
-                            {% endwith %}
-
                             <div class="d-flex justify-content">
                             <div>
                             <ul class="list-group" >
