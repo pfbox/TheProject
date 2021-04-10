@@ -140,6 +140,30 @@ class UploadInstances(forms.Form):
 
 from .formtemplate import *
 
+class DeleteInstanceForm(forms.Form):
+    def __init__(self,*args,**kwargs):
+        self.Class_id=kwargs.pop('Class_id')
+        self.Instance_id = kwargs.pop('Instance_id')
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.attrs = {'data-instance-id':'{}'.format(self.Instance_id),'data-class-id':'{}'.format(self.Class_id),
+                             'data-delete-instance-link':reverse_lazy('ut:delete_instance',args=(self.Class_id,self.Instance_id,))}
+
+        self.helper.layout = Layout(HTML("""
+            <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Delete instance </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            """))
+        Buttons = ButtonHolder(
+                Button(value='Delete',name='delete',css_class='btn btn-primary deleteinstance-confirmation',css_id='delete'),
+                Button(value='Cancel',name='cancel',css_class='btn-secondary',data_dismiss='modal'),
+                css_class='buttonHolder modal-footer'
+            )
+        self.helper.layout.append(Buttons)
+        self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
+
 from django_select2 import forms as s2forms
 class InstanceForm(forms.Form):
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
@@ -237,15 +261,15 @@ class InstanceForm(forms.Form):
                 print ("layout for the class "+ str(self.Class_id) + " didn't work")
                 lo=None
                 #raise
-        if lo:
-            self.helper.layout = Layout(HTML("""
+
+        self.helper.layout = Layout(HTML("""
             <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Edit instance </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             """))
-            self.helper.layout.append(Div(lo, css_class='modal-body'))
+        self.helper.layout.append(Div(lo, css_class='modal-body'))
 
         if self.ReadOnly:
             Buttons = ButtonHolder(

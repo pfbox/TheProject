@@ -72,9 +72,20 @@ def showclass(request,Class_id):
 class delete_instance(LoginRequiredMixin,DeleteView):
     model = Instances
     success_url = reverse_lazy('ut:index')
-    def get(self,*args,**kwargs):
-        self.success_url = reverse_lazy('ut:instances',kwargs={'Class_id':kwargs['Class_id'],})
-        return self.post(*args,**kwargs)
+    def get(self,request,Class_id,Instance_id,*args,**kwargs):
+        form=DeleteInstanceForm(Class_id=Class_id,Instance_id=Instance_id)
+        context={'Class_id':Class_id,'Instance_id':Instance_id,'form':form}
+        data = {}
+        data['modalformcontent'] = render_to_string('ut/delete_instance_modal.html', context=context, request=request)
+        return JsonResponse(data)
+
+    def post(self,request,Class_id,Instance_id,*args,**kwargs):
+        try:
+            Instances.objects.get(pk=Instance_id).delete()
+            data={'success':True}
+        except models.ProtectedError as e:
+            data={'success':False,'error':str(e)}
+        return JsonResponse(data)
 
 class update_instances_table(View):
     def get(self,request,*args,**kwargs):

@@ -9,23 +9,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-04-02">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/fd4f8837-3275-41dd-ab6a-2688071b6cc4.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/fd4f8837-3275-41dd-ab6a-2688071b6cc4.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/delete_instance_modal.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/ut/js/django_select2.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/django_select2.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/migrations/0001_initial.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/_edit_instance_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/_edit_instance_modal.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/datatable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/widgets.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/widgets.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <list id="3efd15e1-ca7b-420d-ac46-efbe65f01c9f" name="Revert &quot;2021-29-03 v2&quot;-2" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -315,7 +304,7 @@
       <workItem from="1617372350017" duration="45752000" />
       <workItem from="1617542457347" duration="7683000" />
       <workItem from="1617559829122" duration="21605000" />
-      <workItem from="1617744189793" duration="25119000" />
+      <workItem from="1617744189793" duration="34052000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -373,7 +362,14 @@
       <option name="project" value="LOCAL" />
       <updated>1617424576079</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="2021-08-04">
+      <created>1617934230140</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1617934230140</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -417,7 +413,8 @@
     <MESSAGE value="2021-29-03 v3" />
     <MESSAGE value="2021-04-02" />
     <MESSAGE value="2021-04-03 MySQL" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-04-03 MySQL" />
+    <MESSAGE value="2021-08-04" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-08-04" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -430,6 +427,12 @@
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
           <line>138</line>
           <option name="timeStamp" value="108" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
+          <line>61</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="132" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -446,7 +449,7 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="new" language="Python" />
+        <watch expression="form.is_bound" language="Python" />
         <watch expression="old" language="Python" />
         <watch expression="(old_val==new_val) or (pd.isnull(old_val) and pd.isnull(new_val))" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />

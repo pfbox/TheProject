@@ -38,6 +38,32 @@ $(document).ready(function() {
         })
     })
 
+    $('#ModalFactory').on('click','.deleteinstance-confirmation',function(){
+        var form=$(this).closest('form')
+        var class_id=form.data('class-id')
+        $.ajax({
+            type : 'POST',
+            url : form.data('delete-instance-link'),
+            data : form.serialize(),
+            success : function (data) {
+                if (data.success) {
+                    var mymodal = form.closest('.modal')
+                    mymodal.modal('hide');
+                    $('.classtable[data-class-id="'+class_id+'"]').each(function(i,el){
+                            if ($.fn.DataTable.isDataTable($(el))) {
+                                $(el).DataTable().ajax.reload()
+                            }
+                    })
+                } else {
+                    form.find('.form-errors').text(data['error'])
+                }
+            },
+            error : function () {
+                alert ('Unknow error!')
+            }
+        })
+    })
+
 
     $('#ModalFactory').on('click','.savechanges',function(){
         var btn=$(this)
@@ -188,11 +214,7 @@ $(document).ready(function() {
     }
 
     $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance',function () {
-        //elHeight$('#ModalFactory').find('.modal')
         fmodal = create_modal_form_wrap()
-        //fmodal = $('<div class="modal fade" role="dialog" aria-hidden="true"></div>')
-        //mdialog = $('<div class="modal-dialog modal-xl modal-dialog-centered" role="document"></div>')
-        //mcontext = $('<div class="modal-content"></div>')
         $('#ModalFactory').append(fmodal)
         $.ajax({
             url :  get_hlink($(this)),
@@ -208,6 +230,10 @@ $(document).ready(function() {
         })
         $(fmodal).modal('show');
     });
+
+    $('main').on('click','.deleteinstancemodal',function(){
+
+    })
 
 //    $(".LoadInstances").modalForm({
 //        formURL: "{% url 'ut:loadinstances' Class_id %}"
