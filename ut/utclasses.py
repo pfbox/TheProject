@@ -263,7 +263,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
             field = forms.CharField(max_length=255, required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
-    elif dt in [DT_Text]:
+    elif dt in [DT_Text,DT_Hyperlink]:
         field=forms.CharField(widget=forms.Textarea(attrs={'rows':1}),required=req)
     elif dt in [DT_Date]:
         field=forms.DateField(required=req, widget=DateInput(format=('%Y-%m-%d'),attrs={'class':'datefield','autocomplete': 'off'})
@@ -388,7 +388,7 @@ def create_limit_offset(Class_id,limit=None,offset=None):
 def create_search_all(columns,search=''):
     tmp=[]
     for c in columns:
-        tmp.append("{f} like '%{s}%'".format(f=c,s=search))
+        tmp.append("lower(cast({f} AS VARCHAR)) like lower('%{s}%')".format(f=c,s=search))
     return ' and (' +' or '.join(tmp) + ')'
 
 def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={},orderby={},search='',limit=None,offset=None):
@@ -448,7 +448,11 @@ def create_qs_sql(Class_id=0,Instance_id=0):
     #default for instances id, code, and instance table
     ss = {'id':'ins.id','Code':'ins."Code"'}
     lo = {'ins' : '"{}" ins '.format(Instances._meta.db_table)}
+    hl = {}
     for a in atts:
+        if a.DataType.id in [DT_Hyperlink]:
+            if a.Ref_Attribute_id != Default_Attribute:
+                hl[a.Attribute]=a.Ref_Attribute_id
         if a.id != Default_Attribute:
             ss[a.Attribute]=a.SelectedField
             for key,val in a.LeftOuter.items():
@@ -496,9 +500,9 @@ def get_value(Instance_id,Attribute_id):
                 value=v.int_value
             elif DataType in [DT_Float,DT_Currency]:
                 value=v.float_value
-            elif DataType in (DT_String,DT_Email,DT_Time):
+            elif DataType in [DT_String,DT_Email,DT_Time]:
                 value=v.char_value
-            elif DataType == DT_Text:
+            elif DataType in [DT_Text,DT_Hyperlink]:
                 value=v.text_value
             elif DataType in (DT_Date,DT_Datetime):
                 value=v.datetime_value
@@ -563,7 +567,7 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
             if val=='':
                 val=None
             defaults={'char_value':val}
-        elif DataType == DT_Text: #text
+        elif DataType in [DT_Text,DT_Hyperlink]: #text
             if val=='':
                 val=None
             defaults={'text_value':val}

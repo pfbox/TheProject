@@ -60,8 +60,9 @@ class AttributeForm(forms.ModelForm):
             self.Class_id=instance.Class.id
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Class'].required = False
+            self.fields['Ref_Class'].queryset = Classes.objects.all()
             self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(
-                Q(Class_id=self.Ref_Class) | Q(Class_id=Default_Class))
+                (Q(Class_id=self.Ref_Class)|Q(Class_id=Default_Class)) & Q(UniqueAtt=True))
             self.fields['InternalAttribute'].queryset = Attributes.objects.filter(
                 Q(Class_id=self.Class_id) | Q(Class_id=Default_Class))
         else:

@@ -638,8 +638,8 @@ def ajax_change_master(request,Attribute_id):
     return JsonResponse(data,encoder=NpEncoder)
 
 def ajax_get_class_columns(request,Class_id):
-    cqs = Instances.objects.raw(create_qs_sql(Class_id=Class_id)['sql'] + ' limit 0')
-    return JsonResponse({'columns':cqs.columns})
+    columns=create_qs_sql(Class_id=Class_id)['columns']
+    return JsonResponse({'columns':list(columns)})
 
 from querystring_parser import parser
 
