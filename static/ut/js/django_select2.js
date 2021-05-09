@@ -27,9 +27,11 @@
 
           var dependentFields = $element.data('select2-dependent-fields')
           if (dependentFields) {
-            dependentFields = dependentFields.trim().split(/\s+/)
+            dependentFields = dependentFields.trim().split(/~/)
             $.each(dependentFields, function (i, dependentField) {
-              result[dependentField] = $('[name=' + dependentField + ']', $element.closest('form')).val()
+              if (dependentField.length>0) {
+                result[dependentField] = $('[name="' + dependentField + '"]', $element.closest('form')).val()
+              }
             })
           }
 
@@ -60,7 +62,7 @@
       }
       $element.on('select2:select select2:clear', function (e) {
         var name = $(e.currentTarget).attr('name')
-        $('[data-select2-dependent-fields*=' + name + ']').each(function () {
+        $('[data-select2-dependent-fields*="~' + name + '~"]').each(function () {
           $(this).val('').trigger('change')
           console.log('im here')
         })
@@ -71,7 +73,6 @@
 
   $(function () {
     $('.django-select2').djangoSelect2()
-    console.log('i was here!')
   })
   return $.fn.djangoSelect2
 }))

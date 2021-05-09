@@ -4,6 +4,7 @@ from django.urls import reverse,reverse_lazy
 from django.shortcuts import render
 from .tables import *
 from .forms import *
+from urllib.parse import urlencode, quote_plus
 from django.template.context_processors import csrf
 import numpy as np
 from django_tables2 import SingleTableView
@@ -17,6 +18,7 @@ from django.utils.html import strip_tags
 from .utclasses import *
 from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
+import ast
 
 def index(request):
     projects=Projects.objects.filter(id__gte=0)
@@ -104,9 +106,30 @@ from django.test.client import RequestFactory
 
 class edit_instance_base(View):
     def get(self,request,Modal=True,ReadOnly=False,*args,**kwargs):
-        Class_id=kwargs['Class_id']
-        Instance_id=kwargs['Instance_id']
+        Class_id=kwargs.get('Class_id')
+        if not pd.isnull(Class_id):
+            Instance_id=kwargs['Instance_id']
+        else:
+            Attribute=kwargs['Attribute']
+            Ref_Instance_id=kwargs['Ref_Instance_id']
+            ref_class_id=Instances.objects.get(pk=Ref_Instance_id).Class_id
+            ref_attribute_id=Attributes.objects.get(Attribute=Attribute,Class_id=ref_class_id).id
+            Instance=Values.objects.get(Instance_id=Ref_Instance_id,Attribute_id=ref_attribute_id).instance_value
+            Instance_id=Instance.id
+            Class_id=Instance.Class_id
+
         defaults={}
+        ai_attribute_id=request.GET.get('action-attribute-id')
+        if ai_attribute_id:
+            ai=Attributes.objects.get(pk=ai_attribute_id)
+            try:
+                ai_defaults=json.loads(ai.ValuesList)
+                for k,v in ai_defaults.items():
+                    if request.GET.get(v):
+                        defaults[k]=request.GET.get(v)
+            except:
+                defaults={}
+
         if Instance_id==0:
             if 'ref_attribute' in request.GET:
                 defaults[request.GET['ref_attribute']]=request.GET['ref_value']
@@ -141,7 +164,7 @@ class edit_instance_base(View):
         Class_id=kwargs['Class_id']
         Instance_id=kwargs['Instance_id']
         Next_id=request.POST.get('next','0')
-        form=InstanceForm(request.POST,Class_id=Class_id,Instance_id=Instance_id,ReadOnly=False,
+        form=InstanceForm(request.POST,request.FILES,Class_id=Class_id,Instance_id=Instance_id,ReadOnly=False,
                           validation=True)
         res = {}
         if form.is_valid():
@@ -166,6 +189,7 @@ class edit_instance_base(View):
             except BaseException as e:
                 res['success']=False
                 res['form_errors']= str(e)
+                raise
             return JsonResponse(res)
         else:
             ctx = {}
@@ -638,8 +662,8 @@ def ajax_change_master(request,Attribute_id):
     return JsonResponse(data,encoder=NpEncoder)
 
 def ajax_get_class_columns(request,Class_id):
-    columns=create_qs_sql(Class_id=Class_id)['columns']
-    return JsonResponse({'columns':list(columns)})
+    columns=create_qs_sql(Class_id=Class_id)['ajax_columns']
+    return JsonResponse({'columns':columns})
 
 from querystring_parser import parser
 
@@ -808,3 +832,11 @@ class EmailTemplateUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
     form_class = EmailTemplateForm
     def get_success_url(self):
         return reverse_lazy('ut:templates_view')
+
+class download_file(LoginRequiredMixin,View):
+    def get(self,request,pk):
+        obj=Values_files.objects.get(pk=pk)
+        filename=obj.file_value.name.split('/')[-1]
+        response = HttpResponse(obj.file_value.file, content_type="plain/text")
+        response['Content-Disposition'] = ('attachment; filename=' + filename).encode('utf-8')
+        return response

@@ -10,6 +10,7 @@ from django.utils import timezone
 import re
 from django.urls import reverse,reverse_lazy
 from .widgets import utHeavyWidget
+from datetime import datetime
 
 from django_tables2.utils import A
 
@@ -272,6 +273,8 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
         field=forms.DateTimeField(required=req, widget=DateTimeInput(format=('%Y-%m-%d %H:%M:%S'),attrs={'class':'datetimefield','autocomplete': 'off'}))
     elif dt in [DT_Time]:
         field = forms.TimeField(required=req, widget=TimeInput(format=('%H:%M'),attrs={'class':'timefield','autocomplete': 'off'}))
+    elif dt in [DT_File]:
+        field = forms.FileField(required=req,allow_empty_file=(not req))
     elif dt in [DT_Instance]:
         if validation:
             field = forms.IntegerField(required=req)
@@ -284,7 +287,7 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                 ch = [(k, v) for k, v in op.items()]
                 field = forms.ChoiceField(choices=ch,required=req,
                     widget= utHeavyWidget(data_url=reverse_lazy('ut:ajax_get_attribute_options',kwargs={'Class_id':attr.Class_id,'Attribute_id':attr.id})
-                                               ,attrs={"data-minimum-input-length": 2}
+                                               ,attrs={"data-minimum-input-length": 0}
                                                ,dependent_fields= (attr.dependent_fields if not usedinfilter else None),
                 ))
             else:
@@ -350,18 +353,24 @@ def get_filter(Filter_id=0,Class_id=0,FilterName=''):
 def get_attribute(id):
     return Attributes.objects.get(pk=id)
 
+def get_actionitems(Class_id):
+    return  Attributes.objects.filter(DataType_id__in=[DT_ActionItem],Class_id__in=[Class_id])
+
 def get_editfieldlist(Class_id):
-    return  Attributes.objects.exclude(DataType_id__in=[DT_Calculated]).filter(Class_id__in=[Class_id,Default_Class])
+    exclude=[DT_Calculated,DT_ActionItem]
+    return  Attributes.objects.exclude(DataType_id__in=exclude).filter(Class_id__in=[Class_id,Default_Class])
 
 def get_updatefieldlist(Class_id):
-    return  Attributes.allobjects.exclude(DataType_id__in=[DT_Calculated,DT_Lookup]).filter(Class_id__in=[Class_id,Default_Class])
+    exclude=[DT_Calculated,DT_Lookup]
+    return  Attributes.allobjects.exclude(DataType_id__in=exclude).filter(Class_id__in=[Class_id,Default_Class])
 
 
 def get_calulatedfieldlist(Class_id):
     return  Attributes.objects.filter(Class_id__in=[Class_id,Default_Class],DataType_id__in=[DT_Calculated])
 
 def get_tableviewlist(Class_id):
-    return  Attributes.objects.exclude(DataType_id__in=[DT_Table,DT_ManyToMany]).filter(Class_id__in=[Class_id,Default_Class])
+    exclude=[DT_Table,DT_ManyToMany,DT_ActionItem]
+    return  Attributes.objects.exclude(DataType_id__in=exclude).filter(Class_id__in=[Class_id,Default_Class])
         #df_attr[df_attr.Class_id.isin([Class_id,0])&(~df_attr.DataType_id.isin([DT_Table,DT_ManyToMany]))]
 
 def get_fulllist(Class_id):
@@ -448,11 +457,22 @@ def create_qs_sql(Class_id=0,Instance_id=0):
     #default for instances id, code, and instance table
     ss = {'id':'ins.id','Code':'ins."Code"'}
     lo = {'ins' : '"{}" ins '.format(Instances._meta.db_table)}
+    ajax_columns = {'id': 'data', 'Code': 'data'}
     hl = {}
     for a in atts:
         if a.DataType.id in [DT_Hyperlink]:
             if a.Ref_Attribute_id != Default_Attribute:
                 hl[a.Attribute]=a.Ref_Attribute_id
+
+        if a.DataType.id == DT_Hyperlink:
+            ajax_columns[a.Attribute] = 'hlink'
+        elif a.DataType.id == DT_Instance:
+            ajax_columns[a.Attribute] = 'instance'
+        elif a.DataType.id == DT_File:
+            ajax_columns[a.Attribute] = 'file'
+        else:
+            ajax_columns[a.Attribute] = 'data'
+
         if a.id != Default_Attribute:
             ss[a.Attribute]=a.SelectedField
             for key,val in a.LeftOuter.items():
@@ -485,7 +505,7 @@ def create_qs_sql(Class_id=0,Instance_id=0):
     """.format(Class_id=Class_id, user_id=user_id,instance=ins_condition,true='true')
     sql=sselect +'\n' + sfrom + '\n' + swhere
     #print (sql)
-    return {'sql':sql,'columns':ss.keys(),'selectfields':ss.values()}
+    return {'sql':sql,'columns':ss.keys(),'selectfields':ss.values(),'ajax_columns':ajax_columns}
 
 def get_value(Instance_id,Attribute_id):
     DataType=Attributes.objects.get(pk=Attribute_id).DataType.id
@@ -550,10 +570,6 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
             val = ''
         else:
             val = value
-#        if not Values.objects.filter(Instance_id=Instance_id,Attribute_id=Attribute_id).exists():
-#            v = Values(Instance_id=Instance_id,Attribute_id=Attribute_id)
-#        else:
-#            v = Values.objects.get(Instance_id=Instance_id,Attribute_id=Attribute_id)
 
         if DataType in [DT_Integer,DT_Boolean]: #int
             if val=='':
@@ -586,6 +602,8 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
             else:
                 val=None
             defaults={'char_value':val}
+        elif DataType in [DT_File]:
+            defaults={'file_value':val}
         elif DataType == DT_Instance: #instance
             if val=='':
                 val = None
@@ -599,10 +617,11 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
                         val=Values.objects.get(Attribute_id=ref_attr,char_value=value).Instance.id
             defaults={'instance_value_id':val}
         print(datetime.now() - t0, 'before save')
-        Values.objects.update_or_create(Instance_id=Instance_id, Attribute_id=Attribute_id, defaults=defaults)
+        if DataType in [DT_File]:
+            Values_files.objects.update_or_create(Instance_id=Instance_id, Attribute_id=Attribute_id, defaults=defaults)
+        else:
+            Values.objects.update_or_create(Instance_id=Instance_id, Attribute_id=Attribute_id, defaults=defaults)
         print(datetime.now() - t0, 'after save',at.Attribute)
-        #v.save()
-
 
 
 def fieldlist(Class_id):

@@ -45,6 +45,9 @@ DT_Calculated = 14
 DT_Lookup = 15
 DT_ManyToMany = 16
 DT_Hyperlink = 17
+DT_File = 18
+DT_Image = 19
+DT_ActionItem = 20
 
 DT_NUMBERS = [DT_Integer, DT_Float, DT_Date, DT_Instance, DT_Datetime, DT_Boolean, DT_Currency]
 DT_LETTERS = [DT_String, DT_Text, DT_External, DT_Email, DT_Lookup, DT_Calculated, DT_Time, DT_Hyperlink]
@@ -68,9 +71,9 @@ def get_fieldname(dt):
         f = 'int_value'
     elif dt in [DT_Float, DT_Currency]:
         f = 'float_value'
-    elif dt in [DT_String, DT_Email, DT_Time, DT_Hyperlink]:
+    elif dt in [DT_String, DT_Email, DT_Time]:
         f = 'char_value'
-    elif dt in [DT_Text]:
+    elif dt in [DT_Text,DT_Hyperlink]:
         f = 'text_value'
     elif dt in [DT_Date, DT_Datetime]:
         f = 'datetime_value'
@@ -80,6 +83,8 @@ def get_fieldname(dt):
         f = 'char_value'
     elif dt in [DT_ManyToMany]:
         f = 'manytomany'
+    elif dt in [DT_File]:
+        f='file_value'
     else:
         raise Exception('No {} datatype'.format(dt))
     return '{di}{f}{di}'.format(f=f, di=Default_Identifier)
@@ -267,6 +272,8 @@ def selectfield_nd(attr):
         res = '0 as Table__' + str(id) + '__'
     elif dt in [DT_Calculated]:
         res = '{formula}'.format(formula=attr.Formula)
+    elif dt in [DT_File]:
+        res = r"""concat({tab}."id",';',right({tab}.{field},position('/' in reverse({tab}.{field}))-1))""".format(tab=attr.TableName, id=id, field=get_fieldname(dt))
     else:
         res = '{tab}.{field}'.format(tab=attr.TableName, id=id, field=get_fieldname(dt))
     return res
@@ -277,6 +284,7 @@ def valueleftouter(attr):
     dt = attr.DataType_id
     internal_attr = attr.InternalAttribute
     res = {}
+
     if dt == DT_External:
         res[attr.ExternalTable] = 'LEFT OUTER JOIN {ext} as {ext} ON ({ext}.{uq}={loctab}.{locfield})' \
             .format(ext=attr.ExternalTable, uq=attr.ExternalUq, loctab=internal_attr.TableName,
@@ -294,9 +302,13 @@ def valueleftouter(attr):
             .format(val=Values._meta.db_table, refval=attr.RefAttrTableName, refatt=attr.Ref_Attribute_id,
                     reftab=internal_attr.RefTableName, attr=attr.Attribute)
     else:
+        if dt == DT_File:
+            table_name = Values_files._meta.db_table
+        else:
+            table_name = Values._meta.db_table
         res[
             attr.TableName] = 'LEFT OUTER JOIN {val} as {tab} ON ({tab}."Instance_id"=ins.id and {tab}."Attribute_id"={id}) /* {attr} */' \
-            .format(val=Values._meta.db_table, tab=attr.TableName, id=attr.id, attr=attr.Attribute)
+            .format(val=table_name, tab=attr.TableName, id=attr.id, attr=attr.Attribute)
     return res
 
 
@@ -324,9 +336,13 @@ def leftouter(attr):
             .format(val=Values._meta.db_table, refval=attr.RefAttrTableName, refatt=attr.Ref_Attribute_id,
                     reftab=internal_attr.RefTableName, attr=attr.Attribute)
     else:
+        if dt == DT_File:
+            table_name = Values_files._meta.db_table
+        else:
+            table_name = Values._meta.db_table
         res[
             attr.TableName] = 'LEFT OUTER JOIN {val} as {tab} ON ({tab}."Instance_id"=ins.id and {tab}."Attribute_id"={id}) /* {attr} */ ' \
-            .format(val=Values._meta.db_table, tab=attr.TableName, id=attr.id, attr=attr.Attribute)
+            .format(val=table_name, tab=attr.TableName, id=attr.id, attr=attr.Attribute)
         if dt == DT_Instance:
             res[
                 attr.RefTableName] = 'LEFT OUTER JOIN {ins} as {reftab} ON ({reftab}.id={tab}.instance_value_id) /* {attr} */' \
@@ -360,6 +376,7 @@ class Attributes(models.Model):
     Class = models.ForeignKey(Classes, on_delete=models.PROTECT, related_name='+')
     Attribute = models.CharField(max_length=50)
     DataType = models.ForeignKey(DataTypes, on_delete=models.PROTECT)
+    DefaultValue = models.CharField(max_length=255,blank=True,null=True)
     InputType = models.ForeignKey(InputTypes, null=False, blank=False, on_delete=models.PROTECT, default=IT_Default)
     Ref_Class = models.ForeignKey(Classes, on_delete=models.PROTECT, related_name='+',
                                   default=Default_Class)  # zerohere
@@ -618,10 +635,14 @@ class Instances(models.Model):
             raise Exception("User {} does not have rights to delete record".format(user.username))
 
 
+class Values_files(models.Model):
+    Instance = models.ForeignKey(Instances, on_delete=models.CASCADE, related_name='+')
+    Attribute = models.ForeignKey(Attributes, on_delete=models.PROTECT)
+    file_value = models.FileField(upload_to='uploads/%Y%m%d%H%M%S',null=True)
+
 class Values(models.Model):
     Instance = models.ForeignKey(Instances, on_delete=models.CASCADE, related_name='+')
     Attribute = models.ForeignKey(Attributes, on_delete=models.PROTECT)
-    #    Value=''
     int_value = models.IntegerField(null=True)
     char_value = models.CharField(max_length=255, null=True)
     text_value = models.TextField(null=True)

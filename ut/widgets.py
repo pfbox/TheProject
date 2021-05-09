@@ -11,6 +11,29 @@ class utHeavyWidget(HeavySelect2Widget):
                             '/static/ut/js/django_select2.js'])
         return m
 
+    def build_attrs(self, base_attrs, extra_attrs=None):
+        #""" full copy form Select2.HeavyWidgetMixin"""
+        default_attrs = {
+            "data-ajax--url": self.get_url(),
+            "data-ajax--cache": "true",
+            "data-ajax--type": "GET",
+            "data-minimum-input-length": 2,
+        }
+
+        if self.dependent_fields:
+            default_attrs["data-select2-dependent-fields"] ="~" + "~".join(
+                self.dependent_fields
+            ) + "~"
+
+        default_attrs.update(base_attrs)
+
+        attrs = super().build_attrs(default_attrs, extra_attrs=extra_attrs)
+
+        attrs["data-field_id"] = self.field_id
+
+        attrs["class"] += " django-select2-heavy"
+        return attrs
+
 class DataAttributesSelect(Select):
     def __init__(self,attrs=None,choises=(),data={}):
         super(DataAttributesSelect,self).__init__(attrs=attrs,choices=choises)

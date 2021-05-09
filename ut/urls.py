@@ -34,6 +34,7 @@ urlpatterns = [
     path('ClassIns/<int:Class_id>/<int:SaveToExl>/',        views.instances,    name='instances'),
     path('ClassIns/<int:Class_id>/<int:SaveToExl>/<int:Project_id>',        views.instances,    name='instances'),
     path('Classes/view/<int:Class_id>/<int:Instance_id>/', views.view_instance.as_view(),               name='view_instance'),
+    path('Classes/view/<str:Attribute>/<int:Ref_Instance_id>/', views.view_instance.as_view(),          name='view_instance'),
     path('Classes/edit/<int:Class_id>/<int:Instance_id>/', views.edit_instance.as_view(),               name='edit_instance'),
     path('Classes/delete/<int:Class_id>/<int:Instance_id>/', views.delete_instance.as_view(), name='delete_instance'),
     path('Load/<int:Class_id>/', views.load_instances, name='loadinstances'),
@@ -49,7 +50,7 @@ urlpatterns = [
     path('send_instance_email/<int:Class_id>/',views.send_instance_email.as_view(),name='send_instance_email'),
     path('modal/send_instance_email/<int:Class_id>/', views.send_instance_email.as_view(), name='send_instance_email_modal'),
     path('send_instance_email/<int:Class_id>/<int:Instance_id>/', views.send_instance_email.as_view(), name='send_instance_email'),
-
+    path('download_file/<slug:pk>/', views.download_file.as_view(),name='download_file'),
 ]
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns

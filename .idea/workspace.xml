@@ -8,14 +8,36 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-04-02">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-04-26 nb">
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/23/41/49/Coach_letter.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/Coach_letter.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/Dear_Ninja.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth_imi2yEz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth_jNAk6Km.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth_sXWx0UD.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210503234446/Dear_Ninja.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210504121418/Dear_Ninja.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210504122656/lets_save_earth.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210504170011/lets_save_earth.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210504170426/Origin.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210508123327/Бизнес_модель.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210508193941/Coach_letter.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0002_attributes_defaultvalue.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0003_values_files.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/ut/js/django_select2.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/django_select2.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/datatable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/formtemplate.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/formtemplate.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/widgets.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/widgets.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <list id="3efd15e1-ca7b-420d-ac46-efbe65f01c9f" name="Revert &quot;2021-29-03 v2&quot;-2" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -309,7 +331,10 @@
       <workItem from="1618053117468" duration="3870000" />
       <workItem from="1618146460337" duration="13962000" />
       <workItem from="1618182651091" duration="7975000" />
-      <workItem from="1618501162596" duration="10737000" />
+      <workItem from="1618501162596" duration="55015000" />
+      <workItem from="1620177978247" duration="21836000" />
+      <workItem from="1620335230611" duration="41234000" />
+      <workItem from="1620569162103" duration="2862000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -381,7 +406,14 @@
       <option name="project" value="LOCAL" />
       <updated>1618016913424</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="2021-04-26">
+      <created>1619484667356</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1619484667356</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -427,7 +459,8 @@
     <MESSAGE value="2021-04-03 MySQL" />
     <MESSAGE value="2021-08-04" />
     <MESSAGE value="2021-04-09" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-04-09" />
+    <MESSAGE value="2021-04-26" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-04-26" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -438,8 +471,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>138</line>
+          <line>139</line>
           <option name="timeStamp" value="108" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
+          <line>553</line>
+          <option name="timeStamp" value="146" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -456,11 +494,12 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="form.is_bound" language="Python" />
-        <watch expression="old" language="Python" />
-        <watch expression="(old_val==new_val) or (pd.isnull(old_val) and pd.isnull(new_val))" language="Python" />
+        <watch expression="obj" language="Python" />
+        <watch expression="val" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
         <watch expression="__py_debug_temp_var_1064192193.'Province' (2281442867440)" />
+        <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152).0.DEFAULT_CHUNK_SIZE" />
+        <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152)" />
       </configuration>
     </watches-manager>
   </component>

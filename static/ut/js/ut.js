@@ -15,10 +15,10 @@ $(document).ready(function() {
 
     function get_next_instance_id_str(instance_id){
        if (instance_id==0){
-           return '&next=0'
+           return 0
        } else {
            cr = $('tr[data-id=' + instance_id + ']') //current row
-           return '&next='+cr.next("tr").data('id')
+           return cr.next("tr").data('id')
        }
     }
 
@@ -71,11 +71,18 @@ $(document).ready(function() {
         var mymodal=form.closest('.modal')
         var Instance_id=form.data('instance-id')
         var Class_id=form.data('class-id')
+        let data = new FormData(form.get(0))
+        data.append('action',btn.attr('name'))
+        data.append('next',get_next_instance_id_str(Instance_id))
+        for (var value of data.values()) {
+           console.log(value);
+        }
         $.ajax({
             type : 'POST',
             url : "/Classes/edit/12345/56789/".replace(/12345/,Class_id).replace(/56789/,Instance_id),
-            data : form.serialize() + '&action='+btn.attr('name') + get_next_instance_id_str(Instance_id),
-            dataType : 'json',
+            data : data,// + '&action='+btn.attr('name') + get_next_instance_id_str(Instance_id),
+            processData: false,
+            contentType: false,
             success: function(data) {
                 if (!(data['success'])) {
             // Here we replace the form, for the
@@ -84,6 +91,7 @@ $(document).ready(function() {
                     } else {
                         form.find('.form-errors').text(data['form_errors'])
                     }
+                    set_flatpickr();
                 } else {
             // Here you can show the user a success message or do whatever you need
                     if ('form_html' in data) {
@@ -156,6 +164,18 @@ $(document).ready(function() {
         $(fmodal).modal('show');
     })
 
+    $("#ModalFactory").on('show.bs.collapse','.btn-link,.dt-table',function () {
+          var collapse=$(this)
+          collapse.find('.classtable').each(function(i,el){
+                        if ($(el).hasClass('dataTable')){
+                            return
+                        }
+                        if (!$.fn.DataTable.isDataTable($(el))) {
+                            set_datatables(collapse)
+                        }
+                    })
+    })
+
     $("#ModalFactory").on('change','.hierarchy_trigger,.lookup_trigger',function () {
       var attr_id = $(this).attr('attr_id')
       var master_value  = $(this).val()
@@ -176,10 +196,17 @@ $(document).ready(function() {
     });
 
     function get_hlink(el){
-        var class_id = el.closest('table').data('class-id')
-        var instance_id = el.closest('tr').data('id')
+        if (el.hasClass('action-item')){
+            var class_id = el.data('class-id')
+            var instance_id = 0
+        } else {
+            var class_id = el.closest('table').data('class-id')
+            var instance_id = el.closest('tr').data('id')
+        }
         if (el.hasClass('viewinstance')) {
             return "/Classes/view/1111/2222".replace(/1111/,class_id).replace(/2222/,instance_id)
+        } else if (el.hasClass('call-viewinstance'))  {
+            return "/Classes/view/1111/2222".replace(/1111/,encodeURIComponent(el.data('attribute'))).replace(/2222/,el.data('ref-instance-id'))
         } else if (el.hasClass('editinstance'))  {
             return "/Classes/edit/1111/2222".replace(/1111/,class_id).replace(/2222/,instance_id)
         } else if (el.hasClass('deleteinstance')) {
@@ -188,7 +215,7 @@ $(document).ready(function() {
             elform  = $(el).closest('.instanceform').data('instance-id')
             var eldefaults = ''
             if (elform) {
-                ref_attribute=$(el).data('ref-attribute')
+                ref_attribute=encodeURIComponent($(el).data('ref-attribute'))
                 ref_value=$(el).data('ref-instance-id')
                 eldefaults = '?ref_attribute='+ref_attribute+'&ref_value='+ref_value
             }
@@ -213,17 +240,29 @@ $(document).ready(function() {
         return fmodal.append(mdialog.append(mcontext))
     }
 
-    $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance',function () {
+    $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance,.call-viewinstance',function () {
         fmodal = create_modal_form_wrap()
         $('#ModalFactory').append(fmodal)
+        var inputData={}
+        if ($(this).hasClass('action-item')) {
+            var form=$(this).closest('form')
+            var instance_id=form.data('instance-id')
+            if (instance_id==0){
+                alert ('You cannot action on new instance. Please save changes.')
+                return
+            }
+            inputData=form.serializeArray()
+            inputData.push({name:'action-attribute-id',value:$(this).data('action-attribute-id')})
+            inputData.push({name:'id',value:instance_id})
+        }
         $.ajax({
             url :  get_hlink($(this)),
-            data : {},
+            data : inputData,
             dataType : 'json',
             success : function (data){
                 fmodal.find('.modal-content').append(data.modalformcontent);
 //                fmodal.find('.django-select2').djangoSelect2()
-                set_datatables(fmodal)
+//                set_datatables(fmodal)
                 set_flatpickr()
                 //fmodal.find('.select2').djangoSelect2()
             }
@@ -380,7 +419,8 @@ $(document).ready(function() {
                         ,
                         "width": 64,
                         "orderable": false
-                    }]
+                        },
+                    ]
                 }
                 //$(el).preventDefault();
                 $.ajaxSetup({async: false});
@@ -470,8 +510,34 @@ $(document).ready(function() {
             "url": $(el).data('ajax-columns-link'),
             "success" : function (data){
                     var hrow = $(el).find('thead tr').first().empty()
-                    $.each(data.columns, function (i,key) {
+                    $.each(data.columns, function (key,dt) {
                         var my_item = {'data': key};
+                        if (dt=='hlink'){
+                            my_item['render'] = function ( data, type, row, meta ) {
+                                if (data) {
+                                    return '<a href="//' + data + '">'+'click...'+'</a>';
+                                }  else {
+                                    return data
+                                }
+                            }
+                        } else if (dt=='instance') {
+                            my_item['render'] = function ( data, type, row, meta ) {
+                                if (data) {
+                                    return '<a class="call-viewinstance" href="javascript:void(0)" data-attribute="'+key+'" data-ref-instance-id="'+row.id+'">'+data+'</a>';
+                                }  else {
+                                    return data
+                                }
+                            }
+                        } else if (dt=='file') {
+                            my_item['render'] = function ( data, type, row, meta ) {
+                                if (data) {
+                                    ds=data.split(';')
+                                    return '<a class="file-to-download" href="/download_file/'+ds[0]+'" data-file-id="'+ds[0]+'" data-ref-instance-id="'+row.id+'">'+ds[1]+'</a>';
+                                }  else {
+                                    return data
+                                }
+                            }
+                        }
                         ajax_columns.push(my_item);
                         hrow.append('<th>' + key + '</th>')
                     });

@@ -40,7 +40,7 @@
                                 <h6>Classes</h6>
                                       {% for c in p.Classes_m2m.all %}
                                 <li class="list-group-item">
-                                          <a class="dropdown-item" href="{% url 'ut:instances' c.id %}">{{c.Class}}</a>
+                                          <a class="dropdown-item" href="{% url 'ut:instances' c.id 0 p.id %}">{{c.Class}}</a>
                                 </li>
                                       {% endfor %}
                             </ul>

@@ -8,6 +8,7 @@ from django.urls import reverse,reverse_lazy
 from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget, ModelSelect2Widget
 from django.template import Template, Context
 from tinymce.widgets import TinyMCE
+from datetime import datetime
 
 
 class ProjectForm(forms.ModelForm):
@@ -51,7 +52,7 @@ class AttributeForm(forms.ModelForm):
         self.helper.add_input(Submit('submit', 'Save'))
         #self.Class_id=self.initials['Class_id']
 
-        self.fields['Class'].queryset = Classes.objects.all()
+        self.fields['Class'].queryset = Classes.allobjects.all()
         instance = getattr(self, 'instance', None)
         if instance and instance.pk:
             self.Class_id = self.initial['Class']
@@ -62,7 +63,8 @@ class AttributeForm(forms.ModelForm):
             self.fields['Class'].required = False
             self.fields['Ref_Class'].queryset = Classes.objects.all()
             self.fields['Ref_Attribute'].queryset = Attributes.objects.filter(
-                (Q(Class_id=self.Ref_Class)|Q(Class_id=Default_Class)) & Q(UniqueAtt=True))
+                (Q(Class_id=self.Ref_Class)|Q(Class_id=Default_Class)) #& (Q(UniqueAtt=True)|Q(DataType_id=DT_Table))
+            ).order_by('Class_id')
             self.fields['InternalAttribute'].queryset = Attributes.objects.filter(
                 Q(Class_id=self.Class_id) | Q(Class_id=Default_Class))
         else:
@@ -71,8 +73,8 @@ class AttributeForm(forms.ModelForm):
             self.fields['Class'].required = False
             self.fields['Class'].widget.attrs['disabled'] = 'true'
             self.fields['Ref_Class'].queryset = Classes.objects.all()
-            self.fields['Ref_Attribute'].queryset = Attributes.objects.all()
-            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id)| Q(Class_id=Default_Class))
+            self.fields['Ref_Attribute'].queryset = Attributes.objects.all().order_by('Class_id')
+            self.fields['InternalAttribute'].queryset = Attributes.objects.filter(Q(Class_id=self.Class_id)|Q(Class_id=Default_Class))
 
     def save(self,commit=True):
         Class_id=self.initial['Class_id'];
@@ -95,6 +97,7 @@ class ClassesForm(forms.ModelForm):
                    }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['Master'].queryset = Classes.allobjects.all()
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save'))
@@ -178,6 +181,7 @@ class InstanceForm(forms.Form):
             self.Validation = kwargs.pop('validation')
         if 'next' in kwargs:
             self.Next = kwargs.pop('next')
+        #check for defaults from parent Class, e.g. when SR calls from Client view
         if 'defaults' in kwargs:
             self.Defaults=kwargs.pop('defaults')
         else:
@@ -197,6 +201,17 @@ class InstanceForm(forms.Form):
 
         old=datetime.now()
         for att in get_editfieldlist(self.Class_id).iterator():
+            if self.Instance_id==0:
+                if att.DefaultValue:
+                    if not initrow.get(att.Attribute):
+                        try:
+                            loc={}
+                            exec("res={}".format(att.DefaultValue),globals(),loc)
+                            initrow[att.Attribute]=str(loc['res'])
+                            self.Defaults[att.Attribute]=loc['res']
+                        except:
+                            print ('Defalut value for attribute {} did not worked!'.format(att.Attribute))
+
             if create_form_field_check(att):
                 self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
                 self.fields[att.Attribute].label = att.Attribute
@@ -215,8 +230,10 @@ class InstanceForm(forms.Form):
                 if self.Instance_id!=0:
                     if att.DataType_id in [DT_ManyToMany]:
                         self.initial[att.Attribute]=list(Values_m2m.objects.filter(Instance_id=self.Instance_id,Attribute_id=att.id).values_list('instance_value_id',flat=True))
+                    elif att.DataType_id == DT_File:
+                        self.initial[att.Attribute] = initrow[att.Attribute]
                     else:
-                        self.initial[att.Attribute]=initrow[att.Attribute]
+                         self.initial[att.Attribute]=initrow[att.Attribute]
                 else:
                     if not self.Validation:
                         if att.id==Default_Attribute:
@@ -233,12 +250,12 @@ class InstanceForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.attrs = {'data-instance-id':'{}'.format(self.Instance_id),'data-class-id':'{}'.format(self.Class_id),
-                             'data-send-instance-email-link':reverse_lazy('ut:send_instance_email_modal',args=(self.Class_id,))}
+                             'data-send-instance-email-link':reverse_lazy('ut:send_instance_email_modal',args=(self.Class_id,)),
+                             'enctype':'multipart/form-data'}
         self.helper.form_class = 'instanceform'
         self.helper.labels_uppercase = True
 
         layout={}
-
         lo=memory_cache.get('lo-{}'.format(self.Class_id))
         if not lo:
             try:
@@ -252,17 +269,13 @@ class InstanceForm(forms.Form):
                 master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=lo)
                 master.split_by_con()
                 layout=master.print_elements()
-            except:
-                print ("layout for the class "+ str(self.Class_id) + " was not found")
-
-            try:
                 lo=get_layout(self.Class_id, layout, 'Layout')
-                memory_cache.set('lo-{}'.format(self.Class_id),lo)
             except:
                 print ("layout for the class "+ str(self.Class_id) + " didn't work")
-                lo=None
-                #raise
-
+                lo=Div()
+                for f in self.fields:
+                    lo.append(Field(f))
+        memory_cache.set('lo-{}'.format(self.Class_id), lo)
         self.helper.layout = Layout(HTML("""
             <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Edit instance </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -271,6 +284,25 @@ class InstanceForm(forms.Form):
             </div>
             """))
         self.helper.layout.append(Div(lo, css_class='modal-body'))
+
+        actionitems=''
+        for ai in get_actionitems(self.Class_id):
+            actionitems=actionitems +'\n' + '<a class="dropdown-item action-item editinstance" data-class-id={class_id} data-action-attribute-id={attribute_id}>{attribute}</a>'\
+                .format(class_id=ai.Ref_Class_id,attribute=ai.Attribute,attribute_id=ai.id)
+        actionitems_button=HTML(("""
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton{class_id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Action
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton{class_id}">
+                <a class="dropdown-item send-instance-email">Send Email</a>
+        """ + actionitems+ """
+              </div>
+            </div>
+        """).format(class_id=self.Class_id))
+
+
+        action_items=Button(value='Send e-mail',name='sendemail',css_class='btn btn-primary dropdown-toggle send-instance-email',css_id='sendemail')
 
         if self.ReadOnly:
             Buttons = ButtonHolder(
@@ -282,7 +314,8 @@ class InstanceForm(forms.Form):
                 Button(value='Save',name='save',css_class='btn btn-primary savechanges',css_id='save'),
                 Button(value='Save&Next',name='savenext',css_class='btn btn-primary savechanges',css_id='savenext') if self.Instance_id!=0
                 else Button(value='Save&New',css_class='btn btn-primary savechanges',name='savenext',css_id='savenext'),
-                Button(value='Send e-mail',name='sendemail',css_class='btn btn-primary send-instance-email',css_id='sendemail'),
+                actionitems_button,
+                #Button(value='Send e-mail',name='sendemail',css_class='btn btn-primary dropdown-toggle send-instance-email',css_id='sendemail'),
                 Button(value='Close',name='close',css_class='btn-secondary',data_dismiss='modal'),
                 css_class='buttonHolder modal-footer'
             )
@@ -310,10 +343,22 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
             if dt in [DT_Table]:
                 refattr=Attributes.allobjects.get(id=attr.Ref_Attribute_id).Attribute
                 a=strTemplate("""
-                $attname
-                {% with Class_id=$refclass Ref_Attribute="$refattr" %}
-                    {% include "ut/datatable.html" %}
-                {% endwith%}
+                 <div class="card">
+                    <div class="card-header" id="heading$refclass">
+                      <h2 class="mb-0">
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse$refclass" aria-expanded="true" aria-controls="collapse$refclass">
+                          $attname
+                        </button>
+                      </h2>
+                    </div>
+                    <div id="collapse$refclass" class="collapse dt-table" aria-labelledby="heading$refclass">
+                      <div class="card-body">
+                        {% with Class_id=$refclass Ref_Attribute="$refattr" %}
+                            {% include "ut/datatable.html" %}
+                        {% endwith%}
+                      </div>
+                    </div>
+                  </div>                
                 """)
                 master.append(HTML(a.substitute(tb=attr.id,attname=attr.Attribute,refclass=attr.Ref_Class_id,refattr=refattr)))
             elif clname=='Column': #form-group flex-grow-1 d-flex flex-column
@@ -398,7 +443,6 @@ class SendInstanceEmailForm(forms.Form):
         self.Class_id=kwargs.pop('Class_id')
         if 'instance' in kwargs.keys():
             self.instance=kwargs.pop('instance')
-
 
         self.ToTemplate=''
         self.CcTemplate=''
