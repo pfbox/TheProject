@@ -3,13 +3,15 @@ from .utclasses import *
 from .models import *
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column,Field,Fieldset,MultiField,HTML,Button,Div,ButtonHolder
+from crispy_forms.bootstrap import InlineRadios
 #from bootstrap_datepicker_plus import DatePickerInput,DateTimePickerInput
 from django.urls import reverse,reverse_lazy
 from django_select2.forms import Select2MultipleWidget,ModelSelect2MultipleWidget, ModelSelect2Widget
 from django.template import Template, Context
 from tinymce.widgets import TinyMCE
 from datetime import datetime
-
+from .utparser import UtParser
+from .formtemplate import *
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -52,7 +54,7 @@ class AttributeForm(forms.ModelForm):
         self.helper.add_input(Submit('submit', 'Save'))
         #self.Class_id=self.initials['Class_id']
 
-        self.fields['Class'].queryset = Classes.allobjects.all()
+        self.fields['Class'].queryset = Classes.objects.all()
         instance = getattr(self, 'instance', None)
         if instance and instance.pk:
             self.Class_id = self.initial['Class']
@@ -97,7 +99,7 @@ class ClassesForm(forms.ModelForm):
                    }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['Master'].queryset = Classes.allobjects.all()
+        self.fields['Master'].queryset = Classes.objects.all()
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save'))
@@ -142,8 +144,6 @@ class UploadInstances(forms.Form):
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Upload'))
 
-from .formtemplate import *
-
 class DeleteInstanceForm(forms.Form):
     def __init__(self,*args,**kwargs):
         self.Class_id=kwargs.pop('Class_id')
@@ -169,6 +169,10 @@ class DeleteInstanceForm(forms.Form):
         self.helper.layout.append(HTML('<div class="form-errors">{{ form_errors }}</div>'))
 
 from django_select2 import forms as s2forms
+
+class ShowImageField(Field):
+    template = template='ut/ut_image.html'
+
 class InstanceForm(forms.Form):
     fieldclass={1:'form-group col-md-12 mb-0',2:'form-group col-md-6 mb-0',3:'form-group col-md-4 mb-0',4:'form-group col-md-3 mb-0',5:'form-group col-md-3 mb-0',6:'form-group col-md-2 mb-0'} #'form-group col-md-6 mb-0'
     def __init__(self,*args,**kwargs):
@@ -191,7 +195,10 @@ class InstanceForm(forms.Form):
         # get form initial values
         #initrow={}
         if self.Instance_id!=0:
-            initrow=get_instance_values(self.Class_id,self.Instance_id)
+            if False: #self.ReadOnly:
+                initrow = get_instance(self.Class_id,self.Instance_id)
+            else:
+                initrow=get_instance_values(self.Class_id,self.Instance_id)
         else:
             if len(self.Defaults)>0:
                 initrow=self.Defaults
@@ -199,21 +206,33 @@ class InstanceForm(forms.Form):
                 initrow={}
         #print ('initrow done in:',datetime.now()-it,datetime.now())
 
+        available_columns={}
         old=datetime.now()
         for att in get_editfieldlist(self.Class_id).iterator():
+            available_columns[att.Attribute]={'InputType':att.DataType_id}
+            if att.ValuesList:
+                try:
+                    vl_list=json.loads(att.ValuesList)
+                    for i in vl_list:
+                        if False: #str(i[0])==str(initrow[att.Attribute]):
+                            initrow[att.Attribute]=i[1]
+                            break
+                except:
+                    pass
+
             if self.Instance_id==0:
                 if att.DefaultValue:
                     if not initrow.get(att.Attribute):
                         try:
-                            loc={}
-                            exec("res={}".format(att.DefaultValue),globals(),loc)
-                            initrow[att.Attribute]=str(loc['res'])
-                            self.Defaults[att.Attribute]=loc['res']
+                            ev=UtParser()
+                            pres=ev.evaluate()
+                            initrow[att.Attribute]=pres
+                            self.Defaults[att.Attribute]=pres
                         except:
                             print ('Defalut value for attribute {} did not worked!'.format(att.Attribute))
 
             if create_form_field_check(att):
-                self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation)
+                self.fields[att.Attribute]=create_form_field(att,values=initrow,validation=self.Validation,readonly=self.ReadOnly)
                 self.fields[att.Attribute].label = att.Attribute
                 self.fields[att.Attribute].widget.attrs['attr_id']=att.id
                 if att.DataType_id == DT_Instance:
@@ -223,15 +242,15 @@ class InstanceForm(forms.Form):
                     widgetclass= '' if pd.isnull(self.fields[att.Attribute].widget.attrs.get('class')) else widgetclass
                     self.fields[att.Attribute].widget.attrs['class']= widgetclass \
                         +(' hierarchy_trigger' if att.hierarchy_trigger>0 else '') + (' lookup_trigger' if att.lookup_trigger>0 else '')
-                if self.ReadOnly or att.DataType_id in [DT_Lookup]:
-                    self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
-                    self.fields[att.Attribute].widget.attrs['disabled'] = "disabled"
                     #self.fields[att.Attribute].required = False
                 if self.Instance_id!=0:
                     if att.DataType_id in [DT_ManyToMany]:
                         self.initial[att.Attribute]=list(Values_m2m.objects.filter(Instance_id=self.Instance_id,Attribute_id=att.id).values_list('instance_value_id',flat=True))
-                    elif att.DataType_id == DT_File:
-                        self.initial[att.Attribute] = initrow[att.Attribute]
+                    elif att.DataType_id in [DT_File,DT_Image]:
+                        try:
+                            self.initial[att.Attribute] = Values_files.objects.get(Instance_id=self.Instance_id,Attribute_id=att.id).file_value
+                        except:
+                            self.initial[att.Attribute] = None
                     else:
                          self.initial[att.Attribute]=initrow[att.Attribute]
                 else:
@@ -241,6 +260,10 @@ class InstanceForm(forms.Form):
                         if len(self.Defaults)>0:
                             if att.Attribute in self.Defaults:
                                self.initial[att.Attribute] = self.Defaults[att.Attribute]
+                #set readonly and disabled
+                if self.ReadOnly or att.DataType_id in [DT_Lookup]:
+                    self.fields[att.Attribute].widget.attrs['readonly'] = "readonly"
+                    self.fields[att.Attribute].widget.attrs['disabled'] = "disabled"
             new=datetime.now()
             diff=new-old
 #            print (diff,att.Attribute,datetime.now())
@@ -262,27 +285,36 @@ class InstanceForm(forms.Form):
                 rawlayout=json.loads(Layouts.objects.get(Class_id=self.Class_id).FormLayout)
                 NinRow = rawlayout['settings']['NinRow']
                 lo= []
-                available_columns=get_editfieldlist(self.Class_id).values_list('Attribute',flat=True)
+                #available_columns=get_editfieldlist(self.Class_id).values_list('Attribute',flat=True)
                 for obj in rawlayout['layout']:
-                    if obj['name'] in available_columns:
+                    if obj['name'] in available_columns.keys():
+                        obj['inputtype']=available_columns[obj['name']]['InputType']
                         lo.append(obj)
-                master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': 1200}, rawlayout=lo)
+                master = container(mel={'top': 0, 'left': 0, 'width': NinRow, 'height': NinRow*2}, rawlayout=lo)
                 master.split_by_con()
                 layout=master.print_elements()
                 lo=get_layout(self.Class_id, layout, 'Layout')
             except:
+                #raise
                 print ("layout for the class "+ str(self.Class_id) + " didn't work")
                 lo=Div()
                 for f in self.fields:
                     lo.append(Field(f))
         memory_cache.set('lo-{}'.format(self.Class_id), lo)
-        self.helper.layout = Layout(HTML("""
-            <div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle">  Edit instance </h5>
+        if self.Instance_id!=0:
+            ins=Instances.objects.get(pk=self.Instance_id)
+            instance_info='Edit - {} - {}'.format(ins.Class.Class,ins.Code)
+        else:
+            cl=Classes.objects.get(pk=self.Class_id)
+            instance_info = 'Create - {}'.format(cl.Class)
+        header_html="""<div class="modal-header"><h5 class="modal-title" id="exampleModalLongTitle"> {} </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-            </div>
-            """))
+        </div>
+        """
+        header_html=header_html.format(instance_info)
+        self.helper.layout = Layout(HTML(header_html))
         self.helper.layout.append(Div(lo, css_class='modal-body'))
 
         actionitems=''
@@ -334,14 +366,9 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
         if type(v)==dict:
             master.append(get_layout(Class_id,v,clname,level+1))
         else:
-            try:
-                attr=Attributes.allobjects.get(Class_id=Class_id,Attribute=v)
-                dt=attr.DataType.id
-            except ObjectDoesNotExist:
-                id=0
-                dt=0
-            if dt in [DT_Table]:
-                refattr=Attributes.allobjects.get(id=attr.Ref_Attribute_id).Attribute
+            attr=Attributes.objects.get(Class_id__in=(Class_id,Default_Class),Attribute=v)
+            if attr.DataType_id in [DT_Table]:
+                refattr=Attributes.objects.get(id=attr.Ref_Attribute_id).Attribute
                 a=strTemplate("""
                  <div class="card">
                     <div class="card-header" id="heading$refclass">
@@ -361,6 +388,11 @@ def get_layout(Class_id,layout,mastertype='Row',level=0):
                   </div>                
                 """)
                 master.append(HTML(a.substitute(tb=attr.id,attname=attr.Attribute,refclass=attr.Ref_Class_id,refattr=refattr)))
+            elif attr.DataType_id in [DT_Image]:
+                master.append(Column(ShowImageField(v),css_class=cssclass))
+            elif attr.InputType_id == IT_InlineRadioButton:
+                # I wasn't able to create a widget for bootstrap Inline Radio
+                master.append(Column(InlineRadios(v),css_class=cssclass))
             elif clname=='Column': #form-group flex-grow-1 d-flex flex-column
                 master.append(cls(v,css_class=cssclass))
             else:
@@ -435,14 +467,23 @@ class InstanceFilterForm(forms.Form):
 
 
 class SendInstanceEmailForm(forms.Form):
-    to = forms.EmailField(required=True)
+    Class = forms.ModelChoiceField(queryset=Classes.objects.all())
+    EmailField = forms.ModelChoiceField(queryset=Attributes.objects.all())
+    Template = forms.ModelChoiceField(queryset=EmailTemplates.objects.all())
+    to = forms.EmailField(required=False)
     cc = forms.EmailField(required=False)
     subject = forms.CharField(required=True,max_length=255)
     text_body = forms.CharField(widget=TinyMCE(),required=False)
+
     def __init__(self,*args,**kwargs):
         self.Class_id=kwargs.pop('Class_id')
+        if 'MassEmail' in kwargs.keys():
+            self.MassEmail=kwargs.pop('MassEmail')
+        else:
+            self.MassEmail=False
         if 'instance' in kwargs.keys():
             self.instance=kwargs.pop('instance')
+
 
         self.ToTemplate=''
         self.CcTemplate=''
@@ -450,7 +491,7 @@ class SendInstanceEmailForm(forms.Form):
         self.BodyTemplate=''
 
         try:
-            self.Template=Classes.objects.get(id=self.Class_id).DefaultEmailTemplate
+            self.Template = Classes.objects.get(id=self.Class_id).DefaultEmailTemplate
             fieldmatch=re.compile(r'{{ *(".*?") *}}')
             self.ToTemplate=fieldmatch.sub(lambda x: '{{ '+x.group(1).replace(" ","_").replace('"','') + ' }}',value_if_null(self.Template.ToTemplate,''))
             self.CcTemplate=fieldmatch.sub(lambda x: '{{ '+x.group(1).replace(" ","_").replace('"','') + ' }}',value_if_null(self.Template.CcTemplate,''))
@@ -469,7 +510,14 @@ class SendInstanceEmailForm(forms.Form):
         self.fields['cc'].initial = Template(self.CcTemplate).render(context=Context(self.instance))
         self.fields['subject'].initial = Template(self.SubjectTemplate).render(context=Context(self.instance))
         self.fields['text_body'].initial = Template(self.BodyTemplate).render(context=Context(self.instance))
-        #self.fields['text_body'].widget =
+
+        if True or self.MassEmail:
+            self.fields['EmailField'].queryset=Attributes.objects.filter(Class_id=self.Class_id)
+            self.fields['Class'].initial=self.Class_id
+            self.fields['Template'].initial=self.Template
+        else:
+            #self.fields['ClassEmailField'].visible=False
+            pass
 
         self.helper.layout=Layout()
         self.helper.layout=Layout(HTML("""
@@ -480,7 +528,12 @@ class SendInstanceEmailForm(forms.Form):
         </div>
         """))
 
-        self.helper.layout.append(Fieldset('','to','cc','subject','text_body',css_class='modal-body'))
+        if self.MassEmail==0:
+            self.helper.layout.append(Fieldset('','Template','to','cc','subject','text_body',css_class='modal-body'))
+        else:
+            self.helper.layout.append(
+                Fieldset('', 'Class', 'EmailField', 'Template', 'cc', 'subject', 'text_body',
+                         css_class='modal-body'))
 
         Buttons = ButtonHolder(
             Button(value='Send', name='send', css_class='btn btn-primary send-instance-email-btn', css_id='save'),

@@ -22,7 +22,6 @@ def readFiles(path):
             message = '\n'.join(lines)
             yield path, message
 
-
 def dataFrameFromDirectory(path, classification):
     rows = []
     index = []

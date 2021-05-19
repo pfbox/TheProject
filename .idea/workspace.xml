@@ -8,32 +8,63 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-04-26 nb">
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/23/41/49/Coach_letter.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/Coach_letter.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/Dear_Ninja.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth_imi2yEz.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth_jNAk6Km.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/2021/05/03/lets_save_earth_sXWx0UD.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210503234446/Dear_Ninja.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210504121418/Dear_Ninja.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210504122656/lets_save_earth.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210504170011/lets_save_earth.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210504170426/Origin.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210508123327/Бизнес_модель.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/media/uploads/20210508193941/Coach_letter.docx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0002_attributes_defaultvalue.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0003_values_files.py" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-05-09 before social ath">
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210509133255/April_11th_one_day_before_launch.docx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517233437/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517233525/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517233528/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517233915/Ovechkin.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517233930/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517234909/fedorov.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517235112/bure.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517235201/fedorov.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517235251/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517235539/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210517235748/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518000122/bure.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518000727/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518005332/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518005434/Malkin.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518005714/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518013939/bure.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518075401/Makarov.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518080321/fedorov.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518083441/fedorov.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518083507/Malkin.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518083853/Makarov.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518084728/bure.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518085343/3brothers.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518085425/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518085557/3brothers.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518215832/Malkin.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518224818/bure.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518225406/Ovechkin.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518225419/tretiak.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518225853/Kovalchuk.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518225907/3brothers.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/uploads/20210518231946/Malkin.PNG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/constants.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0004_auto_20210509_2219.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0005_auto_20210510_0609.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0006_auto_20210515_1619.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0007_values_images.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/ut_image.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/utparser.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/ut/js/django_select2.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/django_select2.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/DSmodels.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/DSmodels.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/formtemplate.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/formtemplate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/sendouts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/sendouts.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/datatable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/datatable.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/formtemplate.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/formtemplate.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/templates/ut/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showproject.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showproject.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/showtable.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/showtable.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
@@ -52,8 +83,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="HTML File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -109,7 +140,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut/templates/ut" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
@@ -123,9 +154,9 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\ut\templates\ut" />
       <recent name="C:\TheProject\ut\templatetags" />
-      <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\templates" />
       <recent name="C:\TheProject\utlogin" />
     </key>
@@ -334,7 +365,12 @@
       <workItem from="1618501162596" duration="55015000" />
       <workItem from="1620177978247" duration="21836000" />
       <workItem from="1620335230611" duration="41234000" />
-      <workItem from="1620569162103" duration="2862000" />
+      <workItem from="1620569162103" duration="37484000" />
+      <workItem from="1620841999533" duration="332000" />
+      <workItem from="1620842442603" duration="18941000" />
+      <workItem from="1620999138166" duration="38016000" />
+      <workItem from="1621298356367" duration="12559000" />
+      <workItem from="1621338666911" duration="16239000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -413,7 +449,14 @@
       <option name="project" value="LOCAL" />
       <updated>1619484667356</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="2021-05-09 before social ath">
+      <created>1620576771144</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1620576771144</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -460,7 +503,8 @@
     <MESSAGE value="2021-08-04" />
     <MESSAGE value="2021-04-09" />
     <MESSAGE value="2021-04-26" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-04-26" />
+    <MESSAGE value="2021-05-09 before social ath" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-05-09 before social ath" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -471,13 +515,29 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>139</line>
+          <line>142</line>
           <option name="timeStamp" value="108" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/views.py</url>
+          <line>538</line>
+          <option name="timeStamp" value="153" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
+          <line>577</line>
+          <option name="timeStamp" value="173" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
-          <line>553</line>
+          <line>581</line>
           <option name="timeStamp" value="146" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
+          <line>108</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="165" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -494,7 +554,7 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="obj" language="Python" />
+        <watch expression="self" language="Python" />
         <watch expression="val" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
         <watch expression="__py_debug_temp_var_1064192193.'Province' (2281442867440)" />

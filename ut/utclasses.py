@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 import re
 from django.urls import reverse,reverse_lazy
-from .widgets import utHeavyWidget
+from .widgets import utHeavyWidget, ImagePreviewWidget, PictureWidget
 from datetime import datetime
 
 from django_tables2.utils import A
@@ -26,14 +26,14 @@ am=pd.DataFrame()
 for a in app_models:
     am = am.append({'TableName': a._meta.verbose_name, 'Table': a},ignore_index=True)  # .to_dict()
 
-from django.db import connection
-con=connection
-df_classes=pd.DataFrame()#pd.read_sql('select * from ut_classes',con) #.set_index('id')
+from django.db import connection,connections
+#con=connection #['readonly']
+#df_classes=pd.DataFrame()#pd.read_sql('select * from ut_classes',con) #.set_index('id')
 #df_attributes=pd.DataFrame()#pd.read_sql('select * from ut_attributes',con)#.set_index('id')
-df_datatypes=pd.DataFrame()#pd.read_sql('select * from ut_datatypes',con) #.set_index('id')
-df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.set_index('id')
+#df_datatypes=pd.DataFrame()#pd.read_sql('select * from ut_datatypes',con) #.set_index('id')
+#df_inputtypes=pd.DataFrame()#pd.read_sql('select * from ut_inputtypes',con) #.set_index('id')
 #df_formlayouts=pd.read_sql('select * from ut_formlayouts',con) #.set_index('id')
-df_filters=pd.DataFrame()
+#df_filters=pd.DataFrame()
 
 select_options_sql=r"""
 select 
@@ -65,7 +65,8 @@ def value_if_null(x,val):
 
 def get_instance(Class_id,Instance_id):
     sql=create_qs_sql(Class_id,Instance_id)['sql']
-    with con.cursor() as cursor:
+    rocon=connections['readonly']
+    with rocon.cursor() as cursor:
         cursor.execute(sql)
         instance = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
     return instance
@@ -74,7 +75,8 @@ def get_instance_values(Class_id,Instance_id):
     values=memory_cache.get('instance-values-{}'.format(Instance_id))
     if not values:
         sql = create_val_sql(Class_id,Instance_id)
-        with con.cursor() as cursor:
+        rocon=connections['readonly']
+        with rocon.cursor() as cursor:
             cursor.execute(sql)
             values = dict(zip([column[0] for column in cursor.description], cursor.fetchone()))
         memory_cache.set('instance-values-{}'.format(Instance_id),values)
@@ -82,7 +84,8 @@ def get_instance_values(Class_id,Instance_id):
 
 
 def get_simple_options(Class_id,Attribute_id):
-    with con.cursor() as cursor:
+    rocon=connections['readonly']
+    with rocon.cursor() as cursor:
         cursor.execute(select_simple_options_sql.format(Class_id=Class_id,Attribute_id=Attribute_id))
         dict=cursor.fetchall()
     return dict
@@ -170,7 +173,7 @@ def calculated(dt):
     else:
         return False
 
-def get_options(Attribute_id=0,SelectedInstance_id=0,values={},validation=False,term='') :
+def get_options(Attribute_id=0,SelectedInstance_id=None,values={},validation=False,term='') :
     attr=get_attribute(Attribute_id)
     instances={}
     if False: #(attr.MasterAttribute_id>0) and (not validation):
@@ -239,7 +242,8 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     else:
         if re.search('^select',valueslist,re.IGNORECASE):
             try:
-                cursor=con.cursor()
+                rocon=connections['readonly']
+                cursor=rocon.cursor()
                 cursor.execute(valueslist)
                 vl=cursor.fetchall()
             except:
@@ -249,11 +253,15 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                 vl=json.loads(valueslist)
             except:
                 print ('Could not load list of values for field',FieldName,'Class =',attr.Class_id,' String=',valueslist)
-    if dt in [DT_Integer,DT_Boolean]:
+
+
+    if dt in [DT_Integer]:
         if vl=='':
             field=forms.IntegerField(required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
+    elif dt in [DT_Boolean]:
+        field = forms.ChoiceField(choices=[(0,'FALSE'),(1,'TRUE')], required=req)
     elif dt in [DT_Float]:
         if vl=='':
             field = forms.FloatField(required=req)
@@ -274,12 +282,14 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
     elif dt in [DT_Time]:
         field = forms.TimeField(required=req, widget=TimeInput(format=('%H:%M'),attrs={'class':'timefield','autocomplete': 'off'}))
     elif dt in [DT_File]:
-        field = forms.FileField(required=req,allow_empty_file=(not req))
+        field = forms.FileField(required=req, allow_empty_file=(not req))
+    elif dt in [DT_Image]:
+        field = forms.ImageField(required=req,allow_empty_file=(not req)) #,widget=PictureWidget
     elif dt in [DT_Instance]:
         if validation:
             field = forms.IntegerField(required=req)
         else:
-            if True : #usedinfilter: attr.InputType_id==IT_Select2:
+            if True:#attr.InputType_id in [IT_Default, IT_Select2] : #usedinfilter: attr.InputType_id==IT_Select2:
                 if usedinfilter:
                     op = {}
                 else:
@@ -290,6 +300,11 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                                                ,attrs={"data-minimum-input-length": 0}
                                                ,dependent_fields= (attr.dependent_fields if not usedinfilter else None),
                 ))
+            elif attr.InputType_id == IT_RadioButton:
+                op = get_options(Attribute_id=attr.id, values=values, validation=validation)
+                ch = []
+                ch = ch + [(0, '(None)')] + [(k, v) for k, v in op.items()]
+                field=forms.ChoiceField(required=req,widget=forms.RadioSelect(choices=ch))
             else:
                 op = get_options(Attribute_id=attr.id, values=values, validation=validation)
                 if usedinfilter:
@@ -300,8 +315,6 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
                 field=forms.ChoiceField(choices=ch,required=req)
     elif dt == [DT_Datetime]:
         field = forms.DateTimeField(required=req)
-    elif dt == DT_Boolean: #boolean
-        field=forms.ChoiceField(choices=[(0,'False'),(1,'True')],required=req)
     elif dt == DT_Table: #list Do not use
         return False
     elif dt in [DT_Currency]: #Currency
@@ -362,7 +375,7 @@ def get_editfieldlist(Class_id):
 
 def get_updatefieldlist(Class_id):
     exclude=[DT_Calculated,DT_Lookup]
-    return  Attributes.allobjects.exclude(DataType_id__in=exclude).filter(Class_id__in=[Class_id,Default_Class])
+    return  Attributes.objects.exclude(DataType_id__in=exclude).filter(Class_id__in=[Class_id,Default_Class])
 
 
 def get_calulatedfieldlist(Class_id):
@@ -376,6 +389,8 @@ def get_tableviewlist(Class_id):
 def get_fulllist(Class_id):
     return Attributes.objects.filter(Class_id__in=[Class_id,Default_Class])
 
+def get_user_fulllist(Class_id):
+    return Attributes.objects.filter(Class_id__in=[Class_id,Default_Class])
 
 def create_orderby(Class_id,orderby):
     res=''
@@ -468,7 +483,7 @@ def create_qs_sql(Class_id=0,Instance_id=0):
             ajax_columns[a.Attribute] = 'hlink'
         elif a.DataType.id == DT_Instance:
             ajax_columns[a.Attribute] = 'instance'
-        elif a.DataType.id == DT_File:
+        elif a.DataType.id in [DT_File,DT_Image]:
             ajax_columns[a.Attribute] = 'file'
         else:
             ajax_columns[a.Attribute] = 'data'
@@ -477,6 +492,7 @@ def create_qs_sql(Class_id=0,Instance_id=0):
             ss[a.Attribute]=a.SelectedField
             for key,val in a.LeftOuter.items():
                 lo[key]=val
+
     if len(ss)>0:
         co=','
     else:
@@ -602,8 +618,11 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
             else:
                 val=None
             defaults={'char_value':val}
-        elif DataType in [DT_File]:
-            defaults={'file_value':val}
+        elif DataType in [DT_File,DT_Image]:
+            if val:
+                defaults={'file_value':val}
+            else:
+                defaults={'file_value':None}
         elif DataType == DT_Instance: #instance
             if val=='':
                 val = None
@@ -617,17 +636,11 @@ def save_attribute(Instance_id,Attribute_id,value,passed_by_name=False):
                         val=Values.objects.get(Attribute_id=ref_attr,char_value=value).Instance.id
             defaults={'instance_value_id':val}
         print(datetime.now() - t0, 'before save')
-        if DataType in [DT_File]:
+        if DataType in [DT_File,DT_Image]:
             Values_files.objects.update_or_create(Instance_id=Instance_id, Attribute_id=Attribute_id, defaults=defaults)
         else:
             Values.objects.update_or_create(Instance_id=Instance_id, Attribute_id=Attribute_id, defaults=defaults)
         print(datetime.now() - t0, 'after save',at.Attribute)
-
-
-def fieldlist(Class_id):
-    output = pd.read_sql('select * from ut_attributes where Class_id={}'.format(Class_id),con)
-    #output = df_attributes[df_attributes.Class_id==Class_id] #read_frame(Attributes.objects.filter(Class_id=Class_id))
-    return output
 
 def df_to_table(df):
     class t(tables.Table):
@@ -732,7 +745,8 @@ def raw_queryset_as_values_list(raw_qs):
 def raw_queryset_as_dict(sql):
     res=[]
     #columns = raw_qs.columns
-    with con.cursor() as cursor:
+    rocon=connections['readonly']
+    with rocon.cursor() as cursor:
         cursor.execute(sql)
         columns=cursor.description
         res = dictfetchall(cursor)
@@ -806,7 +820,10 @@ def save_instance_byname(Class_id,Instance_id=0,instance={},passed_by_name=True)
         res=ins.id
         for name,value in for_update.items():
             save_attribute(ins.id,upd_attributes[name],value,passed_by_name=passed_by_name)
-    memory_cache.set('instance-values-{}'.format(Instance_id),instance)
+    try:
+        memory_cache.set('instance-values-{}'.format(Instance_id),instance)
+    except:
+        print ("memory_cache has not been saved")
     return res
 
 def dictfetchall(cursor):
@@ -820,13 +837,14 @@ def dictfetchall(cursor):
 def get_report_df(Report_id):
     r = Reports.objects.get(pk=Report_id)
     sql = r.Query
-    df = pd.read_sql(sql,con)
+    df = pd.read_sql(sql,connections['readonly'])
     return {'df': df,'ReportName':r.Report}
 
 def get_reporttable(Report_id):
     r = Reports.objects.get(pk=Report_id)
     sql = r.Query
-    cursor = con.cursor()
+    rocon=connections['readonly']
+    cursor = rocon.cursor()
     cursor.execute(sql)
     t = dictfetchall(cursor)
     extra_columns = [(c[0], tables.Column()) for c in cursor.description]

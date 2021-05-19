@@ -1,3 +1,4 @@
+from .constants import *
 from django.db import models
 import pandas as pd
 from django.db.models import Q
@@ -7,64 +8,9 @@ from django_currentuser.middleware import get_current_user
 from django_currentuser.db.models import CurrentUserField
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
-from django.core.cache import caches
 from tinymce.models import HTMLField
 import json
 import pytz
-
-# This is using for queries to wrap tables and fields
-Default_Identifier = '"'
-Current_Identifier = '"'  # '`' --> for MySQL, '"' --> for postgres, '"' --> sqlite3
-memory_cache = caches['memory']
-
-# Constants
-Default_Attribute = -1
-Default_Class = -1
-Default_Filter = -1
-Default_Project = -1
-
-# Input Types
-IT_Default = -1
-IT_Select2 = 1
-
-# Datatype Constants
-DT_Integer = 1
-DT_Float = 2
-DT_String = 3
-DT_Text = 4
-DT_Date = 5
-DT_Instance = 6
-DT_Datetime = 7
-DT_External = 8
-DT_Boolean = 9
-DT_Table = 10
-DT_Currency = 11
-DT_Email = 12
-DT_Time = 13
-DT_Calculated = 14
-DT_Lookup = 15
-DT_ManyToMany = 16
-DT_Hyperlink = 17
-DT_File = 18
-DT_Image = 19
-DT_ActionItem = 20
-
-DT_NUMBERS = [DT_Integer, DT_Float, DT_Date, DT_Instance, DT_Datetime, DT_Boolean, DT_Currency]
-DT_LETTERS = [DT_String, DT_Text, DT_External, DT_Email, DT_Lookup, DT_Calculated, DT_Time, DT_Hyperlink]
-
-DTG_Int = [DT_Integer, DT_Boolean]  # 1
-DTG_Float = [DT_Float, DT_Currency]  # 2
-DTG_String = [DT_String, DT_Email, DT_Lookup, DT_Time, DT_Hyperlink]  # 3
-DTG_Text = [DT_Text]  # 4
-DTG_Instance = [DT_Instance]  # 5
-DTG_Date = [DT_Date, DT_Datetime]  # 5
-DTG_ManyToMany = [DT_ManyToMany]  # 6
-
-FT_Exact = 1
-FT_MinMax = 2
-FT_Contains = 3
-FT_Like = 4
-
 
 def get_fieldname(dt):
     if dt in [DT_Integer, DT_Boolean]:
@@ -83,7 +29,7 @@ def get_fieldname(dt):
         f = 'char_value'
     elif dt in [DT_ManyToMany]:
         f = 'manytomany'
-    elif dt in [DT_File]:
+    elif dt in [DT_File,DT_Image]:
         f='file_value'
     else:
         raise Exception('No {} datatype'.format(dt))
@@ -118,7 +64,8 @@ class EmailTemplates(models.Model):
     CcTemplate = models.CharField(max_length=255, null=True, blank=True)
     SubjectTemplate = models.CharField(max_length=255, null=True, blank=True)
     Template = HTMLField(null=True, blank=True)
-
+    def __str__(self):
+        return self.TemplateName
 
 class SendOuts(models.Model):
     Query = models.TextField(null=True, blank=True)
@@ -128,7 +75,6 @@ class SendOuts(models.Model):
 
     class Meta:
         verbose_name = 'SendOuts'
-
 
 class ClassManager(models.Manager):
     def get_queryset(self):
@@ -156,8 +102,8 @@ class Classes(models.Model):
     DeleteGroups = models.ManyToManyField(Group, related_name='+', blank=True)
     RightsFilteredByClass = models.ManyToManyField("self", related_name='+', blank=True)
     Class_query = models.TextField(null=True, blank=True)
-    objects = ClassManager()
-    allobjects = models.Manager()
+    objects = models.Manager()
+    userobjects = ClassManager()
 
     class Meta:
         verbose_name = 'Classes'
@@ -181,19 +127,20 @@ class ProjectManager(models.Manager):
 class Projects(models.Model):
     Project = models.CharField(max_length=100, unique=True)
     Description = models.TextField(null=True, blank=True)
-    DefaultReport = models.ForeignKey(Reports, on_delete=models.SET_NULL, related_name='+', null=True, blank=True)
+    DefaultReport = models.ForeignKey(Reports, on_delete=models.CASCADE, related_name='+', null=True, blank=True)
     Classes_m2m = models.ManyToManyField(Classes, blank=True)
     Reports_m2m = models.ManyToManyField(Reports, blank=True)
-    ViewGroups = models.ManyToManyField(Group, related_name='+')
-    UpdateGroups = models.ManyToManyField(Group, related_name='+')
-    objects = ProjectManager()
+    ViewGroups = models.ManyToManyField(Group, related_name='+',blank=True)
+    UpdateGroups = models.ManyToManyField(Group, related_name='+',blank=True)
+    objects = models.Manager()
+    userobjects = ProjectManager()
 
     class Meta:
         verbose_name = 'Projects'
 
 
 class InputTypes(models.Model):
-    Inputtype = models.CharField(max_length=50, unique=True)
+    InputType = models.CharField(max_length=50, unique=True)
     HtmlLine = models.TextField(null=True)
     Description = models.TextField(null=True)
 
@@ -201,7 +148,7 @@ class InputTypes(models.Model):
         verbose_name = 'InputTypes'
 
     def __str__(self):
-        return self.Inputtype
+        return self.InputType
 
 
 # int,varchar,text,class
@@ -272,8 +219,12 @@ def selectfield_nd(attr):
         res = '0 as Table__' + str(id) + '__'
     elif dt in [DT_Calculated]:
         res = '{formula}'.format(formula=attr.Formula)
-    elif dt in [DT_File]:
-        res = r"""concat({tab}."id",';',right({tab}.{field},position('/' in reverse({tab}.{field}))-1))""".format(tab=attr.TableName, id=id, field=get_fieldname(dt))
+    elif dt in [DT_File,DT_Image]:
+        res = r"""CONCAT('{media_url}',{tab}.{field})""".format(media_url=settings.MEDIA_URL,
+            tab=attr.TableName, id=id, field=get_fieldname(dt))
+    elif dt in [DT_Boolean]:
+        res = "CASE WHEN {tab}.{field} = 1 THEN 'TRUE' else 'FALSE' end ".format(
+            tab=attr.TableName, field=get_fieldname(dt))
     else:
         res = '{tab}.{field}'.format(tab=attr.TableName, id=id, field=get_fieldname(dt))
     return res
@@ -302,7 +253,7 @@ def valueleftouter(attr):
             .format(val=Values._meta.db_table, refval=attr.RefAttrTableName, refatt=attr.Ref_Attribute_id,
                     reftab=internal_attr.RefTableName, attr=attr.Attribute)
     else:
-        if dt == DT_File:
+        if dt in [DT_File,DT_Image]:
             table_name = Values_files._meta.db_table
         else:
             table_name = Values._meta.db_table
@@ -310,7 +261,6 @@ def valueleftouter(attr):
             attr.TableName] = 'LEFT OUTER JOIN {val} as {tab} ON ({tab}."Instance_id"=ins.id and {tab}."Attribute_id"={id}) /* {attr} */' \
             .format(val=table_name, tab=attr.TableName, id=attr.id, attr=attr.Attribute)
     return res
-
 
 def leftouter(attr):
     # attr = Attributes.objects.get(pk=id)
@@ -336,7 +286,7 @@ def leftouter(attr):
             .format(val=Values._meta.db_table, refval=attr.RefAttrTableName, refatt=attr.Ref_Attribute_id,
                     reftab=internal_attr.RefTableName, attr=attr.Attribute)
     else:
-        if dt == DT_File:
+        if dt in [DT_File,DT_Image]:
             table_name = Values_files._meta.db_table
         else:
             table_name = Values._meta.db_table
@@ -398,8 +348,8 @@ class Attributes(models.Model):
     UseExternalTables = models.BooleanField(default=False)  # if you'd like to generate internal fields
     ViewGroups = models.ManyToManyField(Group, related_name='+')
     UpdateGroups = models.ManyToManyField(Group, related_name='+')
-    objects = AttributeManager()
-    allobjects = models.Manager()
+    objects = models.Manager()
+    userobjects = AttributeManager()
 
     @cached_property
     def TableName(self):
@@ -435,9 +385,9 @@ class Attributes(models.Model):
 
     @cached_property
     def FT_Exact(self):
-        if self.DataType in DT_NUMBERS:
+        if self.DataType.id in DT_NUMBERS:
             return self.ValueField + '=' + filter_value(self.DataType_id)
-        elif self.DataType in DT_LETTERS:
+        elif self.DataType.id in DT_LETTERS:
             return 'lower({})'.format(self.ValueField) + '= lower({})'.format(filter_value(self.DataType_id))
         else:
             return '/* This datape does not have filter condition */'
@@ -468,10 +418,10 @@ class Attributes(models.Model):
     def set_cached_properties(self):
         # MasterAttribute
         MasterAttribute = None
-        ma = Attributes.allobjects.exclude(Ref_Class_id=Default_Attribute) \
+        ma = Attributes.objects.exclude(Ref_Class_id=Default_Attribute) \
             .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id, Class_id=self.Class_id).exists()
         if ma:
-            MasterAttribute = Attributes.allobjects.exclude(Ref_Class_id=0) \
+            MasterAttribute = Attributes.objects.exclude(Ref_Class_id=0) \
                 .filter(DataType_id=DT_Instance, Ref_Class_id=self.Ref_Class.Master_id,
                         Class_id=self.Class_id).first()
         # MasterAttribute_id
@@ -481,7 +431,7 @@ class Attributes(models.Model):
 
         # get lookup_trigger
         lookup_trigger = 0
-        for a in Attributes.allobjects.exclude(InternalAttribute=0).filter(DataType_id=DT_Lookup,
+        for a in Attributes.objects.exclude(InternalAttribute=0).filter(DataType_id=DT_Lookup,
                                                                            InternalAttribute_id=self.id):
             lookup_trigger = a.id
 
@@ -498,7 +448,7 @@ class Attributes(models.Model):
         while pd.notnull(ma):
             dependent_fields[ma.Attribute] = ma.Attribute
             try:
-                ma = Attributes.allobjects.exclude(Ref_Class_id=Default_Attribute) \
+                ma = Attributes.objects.exclude(Ref_Class_id=Default_Attribute) \
                     .filter(DataType_id=DT_Instance, Ref_Class_id=ma.Ref_Class.Master_id,
                             Class_id=self.Class_id).first()
             except:

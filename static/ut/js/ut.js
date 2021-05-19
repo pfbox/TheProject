@@ -49,7 +49,7 @@ $(document).ready(function() {
                 if (data.success) {
                     var mymodal = form.closest('.modal')
                     mymodal.modal('hide');
-                    $('.classtable[data-class-id="'+class_id+'"]').each(function(i,el){
+                    $('.classtable-setups[data-class-id="'+class_id+'"]').find('.classtable').each(function(i,el){
                             if ($.fn.DataTable.isDataTable($(el))) {
                                 $(el).DataTable().ajax.reload()
                             }
@@ -104,7 +104,7 @@ $(document).ready(function() {
                        mymodal.modal('hide');
                     }
                     $('#msg').append(asyncSuccessMessage)
-                    $('.classtable[data-class-id="'+Class_id+'"]').each(function(i,el){
+                    $('.classtable-setups[data-class-id="'+Class_id+'"]').find('.classtable').each(function(i,el){
                         if ($.fn.DataTable.isDataTable($(el))) {
                             $(el).DataTable().ajax.reload()
                         }
@@ -129,15 +129,17 @@ $(document).ready(function() {
             }, 0);
     });
 
-
-    $("main").on('click','.send-instance-email',function(){
+    function show_email_form(btn,massemail=0){
         var input_data = {}
         var ajax_url = ''
-        var Instance_id=$(this).closest('tr').data('id')
+        var Instance_id=$(btn).closest('tr').data('id')
         var form = null
-        if (Instance_id){
+        if (massemail==1) {
+            ajax_url= $(btn).closest('.classtable-setups').data('send-mass-email-link')
+            elements={}
+        } else if (Instance_id){
             elements={Instance_id:Instance_id}
-            ajax_url= $(this).closest('.classtable').data('send-instance-email-link')
+            ajax_url= $(btn).closest('.classtable-setups').data('send-instance-email-link')
         } else {
             form = $(this).closest('form')
             elements = form.serializeArray()
@@ -162,6 +164,10 @@ $(document).ready(function() {
             }
         })
         $(fmodal).modal('show');
+    }
+
+    $("main").on('click','.send-instance-email',function(){
+        show_email_form(this)
     })
 
     $("#ModalFactory").on('show.bs.collapse','.btn-link,.dt-table',function () {
@@ -200,7 +206,7 @@ $(document).ready(function() {
             var class_id = el.data('class-id')
             var instance_id = 0
         } else {
-            var class_id = el.closest('table').data('class-id')
+            var class_id = el.closest('.classtable-setups').data('class-id')
             var instance_id = el.closest('tr').data('id')
         }
         if (el.hasClass('viewinstance')) {
@@ -233,15 +239,19 @@ $(document).ready(function() {
         }
     })
 
-    function create_modal_form_wrap(){
+    function create_modal_form_wrap(size="modal-xl"){
         fmodal = $('<div class="modal fade" role="dialog" aria-hidden="true"></div>')
-        mdialog = $('<div class="modal-dialog modal-xl modal-dialog-centered" role="document"></div>')
+        mdialog = $('<div class="modal-dialog '+size+' modal-dialog-centered" role="document"></div>')
         mcontext = $('<div class="modal-content"></div>')
         return fmodal.append(mdialog.append(mcontext))
     }
 
     $('main').on('click','.viewinstance,.editinstance,.createinstance,.deleteinstance,.call-viewinstance',function () {
-        fmodal = create_modal_form_wrap()
+        var size="modal-xl"
+        if ($(this).hasClass('deleteinstance')) {
+            size = ''
+        }
+        fmodal = create_modal_form_wrap(size)
         $('#ModalFactory').append(fmodal)
         var inputData={}
         if ($(this).hasClass('action-item')) {
@@ -332,9 +342,9 @@ $(document).ready(function() {
     function set_datatables(mel) {
         $(mel).find('.classtable').each(function (i, el) {
             if ( ! $.fn.DataTable.isDataTable($(el))) {
-                var filter_attr = $(el).data('ref-attribute')
+                var filter_attr = $(el).closest('.classtable-setups').data('ref-attribute')
                 var filter_val = $(el).closest('form').data('instance-id')
-                var class_id = $(el).data('class-id')
+                var class_id = $(el).closest('.classtable-setups').data('class-id')
                 var report_id = $(el).data('report-id')
                 var buttons = []
                 var columnDefs = []
@@ -362,11 +372,11 @@ $(document).ready(function() {
                                     "data-form-url": '/Attributes/' + class_id,
                                 }
                             ],
-                            text: "Columns",
+                            text: "<i class=\"fas fa-columns\"></i>",
                         },
 
                         {
-                            text: 'Create',
+                            text: "<i class=\"fas fa-plus-square\"></i>",
                             attr: {
                                 class: 'createinstance dt-button',
                                 "data-form-url": '/Classes/edit/' + class_id + '/0',
@@ -375,7 +385,7 @@ $(document).ready(function() {
                             }
                         },
                         {
-                            text: 'Action',
+                            text: '<i class="fas fa-copy"></i>',
                             extend: 'collection',
                             buttons: [
                                 'copy', 'csv',
@@ -393,10 +403,15 @@ $(document).ready(function() {
                                     }
                                 },
                             ]
-
                         },
                         {
-                            text: 'Filter',
+                            text: "<i class=\"fas fa-mail-bulk\"></i>", //'<i class="far fa-envelope-open"></i>', //mass email
+                            action: function (e, dt, node, config) {
+                                show_email_form($(el),1)
+                            }
+                        },
+                        {
+                            text: '<i class="fas fa-filter"></i>', //filter
                             attr: {
                                 class: "dt-button",
                                 className: "btn btn-link",
@@ -430,15 +445,16 @@ $(document).ready(function() {
                 //var ajax_data=ajax_response.ajax_data
                 var ajax_columns=ajax_response.ajax_columns
                 $.ajaxSetup({async:true});
+                var table_setup=$(el).closest('.classtable-setups')
                 var table=$(el).removeAttr('width').DataTable({
                     //searchPane:true,
                     dom: dom,
                     scrollX:true,
                     serverSide: true,
                     ajax : {
-                        url : $(el).data('ajax-link'),
+                        url : $(table_setup).data('ajax-link'),
                         data : function (d){
-                                return $.extend(d,create_filter_data(el))
+                                return $.extend(d,create_filter_data(table_setup))
                         }
                     },
                     //data: ajax_data,
@@ -449,13 +465,19 @@ $(document).ready(function() {
                     stateSave: true,
                     buttons: buttons,
                     colReorder: colReorder,
+                    searchHighlight:true,
                     createdRow: function (row, data,            dataIndex) {
                         $(row).attr('data-id', data.id);
                     },
                     initComplete: function () {
                         //set_filters(this.api())
-                   },
+                    },
                 });
+//                table.on('draw', function () {
+//                        var body = $( table.table().body() );
+//                        body.unhighlight();
+//                        body.highlight( table.search() );
+//                } );
                 //only search on "Enter" key
                 $(el).closest('.dataTables_wrapper').find(".dataTables_filter input")
                     .unbind()
@@ -464,6 +486,7 @@ $(document).ready(function() {
                         table.search(this.value).ajax.reload()
                     }
                 });
+
             }
         });
     };
@@ -504,10 +527,10 @@ $(document).ready(function() {
 
     function get_table_columns(el){
         var ajax_columns=[]
-        var class_id = $(el).data('class-id')
+        var class_id = $(el).closest('.classtable-setups').data('class-id')
         var report_id = $(el).data('report-id')
         $.ajax({
-            "url": $(el).data('ajax-columns-link'),
+            "url": $(el).closest('.classtable-setups').data('ajax-columns-link'),
             "success" : function (data){
                     var hrow = $(el).find('thead tr').first().empty()
                     $.each(data.columns, function (key,dt) {
@@ -531,10 +554,15 @@ $(document).ready(function() {
                         } else if (dt=='file') {
                             my_item['render'] = function ( data, type, row, meta ) {
                                 if (data) {
-                                    ds=data.split(';')
-                                    return '<a class="file-to-download" href="/download_file/'+ds[0]+'" data-file-id="'+ds[0]+'" data-ref-instance-id="'+row.id+'">'+ds[1]+'</a>';
+                                    ds=data.split('/')
+                                    file_name=ds[ds.length-1]
+                                    if (file_name!='False') {
+                                        return '<a href="' + data + '"">' + file_name + '</a>';
+                                    } else {
+                                        return null
+                                    }
                                 }  else {
-                                    return data
+                                    return null
                                 }
                             }
                         }

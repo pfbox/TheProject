@@ -49,6 +49,7 @@ urlpatterns = [
     path('ajax/get_attribute_options/<int:Class_id>/<int:Attribute_id>/', views.ajax_get_attribute_options, name='ajax_get_attribute_options'),
     path('send_instance_email/<int:Class_id>/',views.send_instance_email.as_view(),name='send_instance_email'),
     path('modal/send_instance_email/<int:Class_id>/', views.send_instance_email.as_view(), name='send_instance_email_modal'),
+    path('modal/send_instance_email/<int:Class_id>/<int:MassEmail>/', views.send_instance_email.as_view(), name='send_instance_email_modal'),
     path('send_instance_email/<int:Class_id>/<int:Instance_id>/', views.send_instance_email.as_view(), name='send_instance_email'),
     path('download_file/<slug:pk>/', views.download_file.as_view(),name='download_file'),
 ]

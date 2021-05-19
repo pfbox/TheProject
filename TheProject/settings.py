@@ -52,7 +52,12 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_select2',
     'tinymce',
+    #social auth
+    #'social_django',
+    #'social_django_mongoengine',
 ]
+
+SOCIAL_AUTH_STORAGE = 'social_django_mongoengine.models.DjangoStorage'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -97,6 +102,25 @@ DATABASES = {
         'PASSWORD': 'admin_postgres_pqv3',
         'HOST': '127.0.0.1',
         'PORT': '9999',
+    },
+###
+# CREATE ROLE readonly_access
+# CREATE USER readonly_user WITH PASSWORD 'readonly_postgres_pqv3'
+# GRANT USAGE ON SCHEMA public TO readonly_access
+# GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_access
+# ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly_access
+# GRANT readonly_access TO readonly_user
+###
+    'readonly': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'readonly_user',
+        'PASSWORD': 'readonly_postgres_pqv3',
+        'HOST': '127.0.0.1',
+        'PORT': '9999',
+        'OPTIONS': {
+            'options': '-c default_transaction_read_only=on'
+        }
     },
     'sqlite3': {
         'ENGINE': 'django.db.backends.sqlite3',

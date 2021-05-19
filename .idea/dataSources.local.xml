@@ -63,5 +63,20 @@
         <ssh-config-id>0b49f357-33c0-4c1f-b01c-174c7cbb71e8</ssh-config-id>
       </ssh-properties>
     </data-source>
+    <data-source name="Django mysql" uuid="b362fef0-0069-43ea-b4a5-77ba0cf11237">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="MYSQL" exact-version="0" />
+      <user-name>pfbox</user-name>
+      <schema-mapping />
+    </data-source>
+    <data-source name="Django readonly" uuid="b2c72ba5-0180-4e8b-b2b3-d33f9ec143c4">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" exact-version="0" />
+      <user-name>readonly_user</user-name>
+      <schema-mapping />
+    </data-source>
+    <data-source name="Django sqlite3" uuid="7e33a712-7ec1-4e18-a116-b00e54e234e7">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="SQLITE" exact-version="0" />
+      <auth-provider>no-auth</auth-provider>
+      <schema-mapping />
+    </data-source>
   </component>
 </project>

@@ -14,11 +14,11 @@ import json
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.utils.html import strip_tags
+from .sendouts import send_mail
 
 from .utclasses import *
 from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
-import ast
 
 def index(request):
     projects=Projects.objects.filter(id__gte=0)
@@ -256,7 +256,8 @@ class ReportRun(View):
     def get(self,request,Report_id,*args,**kwargs):
         r=Reports.objects.get(pk=Report_id)
         sql=r.QueryAdj
-        cursor=con.cursor()
+        rocon=connections['readonly']
+        cursor=rocon.cursor()
         cursor.execute(sql)
         t=dictfetchall(cursor)
         extra_columns=[(c[0], tables.Column()) for c in cursor.description]
@@ -403,6 +404,9 @@ class ClassesUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
+    def post(self,*args,**kwargs):
+        memory_cache.delete('lo-{}'.format(kwargs['pk']))
+        return super().post(*args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy('ut:classes_view')
@@ -571,6 +575,7 @@ class FormTemplateView(View):
             else:
                 rec=Layouts(FormLayout=lo_to_save,Class_id=Class_id)
             rec.save()
+            memory_cache.delete('lo-{}'.format(Class_id))
 
         return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
 
@@ -670,7 +675,8 @@ from querystring_parser import parser
 def ajax_get_report_data (request, Report_id,sample=0, filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = r.QueryAdj
-    cursor = con.cursor()
+    rocon=connections['readonly']
+    cursor = rocon.cursor()
     cursor.execute(sql)
 #    desc = cursor.description
     res={}
@@ -683,7 +689,8 @@ def ajax_get_report_data (request, Report_id,sample=0, filter={}):
 def ajax_get_report_columns (request, Report_id,filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = 'select * from (' + r.QueryAdj + ') original limit 0'
-    cursor = con.cursor()
+    rocon=connections['readonly']
+    cursor = rocon.cursor()
     cursor.execute(sql)
 #    desc = cursor.description
     res={}
@@ -760,7 +767,8 @@ def ajax_get_class_data(request,Class_id):
     count_sql=create_count_sql(Class_id=Class_id
                                ,filter=filter,masterclassfilter=masterfilter,search=search
                                )
-    with con.cursor() as cursor:
+    rocon=connections['readonly']
+    with rocon.cursor() as cursor:
         cursor.execute(count_sql)
         rec=cursor.fetchone()
     recordsTotal= rec[1]
@@ -772,10 +780,9 @@ def ajax_get_class_data(request,Class_id):
     res['draw']=draw+1
     return JsonResponse(res)
 
-from .sendouts import send_mail
 
 class send_instance_email(View):
-    def get(self,request,Class_id,Modal=True,*args,**kwargs):
+    def get(self,request,Class_id,MassEmail=0,Modal=True,*args,**kwargs):
         Instance_id = request.GET.get('Instance_id')
         if pd.isnull(Instance_id) or Instance_id == 0:
             instance=request.GET
@@ -785,7 +792,7 @@ class send_instance_email(View):
         instance_adj={}
         for k,v in instance.items():
             instance_adj[k.replace(' ','_')]=v
-        form=SendInstanceEmailForm(Class_id=Class_id,instance=instance_adj)
+        form=SendInstanceEmailForm(Class_id=Class_id,instance=instance_adj,MassEmail=MassEmail)
         context = get_base_context()
         context['form']=form
         context['Class_id']=Class_id
@@ -840,3 +847,7 @@ class download_file(LoginRequiredMixin,View):
         response = HttpResponse(obj.file_value.file, content_type="plain/text")
         response['Content-Disposition'] = ('attachment; filename=' + filename).encode('utf-8')
         return response
+
+def ajax_change_email_template(request,EmailTemplate_id):
+    pass
+

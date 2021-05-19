@@ -5,7 +5,7 @@ from django.conf import settings
 
 def send_class_email(Class_id,email_field,type='mass',filter={},email_subject='',email_body=''):
     sql=create_rawquery_sql(Class_id,filter)
-    df_emails=pd.read_sql(sql,con)
+    df_emails=pd.read_sql(sql,connections['readonly'])
     if type=='one':
         send_mail(email_subject,email_body,settings.EMAIL_HOST_USER,list(df_emails[email_field]))
     else:

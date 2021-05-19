@@ -1,6 +1,39 @@
 from django.forms.widgets import Select
 from django_select2.forms import HeavySelect2Widget
 from django.forms.widgets import Media
+from django.forms import RadioSelect
+from django.utils.safestring import mark_safe
+
+from django import forms
+
+from string import Template
+from django.utils.safestring import mark_safe
+
+class PictureWidget(forms.widgets.FileInput):
+    def render(self, name, value, attrs=None,**kwargs):
+        html =  Template("""
+        <div class="form-control custom-file">
+            <input type="file" class="custom-file-input " name="$name" id="$id" accept="image/*" attr_id="$attr">        
+            <label for="$id">Example file input</label>
+            <img src="/media/$link" style="width:100%;hight:100%" />
+        </div>
+        """)
+        return mark_safe(html.substitute(link=value,name=name,id=id,attr=self.attrs['attr_id']))
+
+class ImagePreviewWidget(forms.widgets.Widget):
+    def render(self, name, value, attrs=None, **kwargs):
+        input_html = super().render(name, value, attrs=None)
+        img_html = mark_safe(f'<br><br><img src="{value.url}"  />')
+        return f'{input_html}{img_html}'
+
+class HorizontalRadioSelect(RadioSelect):
+    #template_name = 'ut:ut_inline_radio.html'
+    option_template_name = 'ut:ut_inline_radio.html'
+    #def __init__(self, *args, **kwargs):
+    #    super().__init__(*args, **kwargs)
+    #    css_style = 'style="display: inline-block; margin-right: 10px;"'
+    #    self.renderer.inner_html = '<li ' + css_style + '>{choice_value}{sub_widgets}</li>'
+
 
 class utHeavyWidget(HeavySelect2Widget):
     @property

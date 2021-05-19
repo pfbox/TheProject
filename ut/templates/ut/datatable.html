@@ -1,20 +1,22 @@
-<table id="instances{{ Class_id }}"
+<div class="classtable-setups"
        class="classtable display table-striped"
-       style="width:100%"
        data-class-id="{{ Class_id }}"
        data-ajax-link="{% url "ut:ajax_get_class_data" Class_id %}"
        data-ajax-columns-link="{% url "ut:ajax_get_class_columns" Class_id %}"
        data-send-instance-email-link="{% url 'ut:send_instance_email_modal' Class_id %}"
+       data-send-mass-email-link="{% url 'ut:send_instance_email_modal' Class_id 1 %}"
        {% if Ref_Attribute %}
             data-ref-attribute="{{ Ref_Attribute }}"
-       {% endif %}>
-    <thead>
-        <tr>
-            {% for c in columns %}
-                <th class="filterhead">{{ c }}</th>
-            {% endfor %}
-            <th>Actions</th>
-        </tr>
-    </thead>
+       {% endif %} >
+    <table class="classtable display table-striped" style="width:100%" id="instances{{ Class_id }}">
+        <thead>
+            <tr>
+                {% for c in columns %}
+                    <th class="filterhead">{{ c }}</th>
+                {% endfor %}
+                <th>Actions</th>
+            </tr>
+        </thead>
 
-</table>
+    </table>
+</div>

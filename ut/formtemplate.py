@@ -62,6 +62,19 @@ class container():
             if len(con.elements)>1:
                 con.split_by_con();
 
+    def print_objects(self, level=0, shift=0):
+        lodict = {}
+        i = 1;
+        if len(self.containers) > 0:
+            for con in self.containers:
+                #                print (' '*shift+str(level*100+i)+' '+con.type+':'+str(con.elids))
+                lodict[con.type + ':' + str(level * 100 + i) + ':' + str(con.width) + ':col-md-' + str(
+                    int(12 / (self.width / con.width)))] = con.print_elements(level * 100 + i, shift + 1)
+                i = i + 1
+            return lodict
+        else:
+            return self.elids[0]
+
     def print_elements(self,level=0,shift=0):
         lodict={}
         i=1;

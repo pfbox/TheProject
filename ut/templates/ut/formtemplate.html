@@ -66,7 +66,7 @@
         </div>
         <ul id="sourcelist" class="" >
             {% for att in table  %}
-                <li  class="sourceitem list-group-item" style="height:75px;">
+                <li  class="sourceitem list-group-item" style="height:75;">
                     <div id="{{att.Attribute}}"  name="{{att.Attribute}}" class="draggableHelper" style="">
                       <div id="rz{{att.Attribute}}" class="resizable" >
                           <div class="border">{{att.Attribute}}
@@ -109,7 +109,7 @@ $.widget.bridge('uibutton', $.ui.button);
              drz.width(1200);
              NinRow = 6;
              var gridwidth=drz.width()/NinRow;
-             var gridheight=gridwidth/3;
+             var gridheight=gridwidth/2;
              lgrid = [gridwidth,gridheight]
              x1=$('#drz').offset().left
              y1=$('#drz').offset().top
@@ -276,4 +276,3 @@ $.widget.bridge('uibutton', $.ui.button);
     </script>
 </body>
 </html>
-

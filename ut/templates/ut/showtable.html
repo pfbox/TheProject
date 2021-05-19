@@ -10,7 +10,6 @@
 {% load crispy_forms_tags %}
 <div class="container-fluid">
 <div class="col-md-12">
-
   {% if filterform %}
     <div class="card">
       <div class="card-header" id="headingOne">
@@ -28,13 +27,6 @@
       </div>
     </div>
   {% endif %}
-
-<!--
-<div class="d-inline-flex p-2 bd-highlight" >
-        <button class="btn btn-primary" type="submit">Filter</button>
-        <button class="btn btn-primary" type="submit" formaction="{% url 'ut:instances' Class_id 1 %}">Save to xls</button>
-</div>
--->
 </div>
 </div>
 
