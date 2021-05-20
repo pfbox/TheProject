@@ -101,7 +101,7 @@ DATABASES = {
         'USER': 'super',
         'PASSWORD': 'admin_postgres_pqv3',
         'HOST': 'pfbox-2157.postgres.pythonanywhere-services.com',
-        'PORT': '2157',
+        'PORT': '12157',
     },
     'readonly': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -109,7 +109,7 @@ DATABASES = {
         'USER': 'readonly_user',
         'PASSWORD': 'readonly_postgres_pqv3',
         'HOST': 'pfbox-2157.postgres.pythonanywhere-services.com',
-        'PORT': '2157',
+        'PORT': '12157',
         'OPTIONS': {
             'options': '-c default_transaction_read_only=on'
         }
