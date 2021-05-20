@@ -100,24 +100,16 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'super',
         'PASSWORD': 'admin_postgres_pqv3',
-        'HOST': '127.0.0.1',
-        'PORT': '9999',
+        'HOST': 'pfbox-2157.postgres.pythonanywhere-services.com',
+        'PORT': '2157',
     },
-###
-# CREATE ROLE readonly_access
-# CREATE USER readonly_user WITH PASSWORD 'readonly_postgres_pqv3'
-# GRANT USAGE ON SCHEMA public TO readonly_access
-# GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_access
-# ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly_access
-# GRANT readonly_access TO readonly_user
-###
     'readonly': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'postgres',
         'USER': 'readonly_user',
         'PASSWORD': 'readonly_postgres_pqv3',
-        'HOST': '127.0.0.1',
-        'PORT': '9999',
+        'HOST': 'pfbox-2157.postgres.pythonanywhere-services.com',
+        'PORT': '2157',
         'OPTIONS': {
             'options': '-c default_transaction_read_only=on'
         }
