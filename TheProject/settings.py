@@ -19,9 +19,7 @@ def import_production_db():
     import json
     file=open(os.path.join(BASE_DIR,'databases.txt'),'r')
     db=file.read()
-    print (db)
     res = json.loads(db)
-    print (res)
     return res
 
 import_production_db()
