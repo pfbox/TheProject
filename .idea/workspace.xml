@@ -8,10 +8,19 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-05-19 v2">
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-05-20">
+      <change afterPath="$PROJECT_DIR$/databases.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0008_auto_20210528_1128.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0009_auto_20210528_1129.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <list id="3efd15e1-ca7b-420d-ac46-efbe65f01c9f" name="Revert &quot;2021-29-03 v2&quot;-2" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -316,7 +325,12 @@
       <workItem from="1620999138166" duration="38016000" />
       <workItem from="1621298356367" duration="12559000" />
       <workItem from="1621338666911" duration="16239000" />
-      <workItem from="1621470039275" duration="6388000" />
+      <workItem from="1621470039275" duration="8974000" />
+      <workItem from="1621621227114" duration="1829000" />
+      <workItem from="1621809368568" duration="1650000" />
+      <workItem from="1621966358038" duration="2301000" />
+      <workItem from="1622214835326" duration="15166000" />
+      <workItem from="1623552417750" duration="11803000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -423,7 +437,21 @@
       <option name="project" value="LOCAL" />
       <updated>1621513947062</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="2021-05-19 v3">
+      <created>1621515367865</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1621515367865</updated>
+    </task>
+    <task id="LOCAL-00017" summary="2021-05-20">
+      <created>1621546765785</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1621546765785</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -473,7 +501,9 @@
     <MESSAGE value="2021-05-09 before social ath" />
     <MESSAGE value="2021-05-19" />
     <MESSAGE value="2021-05-19 v2" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-05-19 v2" />
+    <MESSAGE value="2021-05-19 v3" />
+    <MESSAGE value="2021-05-20" />
+    <option name="LAST_COMMIT_MESSAGE" value="2021-05-20" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -489,23 +519,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/views.py</url>
-          <line>538</line>
+          <line>540</line>
           <option name="timeStamp" value="153" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>577</line>
+          <line>579</line>
           <option name="timeStamp" value="173" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
-          <line>581</line>
+          <line>580</line>
           <option name="timeStamp" value="146" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
-          <line>108</line>
-          <option name="timeStamp" value="165" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -522,12 +547,14 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="self" language="Python" />
+        <watch expression="data" language="Python" />
         <watch expression="val" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
         <watch expression="__py_debug_temp_var_1064192193.'Province' (2281442867440)" />
         <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152).0.DEFAULT_CHUNK_SIZE" />
         <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152)" />
+        <watch expression="data.Notes" />
+        <watch expression="__py_debug_temp_var_451925383" />
       </configuration>
     </watches-manager>
   </component>

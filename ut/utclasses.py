@@ -272,8 +272,10 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
             field = forms.CharField(max_length=255, required=req)
         else:
             field=forms.ChoiceField(choices=vl,required=req)
-    elif dt in [DT_Text,DT_Hyperlink]:
+    elif dt in [DT_Text]:
         field=forms.CharField(widget=forms.Textarea(attrs={'rows':1}),required=req)
+    elif dt in [DT_Hyperlink]:
+        field=forms.URLField(required=req)
     elif dt in [DT_Date]:
         field=forms.DateField(required=req, widget=DateInput(format=('%Y-%m-%d'),attrs={'class':'datefield','autocomplete': 'off'})
                               )
@@ -850,3 +852,12 @@ def get_reporttable(Report_id):
     extra_columns = [(c[0], tables.Column()) for c in cursor.description]
     return {'table': ReportTable(data=t,extra_columns=extra_columns),
             'ReportName':r.Report}
+
+def get_parent_classes(Class_id):
+    res=[Class_id]
+    pid=Class_id
+    while pid!=Default_Class:
+        pid=Classes.objects.get(pk=pid).Parent_id
+        res.append(pid)
+    return res
+

@@ -12,6 +12,8 @@ from tinymce.widgets import TinyMCE
 from datetime import datetime
 from .utparser import UtParser
 from .formtemplate import *
+from django.utils.html import escape
+
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -252,7 +254,7 @@ class InstanceForm(forms.Form):
                         except:
                             self.initial[att.Attribute] = None
                     else:
-                         self.initial[att.Attribute]=initrow[att.Attribute]
+                         self.initial[att.Attribute]=escape(initrow[att.Attribute])
                 else:
                     if not self.Validation:
                         if att.id==Default_Attribute:

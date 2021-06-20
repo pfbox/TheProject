@@ -15,6 +15,16 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+def import_production_db():
+    import json
+    file=open(os.path.join(BASE_DIR,'databases.txt'),'r')
+    db=file.read()
+    print (db)
+    res = json.loads(db)
+    print (res)
+    return res
+
+import_production_db()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -93,42 +103,49 @@ WSGI_APPLICATION = 'TheProject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'super',
-        'PASSWORD': 'admin_postgres_pqv3',
-        'HOST': 'pfbox-2157.postgres.pythonanywhere-services.com',
-        'PORT': '12157',
-    },
-    'readonly': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'readonly_user',
-        'PASSWORD': 'readonly_postgres_pqv3',
-        'HOST': 'pfbox-2157.postgres.pythonanywhere-services.com',
-        'PORT': '12157',
-        'OPTIONS': {
-            'options': '-c default_transaction_read_only=on'
-        }
-    },
-    'sqlite3': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    },
-    'mysql': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pfbox$ut',
-        'USER': 'pfbox',
-        'PASSWORD': 'admin_mysql_pqv3',
-        'HOST': '127.0.0.1', #'pfbox.mysql.pythonanywhere-services.com',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+if os.name=='posix':
+    DATABASES=import_production_db()
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'postgres',
+            'USER': 'super',
+            'PASSWORD': 'admin_postgres_pqv3',
+            'HOST': '127.0.0.1',
+            'PORT': '9999',
         },
+    ###
+    # CREATE ROLE readonly_access
+    # CREATE USER readonly_user WITH PASSWORD 'readonly_postgres_pqv3'
+    # GRANT USAGE ON SCHEMA public TO readonly_access
+    # GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_access
+    # ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly_access
+    # GRANT readonly_access TO readonly_user
+    ###
+        'readonly': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'postgres',
+            'USER': 'readonly_user',
+            'PASSWORD': 'readonly_postgres_pqv3',
+            'HOST': '127.0.0.1',
+            'PORT': '9999',
+            'OPTIONS': {
+                'options': '-c default_transaction_read_only=on'
+            }
+        },
+
+        'mysql': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'pfbox$ut',
+            'USER': 'pfbox',
+            'PASSWORD': 'admin_mysql_pqv3',
+            'HOST': '127.0.0.1', #'pfbox.mysql.pythonanywhere-services.com',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

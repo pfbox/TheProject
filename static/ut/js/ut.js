@@ -64,7 +64,6 @@ $(document).ready(function() {
         })
     })
 
-
     $('#ModalFactory').on('click','.savechanges',function(){
         var btn=$(this)
         var form=btn.closest('form')
@@ -75,7 +74,7 @@ $(document).ready(function() {
         data.append('action',btn.attr('name'))
         data.append('next',get_next_instance_id_str(Instance_id))
         for (var value of data.values()) {
-           console.log(value);
+           //console.log(value);
         }
         $.ajax({
             type : 'POST',

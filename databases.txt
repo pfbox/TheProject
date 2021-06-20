@@ -1,0 +1,21 @@
+{
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "postgres",
+        "USER": "super",
+        "PASSWORD": "admin_postgres_pqv3",
+        "HOST": "127.0.0.1",
+        "PORT": "9999"
+    },
+    "readonly": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "postgres",
+        "USER": "readonly_user",
+        "PASSWORD": "readonly_postgres_pqv3",
+        "HOST": "127.0.0.1",
+        "PORT": "9999",
+        "OPTIONS": {
+            "options": "-c default_transaction_read_only=on"
+        }
+    }
+}

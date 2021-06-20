@@ -19,6 +19,8 @@ from .sendouts import send_mail
 from .utclasses import *
 from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.html import escape
+
 
 def index(request):
     projects=Projects.objects.filter(id__gte=0)
@@ -767,13 +769,15 @@ def ajax_get_class_data(request,Class_id):
     count_sql=create_count_sql(Class_id=Class_id
                                ,filter=filter,masterclassfilter=masterfilter,search=search
                                )
+    data=pd.read_sql(sql,con=connections['readonly']).applymap(lambda x: escape(x) if  type(x)==str else x)
+
     rocon=connections['readonly']
     with rocon.cursor() as cursor:
         cursor.execute(count_sql)
         rec=cursor.fetchone()
     recordsTotal= rec[1]
 
-    res['data'] = raw_queryset_as_dict(sql)
+    res['data'] = data.to_dict('records')#raw_queryset_as_dict(sql)
     res['recordsTotal']=recordsTotal
     res['recordsFiltered'] = recordsTotal #len(res['data']) #len(res['data'])
     #recordsFiltered

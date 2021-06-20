@@ -82,14 +82,15 @@ class ClassManager(models.Manager):
         user = get_current_user()
         if (user is not None) and user.is_authenticated:
             if user.is_superuser == False:
-                qs = qs.filter(Q(ViewGroups__in=Group.objects.filter(user=user)) | Q(id=Default_Class))
+                qs = qs.filter(Q(ViewGroups__in=Group.objects.filter(user=user))|Q(id=Default_Class))
         #else:
         #    qs = qs.filter(id=None)
         return qs
 
 class Classes(models.Model):
     Class = models.CharField(max_length=50, unique=True)
-    Master = models.ForeignKey('self', on_delete=models.PROTECT)
+    Master = models.ForeignKey('self', on_delete=models.PROTECT,default=Default_Class)
+    Parent = models.ForeignKey('self', on_delete=models.PROTECT,related_name='+',default=Default_Class)
     Template = models.TextField(null=True, blank=True)
     UseAutoCounter = models.BooleanField(default=False, blank=True)
     Prefix = models.CharField(max_length=10, null=True, blank=True)
@@ -311,9 +312,10 @@ def calculated(dt):
     else:
         return False
 
-
 def filter_value(dt):
-    if dt in DT_NUMBERS:
+    if dt in DT_DATES:
+        res = "'{val}'"
+    elif dt in DT_NUMBERS:
         res = '{val}'
     elif dt in DT_LETTERS:
         res = "'{val}'"
@@ -385,7 +387,9 @@ class Attributes(models.Model):
 
     @cached_property
     def FT_Exact(self):
-        if self.DataType.id in DT_NUMBERS:
+        if self.DataType.id in DT_DATES:
+            return 'lower({})'.format(self.ValueField) + '= lower({})'.format(filter_value(self.DataType_id))
+        elif self.DataType.id in DT_NUMBERS:
             return self.ValueField + '=' + filter_value(self.DataType_id)
         elif self.DataType.id in DT_LETTERS:
             return 'lower({})'.format(self.ValueField) + '= lower({})'.format(filter_value(self.DataType_id))

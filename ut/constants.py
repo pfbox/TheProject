@@ -42,8 +42,9 @@ DT_File = 18
 DT_Image = 19
 DT_ActionItem = 20
 
-DT_NUMBERS = [DT_Integer, DT_Float, DT_Date, DT_Instance, DT_Datetime, DT_Boolean, DT_Currency]
-DT_LETTERS = [DT_String, DT_Text, DT_External, DT_Email, DT_Lookup, DT_Calculated, DT_Time, DT_Hyperlink]
+DT_DATES = [DT_Date,DT_Datetime,DT_Time]
+DT_NUMBERS = [DT_Integer, DT_Float, DT_Instance, DT_Datetime, DT_Boolean, DT_Currency]
+DT_LETTERS = [DT_String, DT_Text, DT_External, DT_Email, DT_Lookup, DT_Calculated, DT_Hyperlink]
 
 DTG_Int = [DT_Integer, DT_Boolean]  # 1
 DTG_Float = [DT_Float, DT_Currency]  # 2
