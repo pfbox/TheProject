@@ -58,21 +58,11 @@ class Reports(models.Model):
         return self.Report
 
 
-class EmailTemplates(models.Model):
-    TemplateName = models.CharField(max_length=100, unique=True, null=False, blank=False)
-    ToTemplate = models.CharField(max_length=255, null=True, blank=True)
-    CcTemplate = models.CharField(max_length=255, null=True, blank=True)
-    SubjectTemplate = models.CharField(max_length=255, null=True, blank=True)
-    Template = HTMLField(null=True, blank=True)
-    def __str__(self):
-        return self.TemplateName
-
 class SendOuts(models.Model):
     Query = models.TextField(null=True, blank=True)
     EmailField = models.CharField(max_length=50, null=False)
     EmailGroupFields = models.TextField(null=True, blank=True)
-    EmailTemplate = models.ForeignKey(EmailTemplates, related_name='+', null=True, blank=True, on_delete=models.PROTECT)
-
+    EmailTemplate = models.ForeignKey('EmailTemplates', related_name='+', null=True, blank=True, on_delete=models.PROTECT)
     class Meta:
         verbose_name = 'SendOuts'
 
@@ -95,7 +85,7 @@ class Classes(models.Model):
     UseAutoCounter = models.BooleanField(default=False, blank=True)
     Prefix = models.CharField(max_length=10, null=True, blank=True)
     CounterStrLen = models.IntegerField(default=10)
-    DefaultEmailTemplate = models.ForeignKey(EmailTemplates, related_name='+', blank=True, null=True,
+    DefaultEmailTemplate = models.ForeignKey('EmailTemplates', related_name='+', blank=True, null=True,
                                              on_delete=models.PROTECT)
     InsertGroups = models.ManyToManyField(Group, related_name='+', blank=True)
     ViewGroups = models.ManyToManyField(Group, related_name='+', blank=True)
@@ -112,6 +102,17 @@ class Classes(models.Model):
     def __str__(self):
         return self.Class
 
+class EmailTemplates(models.Model):
+    TemplateName = models.CharField(max_length=100, unique=True, null=False, blank=False)
+    TemplateClass = models.ForeignKey(Classes,related_name='+',on_delete=models.PROTECT,blank=True,null=True)
+    EmailField = models.ForeignKey('Attributes',related_name='+',on_delete=models.PROTECT,blank=True,null=True)
+    TemplateFilteredByClass=models.ForeignKey(Classes,related_name='+',on_delete=models.PROTECT,blank=True,null=True)
+    ToTemplate = models.CharField(max_length=255, null=True, blank=True)
+    CcTemplate = models.CharField(max_length=255, null=True, blank=True)
+    SubjectTemplate = models.CharField(max_length=255, null=True, blank=True)
+    Template = HTMLField(null=True, blank=True)
+    def __str__(self):
+        return self.TemplateName
 
 class ProjectManager(models.Manager):
     def get_queryset(self):

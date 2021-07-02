@@ -15,12 +15,10 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.utils.html import strip_tags
 from .sendouts import send_mail
-
+from .ututils import get_json_safe_value
 from .utclasses import *
 from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.html import escape
-
 
 def index(request):
     projects=Projects.objects.filter(id__gte=0)
@@ -314,7 +312,10 @@ def edit_attribute(request,Attribute_id):
 
 class BaseContext():
     def get_context_data(self, **kwargs):
-        context=super(BaseContext,self).get_context_data(**kwargs)
+        if hasattr(super(BaseContext,self),'get_context_data'):
+            context=super(BaseContext,self).get_context_data(**kwargs)
+        else:
+            context={}
         context.update(get_base_context())
         return context
 
@@ -503,7 +504,7 @@ def handle_uploaded_file(f,Class_id,commitevery=0,errors='raise'):
             user=get_current_user()
             ctime=datetime.now()
             if not ('Code' in ins.columns):
-                ins['Code']=ins.apply(lambda x: get_next_counter(Class_id))
+                ins.loc[:,'Code']=ins.apply(lambda x: get_next_counter(Class_id))
             newinstances=ins.Code.apply(lambda x: Instances(Class_id=Class_id,Code=x,Updatedby=user,Updated=ctime))
             Instances.objects.bulk_create(list(newinstances),ignore_conflicts=ignore_conflicts)
             ids = pd.DataFrame(list(Instances.objects.filter(Class_id=Class_id,Code__in=list(ins.Code)).values()))
@@ -523,7 +524,10 @@ def handle_uploaded_file(f,Class_id,commitevery=0,errors='raise'):
                             attids = attids.rename(columns={'Code': attr.Attribute, 'id': attr.Attribute + '_id'})
                             ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
                         else:
-                            attids = pd.DataFrame(list(Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,char_value__in=list(ins[attr.Attribute])).values('Instance_id', 'char_value')))
+                            attids = pd.DataFrame(
+                                list(Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
+                                                           char_value__in=list(ins[attr.Attribute]))
+                                     .values('Instance_id', 'char_value')))
                             attids = attids.rename(columns={'char_value': attr.Attribute, 'Instance_id': attr.Attribute + '_id'})
                             ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
                         values=list(ins.apply(lambda x: Values(**{'Instance_id':x.id, 'Attribute_id':attr.id, 'instance_value_id': x[attr.Attribute + '_id']}),axis=1))
@@ -716,13 +720,23 @@ def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
             m_value=int(tmp)
         else:
             m_value=0
+
         if attr.Ref_Attribute_id == Default_Attribute:
             for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id,Instance__Code__icontains=term)[0:maxrecords]:
                 instances.append({'id':r.Instance_id,'text':r.Instance.Code})
         else:
-            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,char_value__icontains=term,
+            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
                     Instance_id__in=Values.objects.filter(instance_value_id=m_value,Instance__Class_id=attr.Ref_Class_id).values_list('Instance_id',flat=True))[0:maxrecords]:
-                instances.append({'id': r.Instance_id, 'text': r.char_value})
+                text=r.char_value
+                ref_attribute = attr.Ref_Attribute
+                tmp_ins_id=r.instance_value_id
+                while ref_attribute.DataType_id == DT_Instance:
+                    ref_attribute = ref_attribute.Ref_Attribute
+                    ref_obj=Values.objects.get(Attribute_id=ref_attribute.id,Instance_id=tmp_ins_id)
+                    text=ref_obj.char_value
+                    tmp_ins_id = ref_obj.instance_value_id
+
+                instances.append({'id': r.Instance_id, 'text': text})
 
                 #Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id) + " and  v2.char_value like '%{}%'".format(term))[0:maxrecords]:
                 #instances.append({'id': r.id, 'text': r.char_value})
@@ -769,7 +783,20 @@ def ajax_get_class_data(request,Class_id):
     count_sql=create_count_sql(Class_id=Class_id
                                ,filter=filter,masterclassfilter=masterfilter,search=search
                                )
-    data=pd.read_sql(sql,con=connections['readonly']).applymap(lambda x: escape(x) if  type(x)==str else x)
+
+    records=raw_queryset_as_dict(sql)
+    new_records=[]
+    for obj in records:
+        new_rec={}
+        for k,v in obj.items():
+            new_rec[k]= get_json_safe_value(v)
+        new_records.append(new_rec)
+
+    #data=pd.read_sql(sql,con=connections['readonly']).applymap(
+    #              lambda x: escape(x) if  type(x)==str  else
+    #                #json.dumps(x.to_pydatetime().isoformat()) if type(x)==pd.Timestamp else
+    #                            None  if pd.isnull(x) else str(x)
+    #              )
 
     rocon=connections['readonly']
     with rocon.cursor() as cursor:
@@ -777,7 +804,7 @@ def ajax_get_class_data(request,Class_id):
         rec=cursor.fetchone()
     recordsTotal= rec[1]
 
-    res['data'] = data.to_dict('records')#raw_queryset_as_dict(sql)
+    res['data'] = new_records#data.to_dict('records')#raw_queryset_as_dict(sql)
     res['recordsTotal']=recordsTotal
     res['recordsFiltered'] = recordsTotal #len(res['data']) #len(res['data'])
     #recordsFiltered
@@ -855,3 +882,15 @@ class download_file(LoginRequiredMixin,View):
 def ajax_change_email_template(request,EmailTemplate_id):
     pass
 
+class ProjectIndex(BaseContext,View):
+    def get(self,request,Project,**kwargs):
+        project=Projects.objects.get(Project=Project)
+        #context['Project']=project
+
+        return render(request, 'ut/project_index.html',context=self.get_context_data(Project=Project,**kwargs))
+
+    def get_context_data(self,Project,**kwargs):
+        context=super().get_context_data(**kwargs)
+        project = Projects.objects.get(Project=Project)
+        context['Project']=project
+        return context

@@ -227,10 +227,11 @@ class InstanceForm(forms.Form):
                     if not initrow.get(att.Attribute):
                         try:
                             ev=UtParser()
-                            pres=ev.evaluate()
+                            pres=ev.evaluate(att.DefaultValue)
                             initrow[att.Attribute]=pres
                             self.Defaults[att.Attribute]=pres
                         except:
+                            #raise
                             print ('Defalut value for attribute {} did not worked!'.format(att.Attribute))
 
             if create_form_field_check(att):

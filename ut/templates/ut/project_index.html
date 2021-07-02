@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load render_table from django_tables2 %}
+<div class="jumbotron">
+  <h1 class="display-6">{{ Project.Project }}</h1>
+  <h3>{{ Project.Description }}</h3>
+  <!--
+  <p class="lead">This tool is built for tracking anything.</p>
+  <hr class="my-4">
+  <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
+  <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
+  -->
+</div>
+
+<div class="album py-5 bg-light">
+    <div class="container">
+        <div class="row">
+        {% if projects%}
+            {% for p in projects %}
+                    <div class="col">
+                      <div class="card mb-2 box-shadow">
+                        <!--img class="card-img-top" src="https://upload.wikimedia.org/wikipedia/en/e/ec/Soccer_ball.svg" alt="Card image cap"-->
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="{% url 'ut:instances' 0 0 p.id %}">{{p.Project}}</a></h5>
+                          <p class="card-text">{{p.Description}}</p>
+                            <div class="d-flex justify-content">
+                            <div>
+                            <ul class="list-group" >
+                                <h6>Reports</h6>
+                                    {% for r in p.Reports_m2m.all %}
+                                        <li class="list-group-item">
+                                                  <a class="dropdown-item" href="{% url 'ut:run_report' r.id %}">{{r.Report}}</a>
+                                        </li>
+                                    {% endfor %}
+                            </ul>
+                            </div>
+                            <span>&nbsp</span>
+                            <div>
+                            <ul class="list-group" >
+                                <h6>Classes</h6>
+                                      {% for c in p.Classes_m2m.all %}
+                                <li class="list-group-item">
+                                          <a class="dropdown-item" href="{% url 'ut:instances' c.id 0 p.id %}">{{c.Class}}</a>
+                                </li>
+                                      {% endfor %}
+                            </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+            {% endfor %}
+        {% else %}
+            <br> No Projects <br>
+        {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="album py-5 bg-light">
+    <div class="container">
+    <div class="row">
+    {% if classes%}
+    {% for c in classes%}
+            <div class="col-4">
+              <div class="card mb-4 box-shadow">
+                <div class="card-body">
+                  <h5 class="card-title">{{c.Class}}</h5>
+                  <p class="card-text">{{c.Description}}</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'ut:edit_class' c.id %}'">Edit</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'ut:attributes_view' c.id %}'">Attributes</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='{% url 'ut:instances' c.id %}'">Intances</button>
+                      <div class="btn-group" role="group">
+                          <button id="btnTemplates" type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                             Templates
+                          </button>
+                          <div class="dropdown-menu" area-labelled="btnTemplates">
+                              <a class="dropdown-item" href="{% url 'ut:change_formtemplate' c.id %}">Form</a>
+                              <a class="dropdown-item" href="{% url 'ut:change_tabletemplate' 'TableLayout' c.id %}">Table</a>
+                              <a class="dropdown-item" href="{% url 'ut:change_tabletemplate' 'ShortLayout' c.id %}">Short</a>
+                          </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+    {% endfor %}
+    {% else %}
+        <br> No Classes <br>
+    {% endif %}
+     </div>
+     </div>
+</div>
+
+{% endblock%}

@@ -11,6 +11,8 @@ import re
 from django.urls import reverse,reverse_lazy
 from .widgets import utHeavyWidget, ImagePreviewWidget, PictureWidget
 from datetime import datetime
+from django.contrib.auth.models import User
+from asgiref.sync import sync_to_async
 
 from django_tables2.utils import A
 
@@ -417,8 +419,8 @@ def create_search_all(columns,search=''):
         tmp.append("lower(cast({f} AS VARCHAR)) like lower('%{s}%')".format(f=c,s=search))
     return ' and (' +' or '.join(tmp) + ')'
 
-def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={},orderby={},search='',limit=None,offset=None):
-    sql_col= create_qs_sql(Class_id)
+def create_rawquery_sql(Class_id=0,filter={},masterclassfilter={},orderby={},search='',limit=None,offset=None,user=None):
+    sql_col= create_qs_sql(Class_id=Class_id,user=user)
     columns= sql_col['selectfields'] #real db field (not aliases)
     # order by create by aliases
     # searchig all fields only if search > ''
@@ -468,8 +470,12 @@ def create_val_sql(Class_id,Instance_id):
         memory_cache.set('val-sql-{}'.format(Class_id),sql)
     return sql.format(Instance_id)
 
-def create_qs_sql(Class_id=0,Instance_id=0):
-    user_id=get_current_user().id
+def create_qs_sql(Class_id=0,Instance_id=0,user=None):
+    print (user)
+    if user:
+        user_id = 1#await sync_to_async(User.objects.get, thread_sensitive=True)(username=user)
+    else:
+        user_id=get_current_user().id
     atts=get_tableviewlist(Class_id=Class_id)
     #default for instances id, code, and instance table
     ss = {'id':'ins.id','Code':'ins."Code"'}
