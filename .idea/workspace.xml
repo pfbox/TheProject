@@ -8,33 +8,9 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="2021-06-19 v2">
-      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled-checkpoint.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled1-checkpoint.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled2-checkpoint.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/.idea/TheProject.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TheProject/records" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Untitled.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Untitled1.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Untitled2.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/hooks.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/migrations/0010_auto_20210701_2004.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/tasks.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/templates/ut/project_index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ut/ututils.py" afterDir="false" />
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="django-q">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/sendouts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/sendouts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/databases.txt" beforeDir="false" afterPath="$PROJECT_DIR$/databases.txt" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <list id="3efd15e1-ca7b-420d-ac46-efbe65f01c9f" name="Revert &quot;2021-29-03 v2&quot;-2" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -349,7 +325,7 @@
       <workItem from="1624408611323" duration="842000" />
       <workItem from="1624411883777" duration="9000" />
       <workItem from="1624655735587" duration="652000" />
-      <workItem from="1625105031081" duration="47332000" />
+      <workItem from="1625105031081" duration="47683000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -484,7 +460,14 @@
       <option name="project" value="LOCAL" />
       <updated>1624154003437</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="django-q">
+      <created>1625231403365</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1625231403365</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -538,7 +521,8 @@
     <MESSAGE value="2021-05-20" />
     <MESSAGE value="2021-06-19" />
     <MESSAGE value="2021-06-19 v2" />
-    <option name="LAST_COMMIT_MESSAGE" value="2021-06-19 v2" />
+    <MESSAGE value="django-q" />
+    <option name="LAST_COMMIT_MESSAGE" value="django-q" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
