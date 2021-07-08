@@ -9,7 +9,7 @@ from django.template.context_processors import csrf
 import numpy as np
 from django_tables2 import SingleTableView
 #from .filters import ClassesFilter
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Prefetch
 import json
 from django.template.loader import render_to_string
 from django.http import JsonResponse
@@ -19,6 +19,7 @@ from .ututils import get_json_safe_value
 from .utclasses import *
 from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django_q.tasks import async_task
 
 def index(request):
     projects=Projects.objects.filter(id__gte=0)
@@ -83,8 +84,11 @@ class delete_instance(LoginRequiredMixin,DeleteView):
 
     def post(self,request,Class_id,Instance_id,*args,**kwargs):
         try:
+            old_instace=get_instance(Class_id=Class_id,Instance_id=Instance_id)
             Instances.objects.get(pk=Instance_id).delete()
             data={'success':True}
+
+
         except models.ProtectedError as e:
             data={'success':False,'error':str(e)}
         return JsonResponse(data)
@@ -498,7 +502,6 @@ def handle_uploaded_file(f,Class_id,commitevery=0,errors='raise'):
             ranges.append([rnum*commitevery,rnum*commitevery+rres])
 
     for irange in ranges:
-        print ('saving class',Class_id,'from',irange[0],'to',irange[1])
         with transaction.atomic():
             ins=totalins[irange[0]:irange[1]]
             user=get_current_user()
@@ -583,7 +586,7 @@ class FormTemplateView(View):
             rec.save()
             memory_cache.delete('lo-{}'.format(Class_id))
 
-        return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
+        return HttpResponseRedirect(reverse('ut:change_  formtemplate',kwargs={'Class_id':Class_id}))
 
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
@@ -725,18 +728,23 @@ def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
             for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id,Instance__Code__icontains=term)[0:maxrecords]:
                 instances.append({'id':r.Instance_id,'text':r.Instance.Code})
         else:
-            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
-                    Instance_id__in=Values.objects.filter(instance_value_id=m_value,Instance__Class_id=attr.Ref_Class_id).values_list('Instance_id',flat=True))[0:maxrecords]:
-                text=r.char_value
-                ref_attribute = attr.Ref_Attribute
-                tmp_ins_id=r.instance_value_id
-                while ref_attribute.DataType_id == DT_Instance:
-                    ref_attribute = ref_attribute.Ref_Attribute
-                    ref_obj=Values.objects.get(Attribute_id=ref_attribute.id,Instance_id=tmp_ins_id)
-                    text=ref_obj.char_value
-                    tmp_ins_id = ref_obj.instance_value_id
+            qs=Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
+                    Instance_id__in=Values.objects.filter(instance_value_id=m_value,Instance__Class_id=attr.Ref_Class_id).values_list('Instance_id',flat=True))
+            con=Q(**{'char_value__icontains':term})
+            field_name='char_value'
+            ref_attribute=attr.Ref_Attribute
+            use_ref=False
+            while ref_attribute.DataType_id == DT_Instance:
+                use_ref=True
+                con=Q(**{'instance_value__values_ins__char_value__icontains':term,'instance_value__values_ins__Attribute_id':ref_attribute.Ref_Attribute_id})
+                field_name='instance_value__values_ins__char_value'
+                qs=qs.select_related('instance_value').prefetch_related(Prefetch('instance_value__values_ins',to_attr='lookup_field'))
+                ref_attribute=ref_attribute.Ref_Attribute
 
-                instances.append({'id': r.Instance_id, 'text': text})
+            qs=qs.filter(con)[0:maxrecords]
+            for r in qs:
+                instances.append({'id': r.Instance_id,
+                                  'text': r.instance_value.values_ins.first().char_value if use_ref else r.char_value})
 
                 #Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id) + " and  v2.char_value like '%{}%'".format(term))[0:maxrecords]:
                 #instances.append({'id': r.id, 'text': r.char_value})
@@ -894,3 +902,55 @@ class ProjectIndex(BaseContext,View):
         project = Projects.objects.get(Project=Project)
         context['Project']=project
         return context
+
+def run_task(request):
+    from .tasks import send_report_email
+    send_report_email(Report_id=5,email_field='Email',email_template_id=3,filter={'Email':'pavel.fedoryaka@gmail.com'})
+    return HttpResponse('task ran')
+
+class PlayerAvailability(BaseContext,View):
+    def get(self,request,TeamPlayer_id):
+        context={}
+        df = get_report_df(9,filter={'TeamPlayer_id':TeamPlayer_id})['df']
+        records = df.to_dict('records')
+        context['records']=records
+        context['TeamPlayer_id']=TeamPlayer_id
+        context['Player']=records[0]['TeamAndPlayer']
+        return render(request,'ut/oafc_availability.html',context)
+
+    def post(self,request,Game_id,TeamPlayer_id):
+        Class_id=35
+        qs_team = Values.objects.filter(Attribute_id=162,instance_value_id=Game_id)
+        qs_player=Values.objects.filter(Attribute_id=163,instance_value_id=TeamPlayer_id).values_list('Instance_id',flat=True)
+        instance_exists=qs_team.filter(Instance_id__in=qs_player)
+
+
+        with transaction.atomic():
+            if len(instance_exists)==0:
+                 Instance_id=0
+                 code=get_next_counter(Class_id)
+            else:
+                Instance=instance_exists[0].Instance
+                Instance_id=Instance.id
+                code=Instance.Code
+            availability=request.POST.get('availability')
+            instance={'Game': Game_id, 'Team': 83, 'Player': TeamPlayer_id, 'Availability': availability,'Code':code}
+            async_task(save_instance_byname,safe=True,Class_id=Class_id, Instance_id=Instance_id, instance=instance,
+                        passed_by_name=False)
+
+        return JsonResponse({'success':True})
+
+class GetClassQuery(View):
+    def get(self,request,Class_id=0,ClassName=''):
+        if Class_id == 0:
+            Class_id=Classes.objects.get(Class=ClassName ).id
+        sql=create_qs_sql(Class_id)['sql']
+        return HttpResponse(sql,content_type='text/plain')
+
+class GetReportQuery(View):
+    def get(self,request,Report_id=0,Report=''):
+        if Report_id == 0:
+            Report_id=Reports.objects.get(Report=Report).id
+        sql=Reports.objects.get(id=Report_id).Query
+        return HttpResponse(sql,content_type='text/plain')
+

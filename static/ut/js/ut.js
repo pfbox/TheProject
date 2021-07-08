@@ -537,7 +537,7 @@ $(document).ready(function() {
                         if (dt=='hlink'){
                             my_item['render'] = function ( data, type, row, meta ) {
                                 if (data) {
-                                    return '<a href="//' + data + '">'+'click...'+'</a>';
+                                    return '<a href="' + data + '">'+'click...'+'</a>';
                                 }  else {
                                     return data
                                 }

@@ -3,6 +3,10 @@ from django.core.cache import caches
 #using memory for now
 memory_cache = caches['memory']
 
+#events
+evINSERT=0
+evUPDATE=1
+
 # This is using for queries to wrap tables and fields
 Default_Identifier = '"'
 Current_Identifier = '"'  # {'MySQL','`','PostgreSQL':'"','SQLite':'"','MS SQL':'"'}

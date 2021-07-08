@@ -3,6 +3,7 @@ from .utclasses import *
 from django.core.mail import send_mail, send_mass_mail,EmailMessage
 from django.conf import settings
 from asgiref.sync import sync_to_async
+from django.template import Template, Context
 
 async def get_email_template(id):
     res = await sync_to_async(list)(EmailTemplates.objects.get(pk=id))
@@ -25,7 +26,7 @@ def send_class_email(Class_id,email_field,type='mass',email_template_id=None,fil
             messages.append(m)
         send_mass_mail(messages)
 
-from django.template import Template, Context
+
 
 def send_report_email(Report_id,email_field,email_subject='',email_body='',static={}):
     rep=get_report_df(Report_id)

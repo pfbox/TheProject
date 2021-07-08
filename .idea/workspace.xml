@@ -8,9 +8,28 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="django-q">
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="django-q v2">
+      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled3-checkpoint.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled4-checkpoint.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled5-checkpoint.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Untitled3.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Untitled4.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Untitled5.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/python" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0011_emailtemplates_emailfield.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/migrations/0012_auto_20210704_1641.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/oafc_availability.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/databases.txt" beforeDir="false" afterPath="$PROJECT_DIR$/databases.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/ut/js/ut.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/ut/js/ut.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/sendouts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/sendouts.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/utparser.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utparser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <list id="3efd15e1-ca7b-420d-ac46-efbe65f01c9f" name="Revert &quot;2021-29-03 v2&quot;-2" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -82,7 +101,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ut" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
@@ -98,8 +117,8 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\ut\templates\ut" />
+      <recent name="C:\TheProject\ut" />
       <recent name="C:\TheProject\ut\templatetags" />
       <recent name="C:\TheProject\templates" />
       <recent name="C:\TheProject\utlogin" />
@@ -325,7 +344,14 @@
       <workItem from="1624408611323" duration="842000" />
       <workItem from="1624411883777" duration="9000" />
       <workItem from="1624655735587" duration="652000" />
-      <workItem from="1625105031081" duration="47683000" />
+      <workItem from="1625105031081" duration="76804000" />
+      <workItem from="1625429640041" duration="33856000" />
+      <workItem from="1625494749913" duration="17865000" />
+      <workItem from="1625572452113" duration="10920000" />
+      <workItem from="1625594029261" duration="14996000" />
+      <workItem from="1625697249303" duration="12574000" />
+      <workItem from="1625743390287" duration="5097000" />
+      <workItem from="1625748974583" duration="19629000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -467,7 +493,14 @@
       <option name="project" value="LOCAL" />
       <updated>1625231403365</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="django-q v2">
+      <created>1625231778552</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1625231778552</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -522,44 +555,50 @@
     <MESSAGE value="2021-06-19" />
     <MESSAGE value="2021-06-19 v2" />
     <MESSAGE value="django-q" />
-    <option name="LAST_COMMIT_MESSAGE" value="django-q" />
+    <MESSAGE value="django-q v2" />
+    <option name="LAST_COMMIT_MESSAGE" value="django-q v2" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/../Lib/site-packages/django/views/generic/list.py</url>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>144</line>
+          <line>145</line>
           <option name="timeStamp" value="108" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>585</line>
-          <option name="timeStamp" value="173" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/forms.py</url>
-          <line>227</line>
-          <option name="timeStamp" value="222" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
-          <line>755</line>
-          <option name="timeStamp" value="227" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ut/tasks.py</url>
-          <line>7</line>
-          <option name="timeStamp" value="233" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/sendouts.py</url>
-          <line>11</line>
+          <line>12</line>
           <option name="timeStamp" value="234" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/views.py</url>
+          <line>848</line>
+          <option name="timeStamp" value="252" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
+          <line>664</line>
+          <option name="timeStamp" value="322" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
+          <line>661</line>
+          <option name="timeStamp" value="323" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
+          <line>111</line>
+          <option name="timeStamp" value="350" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/views.py</url>
+          <line>936</line>
+          <option name="timeStamp" value="382" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
@@ -581,21 +620,23 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="list(ins[attr.Attribute])" language="Python" />
-        <watch expression="records" language="Python" />
-        <watch expression="__py_debug_temp_var_1064192193.'Country' (2281442866096)" />
+        <watch expression="ref_attribute.Ref_Attribute.Ref_Attribute_id" language="Python" />
+        <watch expression="r" language="Python" />
+        <watch expression="qs.query" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Province' (2281442867440)" />
         <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152).0.DEFAULT_CHUNK_SIZE" />
         <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152)" />
         <watch expression="data.Notes" />
         <watch expression="__py_debug_temp_var_451925383" />
         <watch expression="self.kwargs" />
+        <watch expression="__py_debug_temp_var_2032034046['Location']" language="Python" />
+        <watch expression="__py_debug_temp_var_2032034046['Location']" />
       </configuration>
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/__init___py$Unnamed.coverage" NAME="Unnamed Coverage Results" MODIFIED="1617766899782" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/__init___py$test.coverage" NAME="test Coverage Results" MODIFIED="1617770155045" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/__init___py$shell_plus.coverage" NAME="shell_plus Coverage Results" MODIFIED="1625227576007" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/__init___py$shell_plus.coverage" NAME="shell_plus Coverage Results" MODIFIED="1625461110296" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

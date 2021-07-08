@@ -7,6 +7,13 @@ app_name='ut'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('run_task/', views.run_task, name='run_task'),
+    path('class_query/<int:Class_id>', views.GetClassQuery.as_view(), name='class_query'),
+    path('class_query/<str:ClassName>', views.GetClassQuery.as_view(), name='class_query'),
+    path('report_query/<int:Report_id>', views.GetReportQuery.as_view(), name='report_query'),
+    path('report_query/<str:Report>', views.GetReportQuery.as_view(), name='report_query'),
+    path('oafc/availability/<int:TeamPlayer_id>',views.PlayerAvailability.as_view(), name='player_availability'),
+    path('oafc/availability/<int:TeamPlayer_id>/<int:Game_id>',views.PlayerAvailability.as_view(), name='player_availability'),
     path('Classes/',                        views.classes_view,                 name='classes_view'),
     path('Classes/<int:Project_id>/',       views.classes_view,                 name='classes_view'),
     path('Reports/',                        views.reports_view,                 name='reports_view'),
