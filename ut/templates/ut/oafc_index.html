@@ -3,9 +3,14 @@
 {% block content %}
 {% load render_table from django_tables2 %}
 <style>
-.table-games td, .table-games th {
+.table td, th {
    text-align: center;
 }
+.table {
+    table-layout: fixed;
+    max-width: 900px;
+}
+
 </style>
 
 <div class="jumbotron">
@@ -24,26 +29,26 @@
 
     <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
       <div class="card-body">
-      <table class="table col-sm-6 col table-striped table-games">
+      <table class="table table-striped">
       <thead>
                <tr>
-                  <th scope="col" style="text-align: left;">Game</th>
-                  <th scope="col">
+                  <th scope="col" style="text-align: left;" class="col-3 text-truncate">Game</th>
+                  <th scope="col" class="col-1">
                                 <span style="color: forestgreen;">
                                   <i class="fas fa-check-circle fa-lg"></i>
                                 </span>
                   </th>
-                  <th scope="col">
+                  <th scope="col" class="col-1">
                                 <span style="color: red;">
                                     <i class="fas fa-stop-circle fa-lg"></i>
                                 </span>
                   </th>
-                  <th scope="col">
+                  <th scope="col" class="col-1">
                                 <span style="color: lightslategrey;">
                                     <i class="fas fa-question-circle fa-lg"></i>
                                 </span>
                   </th>
-                  <th scope="col">
+                  <th scope="col" class="col-1">
                               <span style="color: #00205B;">
                                     <i class="fab fa-canadian-maple-leaf fa-lg"></i>
                                 </span>
@@ -53,7 +58,9 @@
       <tbody>
               {% for g in ugames %}
                   <tr>
-                      <td scope="row" style="text-align: left;"> {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} @<a href="{{ g.LocationURL }}">{{ g.Location }}</a></td>
+                      <td scope="row" style="text-align: left;" class="text-truncate">
+                          {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} @<a href="{{ g.LocationURL }}">{{ g.Location }}</a>
+                      </td>
                       <td scope="row"> {{ g.In }}</td>
                       <td scope="row"> {{ g.Out }}</td>
                       <td scope="row"> {{ g.Maybe }}</td>
@@ -79,15 +86,23 @@
           <thead>
                    <tr>
                       {% for c in availability_columns %}
-                          <th scope="col">{{ c }}</th>
+                          <th scope="col"
+                            {% if forloop.counter == 1 %}
+                                    style="text-align: left;"
+                            {% endif %}
+                          >{{ c }}</th>
                       {% endfor %}
                   </tr>
           </thead>
           <tbody>
                     {% for a in availability %}
-                <tr>
+                <tr scope="row">
                         {% for val in a %}
-                            <th>
+                            <td
+                            {% if forloop.counter == 1 %}
+                                    style="text-align: left;" class="text-truncate"
+                            {% endif %}
+                            >
                             {% if val == 'In' %}
                                 <span style="color: forestgreen;">
                                   <i class="fas fa-check-circle fa-lg"></i>
@@ -107,7 +122,7 @@
                             {% else %}
                                 {{ val }}
                             {% endif %}
-                            </th>
+                            </td>
                         {% endfor %}
                 </tr>
                     {% endfor %}
