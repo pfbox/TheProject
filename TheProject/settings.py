@@ -199,7 +199,7 @@ MEDIA_URL = '/media/'
 
 EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST_USER='myultimatetracker@gmail.com'
-EMAIL_HOST_PASSWORD='gzbhibpvarnomyjw'
+EMAIL_HOST_PASSWORD='iunjtotiawcmxzpt'
 EMAIL_HOST='smtp.gmail.com'
 EMAIL_PORT = '587'
 EMAIL_USE_TLS  = True
@@ -277,7 +277,7 @@ TINYMCE_DEFAULT_CONFIG = {
 
 Q_CLUSTER = {
     'name': 'DjangORM',
-    'workers': 4,
+    'workers': 3,
     'timeout': 90,
     'retry': 120,
     'queue_limit': 50,

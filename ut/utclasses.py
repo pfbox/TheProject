@@ -254,9 +254,9 @@ def create_form_field(attr,usedinfilter=False,filter={},readonly=False,values={}
         if re.search('^select',valueslist,re.IGNORECASE):
             try:
                 rocon=connections['readonly']
-                cursor=rocon.cursor()
-                cursor.execute(valueslist)
-                vl=cursor.fetchall()
+                with rocon.cursor() as cursor:
+                    cursor.execute(valueslist)
+                    vl=cursor.fetchall()
             except:
                 print ('Could not load values from sql-->'+valueslist+'<--')
         else:
@@ -916,11 +916,12 @@ def get_reporttable(Report_id):
     r = Reports.objects.get(pk=Report_id)
     sql = r.Query
     rocon=connections['readonly']
-    cursor = rocon.cursor()
-    cursor.execute(sql)
-    t = dictfetchall(cursor)
-    extra_columns = [(c[0], tables.Column()) for c in cursor.description]
-    return {'table': ReportTable(data=t,extra_columns=extra_columns),
+    with rocon.cursor() as cursor:
+        cursor = rocon.cursor()
+        cursor.execute(sql)
+        t = dictfetchall(cursor)
+        extra_columns = [(c[0], tables.Column()) for c in cursor.description]
+        return {'table': ReportTable(data=t,extra_columns=extra_columns),
             'ReportName':r.Report}
 
 def get_parent_classes(Class_id):

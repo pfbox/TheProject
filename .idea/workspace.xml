@@ -8,9 +8,12 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="oafc v8">
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="oafc v9">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TheProject/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TheProject/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/oafc_index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/oafc_index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/utclasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/utclasses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <list id="3efd15e1-ca7b-420d-ac46-efbe65f01c9f" name="Revert &quot;2021-29-03 v2&quot;-2" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -333,7 +336,7 @@
       <workItem from="1625697249303" duration="12574000" />
       <workItem from="1625743390287" duration="5097000" />
       <workItem from="1625748974583" duration="26405000" />
-      <workItem from="1625789712411" duration="16541000" />
+      <workItem from="1625789712411" duration="34993000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -538,7 +541,14 @@
       <option name="project" value="LOCAL" />
       <updated>1625806249282</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="oafc v9">
+      <created>1625806467698</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1625806467698</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -574,7 +584,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-    <MESSAGE value="2021-02-27" />
     <MESSAGE value="2021-03-22" />
     <MESSAGE value="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
     <MESSAGE value="2021-29-03 v3" />
@@ -599,7 +608,8 @@
     <MESSAGE value="oafc v6" />
     <MESSAGE value="oafc v7" />
     <MESSAGE value="oafc v8" />
-    <option name="LAST_COMMIT_MESSAGE" value="oafc v8" />
+    <MESSAGE value="oafc v9" />
+    <option name="LAST_COMMIT_MESSAGE" value="oafc v9" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -620,7 +630,7 @@
         </line-breakpoint>
         <line-breakpoint suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/views.py</url>
-          <line>848</line>
+          <line>844</line>
           <option name="timeStamp" value="252" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -637,6 +647,16 @@
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
           <line>111</line>
           <option name="timeStamp" value="350" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/tasks.py</url>
+          <line>13</line>
+          <option name="timeStamp" value="366" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/views.py</url>
+          <line>903</line>
+          <option name="timeStamp" value="368" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>
@@ -658,11 +678,11 @@
         <watch expression="a" language="Python" />
       </configuration>
       <configuration name="Python.DjangoServer">
-        <watch expression="pivot.to_dict('records')" language="Python" />
+        <watch expression="body_html" language="Python" />
         <watch expression="r" language="Python" />
         <watch expression="qs.query" language="Python" />
         <watch expression="__py_debug_temp_var_1064192193.'Province' (2281442867440)" />
-        <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152).0.DEFAULT_CHUNK_SIZE" />
+        <watch expression="body_html" language="Python" />
         <watch expression="__py_debug_temp_var_936407311.'Attachment' (2330151511152)" />
         <watch expression="data.Notes" />
         <watch expression="__py_debug_temp_var_451925383" />

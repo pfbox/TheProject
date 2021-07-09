@@ -261,12 +261,11 @@ class ReportRun(View):
         r=Reports.objects.get(pk=Report_id)
         sql=r.QueryAdj
         rocon=connections['readonly']
-        cursor=rocon.cursor()
-        cursor.execute(sql)
-        t=dictfetchall(cursor)
-        extra_columns=[(c[0], tables.Column()) for c in cursor.description]
+        with rocon.cursor() as cursor:
+            cursor.execute(sql)
+            t=dictfetchall(cursor)
+            extra_columns=[(c[0], tables.Column()) for c in cursor.description]
         context=get_base_context()
-        #context['table']=ReportTable(data=t,extra_columns=extra_columns)
         context['Report_id']=Report_id
         context['ReportName']=r.Report
         return render(request, self.template, context)
@@ -685,13 +684,12 @@ def ajax_get_report_data (request, Report_id,sample=0, filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = r.QueryAdj
     rocon=connections['readonly']
-    cursor = rocon.cursor()
-    cursor.execute(sql)
-#    desc = cursor.description
-    res={}
-    res['data']=dictfetchall(cursor)
-    res['recordsTotal']=len(res['data'])
-    res['recordsFiltered'] = len(res['data'])
+    res = {}
+    with rocon.cursor() as cursor:
+        cursor.execute(sql)
+        res['data']=dictfetchall(cursor)
+        res['recordsTotal']=len(res['data'])
+        res['recordsFiltered'] = len(res['data'])
     #res['columns']=[col[0] for col in cursor.description]
     return JsonResponse(res)
 
@@ -699,13 +697,11 @@ def ajax_get_report_columns (request, Report_id,filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = 'select * from (' + r.QueryAdj + ') original limit 0'
     rocon=connections['readonly']
-    cursor = rocon.cursor()
-    cursor.execute(sql)
-#    desc = cursor.description
-    res={}
-    #res['data']=dictfetchall(cursor)
-    res['columns']=[col[0] for col in cursor.description]
-    return JsonResponse(res)
+    with rocon.cursor() as cursor:
+        cursor.execute(sql)
+        res={}
+        res['columns']=[col[0] for col in cursor.description]
+        return JsonResponse(res)
 
 
 def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
