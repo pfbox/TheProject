@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 {% csrf_token %}
+<style>
+.radioButton {
+    width : 45px
+}
+</style>
 <div id="player_availability">
 <p><b> Availability for {{ Player }} </b></p>
 <br>
@@ -14,27 +19,27 @@
   <tr data-game-id={{ r.id }} data-ajax-url="{% url 'ut:player_availability' TeamPlayer_id r.id %}">
       <td> {{  r.Date }} @{{ r.Time }} vs {{ r.Opposition }} @<a href="{{ r.LocationURL }}">{{ r.Location }} </a> </td>
     <td>
-    <div class="btn-group btn-group-toggle " data-toggle="buttons">
-      <label class="btn btn-outline-success" style="width:75px">
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-outline-success radioButton">
         <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="In"
                {% if r.Availability == 'In' %}
                    checked
                {% endif %}
-        > In
+        > <i class="fas fa-check-circle fa-lg"></i>
       </label>
-      <label class="btn btn-outline-danger" style="width:75px">
+      <label class="btn btn-outline-danger radioButton">
         <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="Out"
                {% if r.Availability == 'Out' %}
                    checked
                {% endif %}
-        > Out
+        > <i class="fas fa-stop-circle fa-lg"></i>
       </label>
-      <label class="btn btn-outline-secondary" style="width:75px">
+      <label class="btn btn-outline-secondary radioButton">
         <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="Maybe"
                {% if r.Availability == 'Maybe' %}
                    checked
                {% endif %}
-        > Maybe
+        > <i class="fas fa-question-circle fa-lg"></i>
       </label>
     </div>
     </td>

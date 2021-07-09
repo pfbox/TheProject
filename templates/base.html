@@ -135,6 +135,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        {% if user.is_authenticated %}
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
               <a class="nav-link" href="{% url 'ut:index' %}">Home <span class="sr-only">(current)</span></a>
@@ -227,7 +228,7 @@
           <ul class="navbar-nav mr-auto">
 
           </ul>
-
+        {% endif %}
           <div class="collapse navbar-collapse flex-grow-1 text-right" id="myNavbar">
             <ul class="navbar-nav ml-auto flex-nowrap">
               <li class="nav-item">

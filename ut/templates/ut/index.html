@@ -12,6 +12,8 @@
   -->
 </div>
 
+{% if user.is_authenticated %}
+
 <div class="album py-5 bg-light">
     <div class="container">
         <div class="row">
@@ -95,5 +97,8 @@
      </div>
      </div>
 </div>
+{% else %}
+    <h5>Please login...</h5>
+{% endif %}
 
 {% endblock%}
