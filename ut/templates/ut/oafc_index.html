@@ -3,7 +3,9 @@
 {% block content %}
 {% load render_table from django_tables2 %}
 <style>
-
+.table-games td, .table-games th {
+   text-align: center;
+}
 </style>
 
 <div class="jumbotron">
@@ -22,20 +24,36 @@
 
     <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
       <div class="card-body">
-      <table class="table col-sm-6 col table-striped">
+      <table class="table col-sm-6 col table-striped table-games">
       <thead>
                <tr>
-                  <th scope="col">Game</th>
-                  <th scope="col" style="width:30px">In</th>
-                  <th scope="col" style="width:30px">Out</th>
-                  <th scope="col" style="width:30px">Maybe</th>
-                  <th scope="col" style="width:30px">Unknown</th>
+                  <th scope="col" style="text-align: left;">Game</th>
+                  <th scope="col">
+                                <span style="color: forestgreen;">
+                                  <i class="fas fa-check-circle fa-lg"></i>
+                                </span>
+                  </th>
+                  <th scope="col">
+                                <span style="color: red;">
+                                    <i class="fas fa-stop-circle fa-lg"></i>
+                                </span>
+                  </th>
+                  <th scope="col">
+                                <span style="color: lightslategrey;">
+                                    <i class="fas fa-question-circle fa-lg"></i>
+                                </span>
+                  </th>
+                  <th scope="col">
+                              <span style="color: #00205B;">
+                                    <i class="fab fa-canadian-maple-leaf fa-lg"></i>
+                                </span>
+                  </th>
               </tr>
       </thead>
       <tbody>
               {% for g in ugames %}
                   <tr>
-                      <td scope="row"> {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} @<a href="{{ g.LocationURL }}">{{ g.Location }}</a></td>
+                      <td scope="row" style="text-align: left;"> {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} @<a href="{{ g.LocationURL }}">{{ g.Location }}</a></td>
                       <td scope="row"> {{ g.In }}</td>
                       <td scope="row"> {{ g.Out }}</td>
                       <td scope="row"> {{ g.Maybe }}</td>
