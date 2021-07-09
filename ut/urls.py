@@ -7,6 +7,7 @@ app_name='ut'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('oafc/', views.OAFCIndex.as_view(), name='oafc_index'),
     path('run_task/', views.run_task, name='run_task'),
     path('class_query/<int:Class_id>', views.GetClassQuery.as_view(), name='class_query'),
     path('class_query/<str:ClassName>', views.GetClassQuery.as_view(), name='class_query'),

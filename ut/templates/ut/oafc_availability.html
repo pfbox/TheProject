@@ -8,18 +8,11 @@
 <table class="table">
   <tr>
     <th>Game</th>
-    <th>Time</th>
-    <th>Opposition</th>
-    <th>Location</th>
     <th>Availability</th>
   </tr>
   {% for r in records %}
   <tr data-game-id={{ r.id }} data-ajax-url="{% url 'ut:player_availability' TeamPlayer_id r.id %}">
-    <td> {{  r.Date }} </td>
-    <td> {{ r.Time }} </td>
-    <td> {{ r.Opposition }} </td>
-    <td> @{{ r.Location }}</td>
-
+      <td> {{  r.Date }} @{{ r.Time }} vs {{ r.Opposition }} @<a href="{{ r.LocationURL }}">{{ r.Location }} </a> </td>
     <td>
     <div class="btn-group btn-group-toggle " data-toggle="buttons">
       <label class="btn btn-outline-success" style="width:75px">

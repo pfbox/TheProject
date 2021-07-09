@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load render_table from django_tables2 %}
+<style>
+
+</style>
+
+<div class="jumbotron">
+  <h2 class="display-8"> Oakville Athletics F.C. Dashboard</h2>
+</div>
+
+<div id="accordion">
+  <div class="card">
+    <div class="card-header" id="headingOne">
+      <h5 class="mb-0">
+        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+          Upcoming Games
+        </button>
+      </h5>
+    </div>
+
+    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+      <div class="card-body">
+      <table class="table col-6 table-striped">
+      <thead>
+               <tr>
+                  <th scope="col">Game</th>
+                  <th scope="col" style="width:30px">In</th>
+                  <th scope="col" style="width:30px">Out</th>
+                  <th scope="col" style="width:30px">Maybe</th>
+                  <th scope="col" style="width:30px">Unknown</th>
+              </tr>
+      </thead>
+      <tbody>
+              {% for g in ugames %}
+                  <tr>
+                      <td scope="row"> {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} @<a href="{{ g.LocationURL }}">{{ g.Location }}</a></td>
+                      <td scope="row"> {{ g.In }}</td>
+                      <td scope="row"> {{ g.Out }}</td>
+                      <td scope="row"> {{ g.Maybe }}</td>
+                      <td scope="row"> {{ g.Unknown }}</td>
+                  </tr>
+              {% endfor %}
+      </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingTwo">
+      <h5 class="mb-0">
+        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+          Availability
+        </button>
+      </h5>
+    </div>
+    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+      <div class="card-body">
+      <table class="table table-striped col-lg-6">
+          <thead>
+                   <tr>
+                      {% for c in availability_columns %}
+                          <th scope="col">{{ c }}</th>
+                      {% endfor %}
+                  </tr>
+          </thead>
+          <tbody>
+                    {% for a in availability %}
+                <tr>
+                        {% for val in a %}
+                            <th>
+                            {% if val == 'IN' %}
+                                <span style="color: forestgreen;">
+                                  <i class="fas fa-check-circle"></i>
+                                </span>
+                            {% elif val == 'Out' %}
+                                <span style="color: red;">
+                                    <i class="fas fa-stop-circle"></i>
+                                </span>
+                            {% elif val == 'Maybe' %}
+                                <span style="color: lightslategrey;">
+                                    <i class="fas fa-question-circle"></i>
+                                </span>
+                            {% elif val == '' %}
+                                <span style="color: #00205B;">
+                                    <i class="fab fa-canadian-maple-leaf"></i>
+                                </span>
+                            {% else %}
+                                {{ val }}
+                            {% endif %}
+                            </th>
+                        {% endfor %}
+                </tr>
+                    {% endfor %}
+
+         </tbody>
+
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingThree">
+      <h5 class="mb-0">
+        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+            Arenas
+        </button>
+      </h5>
+    </div>
+    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+      <div class="card-body">
+        {% for a in arenas %}
+
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock%}

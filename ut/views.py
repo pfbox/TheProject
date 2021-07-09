@@ -954,3 +954,16 @@ class GetReportQuery(View):
         sql=Reports.objects.get(id=Report_id).Query
         return HttpResponse(sql,content_type='text/plain')
 
+class OAFCIndex(BaseContext,View):
+    def get(self,request,*args,**kwargs):
+        context={}
+        context['ugames']=get_report_df(10)['df'].to_dict('records')
+        context['arenas']=get_report_df(4)['df'].to_dict('records')
+        avail=get_report_df(9)['df']
+        avail['DateTime'] = avail.apply(lambda x: '{} @{}'.format(x.Date,x.Time),axis=1)
+        pivot=pd.pivot_table(avail[['Player','Date','Availability']].fillna(''),index=['Player'],columns=['Date'],aggfunc=max).reset_index()
+        pivot.columns=pivot.columns.droplevel(0)
+        pivot.columns.values[0]='Player'
+        context['availability']=list(pivot.itertuples(index=False))
+        context['availability_columns']=list(pivot.columns)
+        return render(request,'ut/oafc_index.html',context=context)
