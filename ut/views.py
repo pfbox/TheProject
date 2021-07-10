@@ -20,6 +20,7 @@ from .utclasses import *
 from django_tables2 import RequestConfig
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django_q.tasks import async_task
+from .tasks import save_availability
 
 def index(request):
     projects=Projects.objects.filter(id__gte=0)
@@ -904,25 +905,6 @@ def run_task(request):
     send_report_email(Report_id=7,email_field='Email',email_template_id=4,filter={'Email':'pavel.fedoryaka@gmail.com'})
     return HttpResponse('task ran')
 
-
-def save_availability(availability,Game_id,TeamPlayer_id):
-    Class_id = 35
-    qs_team = Values.objects.filter(Attribute_id=162, instance_value_id=Game_id)
-    qs_player = Values.objects.filter(Attribute_id=163, instance_value_id=TeamPlayer_id).values_list('Instance_id',
-                                                                                                     flat=True)
-    instance_exists = qs_team.filter(Instance_id__in=qs_player)
-
-    with transaction.atomic():
-        if len(instance_exists) == 0:
-            Instance_id = 0
-            code = get_next_counter(Class_id)
-        else:
-            Instance = instance_exists[0].Instance
-            Instance_id = Instance.id
-            code = Instance.Code
-        instance = {'Game': Game_id, 'Team': 83, 'Player': TeamPlayer_id, 'Availability': availability, 'Code': code}
-        save_instance_byname(safe=True, Class_id=Class_id, Instance_id=Instance_id, instance=instance,
-                             passed_by_name=False)
 
 class PlayerAvailability(BaseContext,View):
     def get(self,request,TeamPlayer_id):

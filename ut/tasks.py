@@ -33,3 +33,23 @@ def send_report_email(Report_id,email_field,email_template_id,pk=None,changes={}
         email.attach_alternative(body_html,'text/html')
         messages.append(email)
     return get_connection().send_messages(messages)
+
+
+def save_availability(availability,Game_id,TeamPlayer_id):
+    Class_id = 35
+    qs_team = Values.objects.filter(Attribute_id=162, instance_value_id=Game_id)
+    qs_player = Values.objects.filter(Attribute_id=163, instance_value_id=TeamPlayer_id).values_list('Instance_id',
+                                                                                                     flat=True)
+    instance_exists = qs_team.filter(Instance_id__in=qs_player)
+
+    with transaction.atomic():
+        if len(instance_exists) == 0:
+            Instance_id = 0
+            code = get_next_counter(Class_id)
+        else:
+            Instance = instance_exists[0].Instance
+            Instance_id = Instance.id
+            code = Instance.Code
+        instance = {'Game': Game_id, 'Team': 83, 'Player': TeamPlayer_id, 'Availability': availability, 'Code': code}
+        save_instance_byname(safe=True, Class_id=Class_id, Instance_id=Instance_id, instance=instance,
+                             passed_by_name=False)
