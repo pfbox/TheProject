@@ -20,50 +20,65 @@
     <div class="card-header" id="headingOne">
       <h5 class="mb-0">
         <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-          Upcoming Games
+          Upcoming Events
         </button>
       </h5>
     </div>
 
     <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
       <div class="card-body">
-      <table class="table col-sm-6 col table-striped table-games">
-      <thead>
-               <tr>
-                  <th scope="col" style="text-align: left;">Game</th>
-                  <th scope="col" style="width: 30px;">
-                                <span style="color: forestgreen;">
-                                  <i class="fas fa-check-circle fa-lg"></i>
-                                </span>
-                  </th>
-                  <th scope="col" style="width: 30px;">
-                                <span style="color: red;">
-                                    <i class="fas fa-stop-circle fa-lg"></i>
-                                </span>
-                  </th>
-                  <th scope="col" style="width: 30px;">
-                                <span style="color: lightslategrey;">
-                                    <i class="fas fa-question-circle fa-lg"></i>
-                                </span>
-                  </th>
-                  <th scope="col" style="width: 30px;">
-                              <span style="color: #00205B;">
-                                    <i class="fab fa-canadian-maple-leaf fa-lg"></i>
-                                </span>
-                  </th>
+      <table class="table col-lg-6 table-striped">
+          <tbody>
+              <tr>
+                  {% for g in ugames %}
+                      <td>
+                          <div class="row" >
+                              <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 align-self-center">
+                                  <div class="text-center" >
+                                      {{ g.Type }} on {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} &#64;<a href="{{ r.LocationURL }}">{{ g.Location }} </a>
+                                  </div>
+                              </div>
+                              <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 align-self-center d-flex justify-content-center">
+                                  <ul class="list-inline borderless">
+                                      <li class="list-inline-item">
+                                          <span style="color: forestgreen;">
+                                              <i class="fas fa-check-circle fa-lg"></i>
+                                          </span>
+                                          <label>
+                                              {{ g.In }}
+                                          </label>
+                                      </li>
+                                      <li class="list-inline-item">
+                                          <span style="color: red;">
+                                              <i class="fas fa-stop-circle fa-lg"></i>
+                                          </span>
+                                          <label>
+                                              {{ g.Out }}
+                                          </label>
+                                      </li>
+                                      <li class="list-inline-item">
+                                          <span style="color: lightslategrey;">
+                                              <i class="fas fa-question-circle fa-lg"></i>
+                                          </span>
+                                          <label>
+                                              {{ g.Maybe }}
+                                          </label>
+                                      </li>
+                                      <li class="list-inline-item">
+                                          <span style="color: #00205B;">
+                                              <i class="fab fa-canadian-maple-leaf fa-lg"></i>
+                                          </span>
+                                          <label>
+                                              {{ g.Unknown }}
+                                          </label>
+                                      </li>
+                                  </ul>
+                              </div>
+                          </div>
+                      </td>
+                  {% endfor %}
               </tr>
-      </thead>
-      <tbody>
-              {% for g in ugames %}
-                  <tr>
-                      <td scope="row" style="text-align: left;"> {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} @<a href="{{ g.LocationURL }}">{{ g.Location }}</a></td>
-                      <td scope="row"> {{ g.In }}</td>
-                      <td scope="row"> {{ g.Out }}</td>
-                      <td scope="row"> {{ g.Maybe }}</td>
-                      <td scope="row"> {{ g.Unknown }}</td>
-                  </tr>
-              {% endfor %}
-      </tbody>
+          </tbody>
       </table>
       </div>
     </div>
@@ -78,7 +93,7 @@
     </div>
     <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
       <div class="card-body">
-      <table class="table table-striped col-lg-6">
+      <table class="table table-striped table-responsive-sm">
           <thead>
                    <tr>
                       {% for c in availability_columns %}

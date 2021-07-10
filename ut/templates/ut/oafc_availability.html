@@ -2,60 +2,69 @@
 {% block content %}
 {% csrf_token %}
 <style>
-.radioButton {
-    width : 45px
+.btn-group-toggle .btn {
+  border-color: #6c757d;
 }
 </style>
 <div id="player_availability">
 <p><b> Availability for {{ Player }} </b></p>
 <br>
-<div class="col-6">
-<table class="table">
-  <tr>
-    <th>Game</th>
-    <th>Availability</th>
-  </tr>
+<table class="table table-striped col-lg-6">
+  <thead>
+    <th>Events</th>
+  </thead>
   {% for r in records %}
   <tr data-game-id={{ r.id }} data-ajax-url="{% url 'ut:player_availability' TeamPlayer_id r.id %}">
-      <td> {{  r.Date }} @{{ r.Time }} vs {{ r.Opposition }} @<a href="{{ r.LocationURL }}">{{ r.Location }} </a> </td>
-    <td>
-    <div class="btn-group btn-group-toggle" data-toggle="buttons">
-      <label class="btn btn-outline-success radioButton">
-        <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="In"
-               {% if r.Availability == 'In' %}
-                   checked
-               {% endif %}
-        > <i class="fas fa-check-circle fa-lg"></i>
-      </label>
-      <label class="btn btn-outline-danger radioButton">
-        <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="Out"
-               {% if r.Availability == 'Out' %}
-                   checked
-               {% endif %}
-        > <i class="fas fa-stop-circle fa-lg"></i>
-      </label>
-      <label class="btn btn-outline-secondary radioButton">
-        <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="Maybe"
-               {% if r.Availability == 'Maybe' %}
-                   checked
-               {% endif %}
-        > <i class="fas fa-question-circle fa-lg"></i>
-      </label>
-    </div>
-    </td>
+        <td>
+        <div class="row d-flex flex-wrap" >
+            <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 align-self-center">
+                <div class="text-center" >
+                    {{ r.Type }} on {{ r.Date }} @{{ r.Time }} vs {{ r.Opposition }} &#64;<a href="{{ r.LocationURL }}">{{ r.Location }} </a>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 align-self-center d-flex justify-content-center">
+                <div class="btn-group btn-group-toggle borderless" data-toggle="buttons">
+                  <label class="btn btn-outline-success radioButton">
+                    <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="In"
+                           {% if r.Availability == 'In' %}
+                               checked
+                           {% endif %}
+                    > <i class="fas fa-check-circle fa-lg"></i>
+                  </label>
+                  <label class="btn btn-outline-danger radioButton">
+                    <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="Out"
+                           {% if r.Availability == 'Out' %}
+                               checked
+                           {% endif %}
+                    > <i class="fas fa-stop-circle fa-lg"></i>
+                  </label>
+                  <label class="btn btn-outline-secondary radioButton">
+                    <input type="radio" class="availability" name="availability{{ r.id }}" autocomplete="off" value="Maybe"
+                           {% if r.Availability == 'Maybe' %}
+                               checked
+                           {% endif %}
+                    > <i class="fas fa-question-circle fa-lg"></i>
+                  </label>
+                </div>
+            </div>
+        </div>
+        </td>
   </tr>
   {% endfor %}
 </table>
-</div>
 </div>
 <script>
 $(document).ready(function() {
     $('#player_availability').on('change', '.availability', function () {
         var row = $(this).closest("tr")
+        console.log('availability')
         $.ajax({
             url: row.data('ajax-url'),
             type: 'post',
             data: {availability:row.find('.availability:checked').val(),csrfmiddlewaretoken: '{{ csrf_token }}'},
+            success : function(data){
+                console.log('success')
+            },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
                 alert("Availability has not been set");
             }

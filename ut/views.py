@@ -585,7 +585,7 @@ class FormTemplateView(View):
             rec.save()
             memory_cache.delete('lo-{}'.format(Class_id))
 
-        return HttpResponseRedirect(reverse('ut:change_  formtemplate',kwargs={'Class_id':Class_id}))
+        return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
 
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
@@ -901,8 +901,28 @@ class ProjectIndex(BaseContext,View):
 
 def run_task(request):
     from .tasks import send_report_email
-    send_report_email(Report_id=5,email_field='Email',email_template_id=3,filter={'Email':'pavel.fedoryaka@gmail.com'})
+    send_report_email(Report_id=7,email_field='Email',email_template_id=4,filter={'Email':'pavel.fedoryaka@gmail.com'})
     return HttpResponse('task ran')
+
+
+def save_availability(availability,Game_id,TeamPlayer_id):
+    Class_id = 35
+    qs_team = Values.objects.filter(Attribute_id=162, instance_value_id=Game_id)
+    qs_player = Values.objects.filter(Attribute_id=163, instance_value_id=TeamPlayer_id).values_list('Instance_id',
+                                                                                                     flat=True)
+    instance_exists = qs_team.filter(Instance_id__in=qs_player)
+
+    with transaction.atomic():
+        if len(instance_exists) == 0:
+            Instance_id = 0
+            code = get_next_counter(Class_id)
+        else:
+            Instance = instance_exists[0].Instance
+            Instance_id = Instance.id
+            code = Instance.Code
+        instance = {'Game': Game_id, 'Team': 83, 'Player': TeamPlayer_id, 'Availability': availability, 'Code': code}
+        save_instance_byname(safe=True, Class_id=Class_id, Instance_id=Instance_id, instance=instance,
+                             passed_by_name=False)
 
 class PlayerAvailability(BaseContext,View):
     def get(self,request,TeamPlayer_id):
@@ -915,25 +935,8 @@ class PlayerAvailability(BaseContext,View):
         return render(request,'ut/oafc_availability.html',context)
 
     def post(self,request,Game_id,TeamPlayer_id):
-        Class_id=35
-        qs_team = Values.objects.filter(Attribute_id=162,instance_value_id=Game_id)
-        qs_player=Values.objects.filter(Attribute_id=163,instance_value_id=TeamPlayer_id).values_list('Instance_id',flat=True)
-        instance_exists=qs_team.filter(Instance_id__in=qs_player)
-
-
-        with transaction.atomic():
-            if len(instance_exists)==0:
-                 Instance_id=0
-                 code=get_next_counter(Class_id)
-            else:
-                Instance=instance_exists[0].Instance
-                Instance_id=Instance.id
-                code=Instance.Code
-            availability=request.POST.get('availability')
-            instance={'Game': Game_id, 'Team': 83, 'Player': TeamPlayer_id, 'Availability': availability,'Code':code}
-            async_task(save_instance_byname,safe=True,Class_id=Class_id, Instance_id=Instance_id, instance=instance,
-                        passed_by_name=False)
-
+        availability = request.POST.get('availability')
+        async_task(save_availability, availability=availability, Game_id=Game_id, TeamPlayer_id=TeamPlayer_id)
         return JsonResponse({'success':True})
 
 class GetClassQuery(View):
@@ -956,8 +959,8 @@ class OAFCIndex(BaseContext,View):
         context['ugames']=get_report_df(10)['df'].to_dict('records')
         context['arenas']=get_report_df(4)['df'].to_dict('records')
         avail=get_report_df(9)['df']
-        avail['DateTime'] = avail.apply(lambda x: '{} @{}'.format(x.Date,x.Time),axis=1)
-        pivot=pd.pivot_table(avail[['Player','Date','Availability']].fillna(''),index=['Player'],columns=['Date'],aggfunc=max).reset_index()
+        avail['TypeDateTime'] = avail.apply(lambda x: '{} {} @{}'.format(x.Type,str(x.Date)[0:6].replace(',',''),x.Time),axis=1)
+        pivot=pd.pivot_table(avail[['Player','TypeDateTime','Availability']].fillna(''),index=['Player'],columns=['TypeDateTime'],aggfunc=max).reset_index()
         pivot.columns=pivot.columns.droplevel(0)
         pivot.columns.values[0]='Player'
         context['availability']=list(pivot.itertuples(index=False))
