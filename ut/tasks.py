@@ -31,7 +31,7 @@ def send_report_email(Report_id,email_field,email_template_id,pk=None,changes={}
         subject=subject_template.render(context)
         email = EmailMultiAlternatives(subject, body_plain, settings.EMAIL_HOST_USER, [r[email_field]])
         email.attach_alternative(body_html,'text/html')
-        messages.append(email)
+        #messages.append(email)
     return get_connection().send_messages(messages)
 
 

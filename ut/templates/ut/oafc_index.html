@@ -29,8 +29,8 @@
       <div class="card-body">
       <table class="table col-lg-6 table-striped">
           <tbody>
+             {% for g in ugames %}
               <tr>
-                  {% for g in ugames %}
                       <td>
                           <div class="row" >
                               <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 align-self-center">
@@ -76,8 +76,8 @@
                               </div>
                           </div>
                       </td>
-                  {% endfor %}
               </tr>
+              {% endfor %}
           </tbody>
       </table>
       </div>
