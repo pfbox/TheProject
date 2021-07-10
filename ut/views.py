@@ -937,7 +937,7 @@ class GetReportQuery(View):
 
 class OAFCIndex(BaseContext,View):
     def get(self,request,*args,**kwargs):
-        context={}
+        context=get_base_context()
         context['ugames']=get_report_df(10)['df'].to_dict('records')
         context['arenas']=get_report_df(4)['df'].to_dict('records')
         avail=get_report_df(9)['df']

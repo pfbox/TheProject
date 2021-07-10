@@ -35,16 +35,16 @@
                           <div class="row" >
                               <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 align-self-center">
                                   <div class="text-center" >
-                                      {{ g.Type }} on {{ g.Date }} @{{ g.Time }} vs {{ g.Opposition }} &#64;<a href="{{ r.LocationURL }}">{{ g.Location }} </a>
+                                      {{ g.Type }} on {{ g.Date }} @{{ g.Time }} {% if g.Opposition %}vs {{ g.Opposition }} {% endif %}&#64;<a href="{{ r.LocationURL }}">{{ g.Location }} </a>
                                   </div>
                               </div>
-                              <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 align-self-center d-flex justify-content-center">
-                                  <ul class="list-inline borderless">
+                              <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 align-center d-flex justify-content-center">
+                                  <div class="list-inline borderless align-self-center d-inline-flex" style="margin:0">
                                       <li class="list-inline-item">
                                           <span style="color: forestgreen;">
                                               <i class="fas fa-check-circle fa-lg"></i>
                                           </span>
-                                          <label>
+                                          <label style="margin:0">
                                               {{ g.In }}
                                           </label>
                                       </li>
@@ -52,7 +52,7 @@
                                           <span style="color: red;">
                                               <i class="fas fa-stop-circle fa-lg"></i>
                                           </span>
-                                          <label>
+                                          <label style="margin:0">
                                               {{ g.Out }}
                                           </label>
                                       </li>
@@ -60,7 +60,7 @@
                                           <span style="color: lightslategrey;">
                                               <i class="fas fa-question-circle fa-lg"></i>
                                           </span>
-                                          <label>
+                                          <label style="margin:0">
                                               {{ g.Maybe }}
                                           </label>
                                       </li>
@@ -68,11 +68,11 @@
                                           <span style="color: #00205B;">
                                               <i class="fab fa-canadian-maple-leaf fa-lg"></i>
                                           </span>
-                                          <label>
+                                          <label style="margin:0">
                                               {{ g.Unknown }}
                                           </label>
                                       </li>
-                                  </ul>
+                                  </div>
                               </div>
                           </div>
                       </td>
