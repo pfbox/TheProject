@@ -19,7 +19,8 @@
         <div class="row d-flex flex-wrap" >
             <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 align-self-center">
                 <div class="text-center" >
-                    {{ r.Type }} on {{ r.Date }} @{{ r.Time }} vs {{ r.Opposition }} &#64;<a href="{{ r.LocationURL }}">{{ r.Location }} </a>
+                    {{ r.Type }} on {{ r.Date }} @{{ r.Time }} {% if r.Opposition %}vs {{ r.Opposition }} {% endif %} &#64;
+                    {% if r.LocationURL %}<a href="{{ r.LocationURL }}">{% endif %}{{ r.Location }} {% if r.LocationURL %}</a>{% endif %}
                 </div>
             </div>
             <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 align-self-center d-flex justify-content-center">

@@ -902,7 +902,7 @@ class ProjectIndex(BaseContext,View):
 
 def run_task(request):
     from .tasks import send_report_email
-    send_report_email(Report_id=7,email_field='Email',email_template_id=4,filter={'Email':'pavel.fedoryaka@gmail.com'})
+    send_report_email(Report_id=5,email_field='Email',email_template_id=3,filter={'Email':'pavel.fedoryaka@gmail.com'})
     return HttpResponse('task ran')
 
 
