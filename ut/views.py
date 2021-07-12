@@ -941,10 +941,14 @@ class OAFCIndex(BaseContext,View):
         context['ugames']=get_report_df(10)['df'].to_dict('records')
         context['arenas']=get_report_df(4)['df'].to_dict('records')
         avail=get_report_df(9)['df']
-        avail['TypeDateTime'] = avail.apply(lambda x: '{} {} @{}'.format(x.Type,str(x.Date)[0:6].replace(',',''),x.Time),axis=1)
-        pivot=pd.pivot_table(avail[['Player','TypeDateTime','Availability']].fillna(''),index=['Player'],columns=['TypeDateTime'],aggfunc=max).reset_index()
-        pivot.columns=pivot.columns.droplevel(0)
-        pivot.columns.values[0]='Player'
-        context['availability']=list(pivot.itertuples(index=False))
-        context['availability_columns']=list(pivot.columns)
+        if len(avail)>0:
+            avail['TypeDateTime'] = avail.apply(lambda x: '{} {} @{}'.format(x.Type,str(x.Date)[0:6].replace(',',''),x.Time),axis=1)
+            pivot=pd.pivot_table(avail[['Player','TypeDateTime','Availability']].fillna(''),index=['Player'],columns=['TypeDateTime'],aggfunc=max).reset_index()
+            pivot.columns=pivot.columns.droplevel(0)
+            pivot.columns.values[0]='Player'
+            context['availability']=list(pivot.itertuples(index=False))
+            context['availability_columns'] = list(pivot.columns)
+        else:
+            context['availability']=None
+            context['availability_columns']=None
         return render(request,'ut/oafc_index.html',context=context)
