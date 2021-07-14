@@ -19,7 +19,7 @@ def send_report_email(Report_id,email_field,email_template_id,pk=None,changes={}
     email_body=et.Template
     email_subject=et.SubjectTemplate
     messages = []
-    for i, r in df_emails.drop_duplicates(email_field).iterrows():
+    for i, r in df_emails.iterrows(): # No need for drop duplicates
         body_template = Template(email_body)
         subject_template = Template(email_subject)
         cdict={ i.replace(' ','_'):v for i,v in r.items()}

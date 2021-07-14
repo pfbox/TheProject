@@ -1,17 +1,8 @@
-from django.views.generic import View,UpdateView,CreateView,ListView,DeleteView
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse,reverse_lazy
+from django.views.generic import View, UpdateView, CreateView, DeleteView
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from .tables import *
 from .forms import *
-from urllib.parse import urlencode, quote_plus
-from django.template.context_processors import csrf
-import numpy as np
-from django_tables2 import SingleTableView
-#from .filters import ClassesFilter
-from django.db.models import Exists, OuterRef, Prefetch
-import json
-from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.utils.html import strip_tags
 from .sendouts import send_mail
@@ -22,41 +13,54 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django_q.tasks import async_task
 from .tasks import save_availability
 
+
+class BaseContext(object):
+    def get_context_data(self, **kwargs):
+        if hasattr(super(BaseContext, self), 'get_context_data'):
+            context = super(BaseContext, self).get_context_data(**kwargs)
+        else:
+            context = {}
+        context.update(get_base_context())
+        return context
+
+
 def index(request):
-    projects=Projects.objects.filter(id__gte=0)
-    default_reports=Projects.objects.filter(DefaultReport__isnull=False)
+    projects = Projects.objects.filter(id__gte=0)
+    default_reports = Projects.objects.filter(DefaultReport__isnull=False)
     dr = {}
     for r in default_reports:
-        dr[r.id]=r.DefaultReport.id #get_reporttable(r.DefaultReport_id)['table']
-    context=get_base_context()
-    #context={'table_list':am.to_dict('records')}
-    context['classes']=Classes.objects.filter(id__gte=0)
-    context['projects']=projects
-    context['reports']=Reports.objects.all()
-    context['defaultreports']=dr
+        dr[r.id] = r.DefaultReport.id  # get_reporttable(r.DefaultReport_id)['table']
+    context = get_base_context()
+    # context={'table_list':am.to_dict('records')}
+    context['classes'] = Classes.objects.filter(id__gte=0)
+    context['projects'] = projects
+    context['reports'] = Reports.objects.all()
+    context['defaultreports'] = dr
 
-    return render(request,'ut/index.html',context)
+    return render(request, 'ut/index.html', context)
 
-from django.forms import ModelForm
 
 def get_base_context(c={}):
-    if len(c)==0:
-        context={}
+    if len(c) == 0:
+        context = {}
     else:
-        context=c
-    context['base_classes']=Classes.objects.filter(id__gte=0)
-    context['base_projects']=Projects.objects.filter(id__gte=0)
+        context = c
+    context['base_classes'] = Classes.objects.filter(id__gte=0)
+    context['base_projects'] = Projects.objects.filter(id__gte=0)
     return context
 
-def table(request,tablename):
-    tm=am[am.TableName==tablename].iloc[0].Table
-    qs=tm.objects.all()
-    class t (tables.Table):
+
+def table(request, tablename):
+    tm = am[am.TableName == tablename].iloc[0].Table
+    qs = tm.objects.all()
+
+    class t(tables.Table):
         class Meta:
-            model=tm
-            sortable=True
+            model = tm
+            sortable = True
+
     table = t(qs)
-    a='''\
+    a = '''\
     class mform(ModelForm): #ModelForm example
         class Meta:
             model=tm
@@ -64,39 +68,43 @@ def table(request,tablename):
 
     form=mform()
     '''
-    context = get_base_context({'tablename':tablename, 'table':  table , 'Class_id': 0})
+    context = get_base_context({'tablename': tablename, 'table': table, 'Class_id': 0})
     return render(request, 'ut/showtable.html', context)
 
-def showclass(request,Class_id):
-    classname=Classes.objects.get(pk=Class_id).Class
-    table=Attributes.objects.filter(Class_id=Class_id)
-    context = get_base_context({'classname':classname,'table':table})
+
+def showclass(request, Class_id):
+    classname = Classes.objects.get(pk=Class_id).Class
+    table = Attributes.objects.filter(Class_id=Class_id)
+    context = get_base_context({'classname': classname, 'table': table})
     return render(request, 'ut/showtable.html', context)
 
-class delete_instance(LoginRequiredMixin,DeleteView):
+
+class delete_instance(LoginRequiredMixin, View):
     model = Instances
     success_url = reverse_lazy('ut:index')
-    def get(self,request,Class_id,Instance_id,*args,**kwargs):
-        form=DeleteInstanceForm(Class_id=Class_id,Instance_id=Instance_id)
-        context={'Class_id':Class_id,'Instance_id':Instance_id,'form':form}
+
+    def get(self, request, Class_id, Instance_id, *args, **kwargs):
+        form = DeleteInstanceForm(Class_id=Class_id, Instance_id=Instance_id)
+        context = {'Class_id': Class_id, 'Instance_id': Instance_id, 'form': form}
         data = {}
         data['modalformcontent'] = render_to_string('ut/delete_instance_modal.html', context=context, request=request)
         return JsonResponse(data)
 
-    def post(self,request,Class_id,Instance_id,*args,**kwargs):
+    def post(self, request, Class_id, Instance_id, *args, **kwargs):
         try:
-            old_instace=get_instance(Class_id=Class_id,Instance_id=Instance_id)
+            old_instace = get_instance(Class_id=Class_id, Instance_id=Instance_id)
             Instances.objects.get(pk=Instance_id).delete()
-            data={'success':True}
+            data = {'success': True}
 
 
         except models.ProtectedError as e:
-            data={'success':False,'error':str(e)}
+            data = {'success': False, 'error': str(e)}
         return JsonResponse(data)
 
+
 class update_instances_table(View):
-    def get(self,request,*args,**kwargs):
-        Class_id=kwargs['Class_id']
+    def get(self, request, *args, **kwargs):
+        Class_id = kwargs['Class_id']
         qs = create_rawquery_from_attributes(Class_id, {})
         data = {}
         data['table'] = render_to_string('ut/asynctable.html',
@@ -104,41 +112,41 @@ class update_instances_table(View):
                                          request=request)
         return JsonResponse(data)
 
+
 from django.template.context_processors import csrf
 from crispy_forms.utils import render_crispy_form
-from django.test.client import RequestFactory
 
 
 class edit_instance_base(View):
-    def get(self,request,Modal=True,ReadOnly=False,*args,**kwargs):
-        Class_id=kwargs.get('Class_id')
+    def get(self, request, Modal=True, ReadOnly=False, *args, **kwargs):
+        Class_id = kwargs.get('Class_id')
         if not pd.isnull(Class_id):
-            Instance_id=kwargs['Instance_id']
+            Instance_id = kwargs['Instance_id']
         else:
-            Attribute=kwargs['Attribute']
-            Ref_Instance_id=kwargs['Ref_Instance_id']
-            ref_class_id=Instances.objects.get(pk=Ref_Instance_id).Class_id
-            ref_attribute_id=Attributes.objects.get(Attribute=Attribute,Class_id=ref_class_id).id
-            Instance=Values.objects.get(Instance_id=Ref_Instance_id,Attribute_id=ref_attribute_id).instance_value
-            Instance_id=Instance.id
-            Class_id=Instance.Class_id
+            Attribute = kwargs['Attribute']
+            Ref_Instance_id = kwargs['Ref_Instance_id']
+            ref_class_id = Instances.objects.get(pk=Ref_Instance_id).Class_id
+            ref_attribute_id = Attributes.objects.get(Attribute=Attribute, Class_id=ref_class_id).id
+            Instance = Values.objects.get(Instance_id=Ref_Instance_id, Attribute_id=ref_attribute_id).instance_value
+            Instance_id = Instance.id
+            Class_id = Instance.Class_id
 
-        defaults={}
-        ai_attribute_id=request.GET.get('action-attribute-id')
+        defaults = {}
+        ai_attribute_id = request.GET.get('action-attribute-id')
         if ai_attribute_id:
-            ai=Attributes.objects.get(pk=ai_attribute_id)
+            ai = Attributes.objects.get(pk=ai_attribute_id)
             try:
-                ai_defaults=json.loads(ai.ValuesList)
-                for k,v in ai_defaults.items():
+                ai_defaults = json.loads(ai.ValuesList)
+                for k, v in ai_defaults.items():
                     if request.GET.get(v):
-                        defaults[k]=request.GET.get(v)
+                        defaults[k] = request.GET.get(v)
             except:
-                defaults={}
+                defaults = {}
 
-        if Instance_id==0:
+        if Instance_id == 0:
             if 'ref_attribute' in request.GET:
-                defaults[request.GET['ref_attribute']]=request.GET['ref_value']
-        form = InstanceForm(defaults=defaults,Class_id=Class_id, Instance_id=Instance_id,ReadOnly=ReadOnly,
+                defaults[request.GET['ref_attribute']] = request.GET['ref_value']
+        form = InstanceForm(defaults=defaults, Class_id=Class_id, Instance_id=Instance_id, ReadOnly=ReadOnly,
                             validation=False)
         context = get_base_context()
         for a1 in Attributes.objects.filter(Class_id=Class_id, DataType_id=DT_Table):
@@ -149,51 +157,52 @@ class edit_instance_base(View):
             else:
                 filter = {refattr: Instance_id}
 
-            context['columns'+ str(a1.id)] = create_qs_sql(refclass_id)['columns']
+            context['columns' + str(a1.id)] = create_qs_sql(refclass_id)['columns']
 
             qs = create_rawquery_from_attributes(refclass_id, masterclassfilter=filter)
             table = mytable(Class_id=refclass_id, style='ShortLayout', data=qs)
             context['table' + str(a1.id) + ''] = table
         context['form'] = form
-        context['Modal']=Modal
-        context['Class_id']=Class_id
-        context['Instance_id']=Instance_id
+        context['Modal'] = Modal
+        context['Class_id'] = Class_id
+        context['Instance_id'] = Instance_id
         if Modal:
-            data={}
-            data['modalformcontent']=render_to_string('ut/_edit_instance_modal.html',context=context,request=request)
+            data = {}
+            data['modalformcontent'] = render_to_string('ut/_edit_instance_modal.html', context=context,
+                                                        request=request)
             return JsonResponse(data)
         else:
             return render(request, 'ut/edit_instance.html', context)
 
-    def post(self,request,*args,**kwargs):
-        Class_id=kwargs['Class_id']
-        Instance_id=kwargs['Instance_id']
-        Next_id=request.POST.get('next','0')
-        form=InstanceForm(request.POST,request.FILES,Class_id=Class_id,Instance_id=Instance_id,ReadOnly=False,
-                          validation=True)
+    def post(self, request, *args, **kwargs):
+        Class_id = kwargs['Class_id']
+        Instance_id = kwargs['Instance_id']
+        Next_id = request.POST.get('next', '0')
+        form = InstanceForm(request.POST, request.FILES, Class_id=Class_id, Instance_id=Instance_id, ReadOnly=False,
+                            validation=True)
         res = {}
         if form.is_valid():
             try:
-                save_instance_byname(Class_id=Class_id,Instance_id=Instance_id,instance=form.cleaned_data,
+                save_instance_byname(Class_id=Class_id, Instance_id=Instance_id, instance=form.cleaned_data,
                                      passed_by_name=False)
                 res['success'] = True
-                if request.POST.get('action')=='savenext':
-                    #newrequest = RequestFactory().get('/')
-                    #newrequest.GET=request.POST.copy()
+                if request.POST.get('action') == 'savenext':
+                    # newrequest = RequestFactory().get('/')
+                    # newrequest.GET=request.POST.copy()
                     ctx = {}
                     ctx.update(csrf(request))
-                    if not Next_id.isnumeric(): #need to show error if no next item
-                        res['form_errors']='Instance has been saved but next instance has not been identified.'
-                        res['success']=False
+                    if not Next_id.isnumeric():  # need to show error if no next item
+                        res['form_errors'] = 'Instance has been saved but next instance has not been identified.'
+                        res['success'] = False
                     else:
                         Next_id = int(Next_id)
                         form = InstanceForm(Class_id=Class_id, Instance_id=Next_id, ReadOnly=False,
                                             validation=False)
                         form_html = render_crispy_form(form, context=ctx)
-                        res['form_html']=form_html
+                        res['form_html'] = form_html
             except BaseException as e:
-                res['success']=False
-                res['form_errors']= str(e)
+                res['success'] = False
+                res['form_errors'] = str(e)
                 raise
             return JsonResponse(res)
         else:
@@ -202,76 +211,85 @@ class edit_instance_base(View):
             form = InstanceForm(request.POST, Class_id=Class_id, Instance_id=Instance_id, ReadOnly=False,
                                 validation=False)
             form_html = render_crispy_form(form, context=ctx)
-            return JsonResponse({'success':False,'form_html':form_html})
-            #return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
+            return JsonResponse({'success': False, 'form_html': form_html})
+            # return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
 
 
-class edit_instance(LoginRequiredMixin,edit_instance_base):
+class edit_instance(LoginRequiredMixin, edit_instance_base):
     pass
 
+
 class view_instance(edit_instance_base):
-    def get(self,request,ReadOnly=True,*args,**kwargs):
-        return super().get(request,ReadOnly=ReadOnly,*args,**kwargs)
+    def get(self, request, ReadOnly=True, *args, **kwargs):
+        return super().get(request, ReadOnly=ReadOnly, *args, **kwargs)
+
 
 def classestree_view(request):
     return render(request, "ut/classestree.html", {'table': Classes.objects.all()})
 
-def reports_view(request,Project_id=0):
-    if Project_id==0:
+
+def reports_view(request, Project_id=0):
+    if Project_id == 0:
         table = ReportsTable(Reports.objects.all())
     else:
         vl = Reports.objects.filter(id=Project_id).values_list('Reports_m2m', flat=True)
-        table =  ReportsTable(Projects.objects.filter(id__in=vl))
+        table = ReportsTable(Projects.objects.filter(id__in=vl))
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    context=get_base_context()
-    context['table']= table
-    context['Project_id']= Project_id
-    return render(request,'ut/reports.html',context)
+    context = get_base_context()
+    context['table'] = table
+    context['Project_id'] = Project_id
+    return render(request, 'ut/reports.html', context)
+
 
 def projects_view(request):
     table = ProjectsTable(Projects.objects.all())
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    context=get_base_context()
-    context['table']= table
-    return render(request,'ut/projects.html',context)
+    context = get_base_context()
+    context['table'] = table
+    return render(request, 'ut/projects.html', context)
 
-def classes_view(request,Project_id=0):
-    if Project_id==0:
+
+def classes_view(request, Project_id=0):
+    if Project_id == 0:
         table = ClassesTable(Classes.objects.filter(id__gte=0))
     else:
         vl = Reports.objects.filter(id=Project_id).values_list('Classes_m2m', flat=True)
-        table =  ClassesTable(Classes.objects.filter(id__in=vl))
+        table = ClassesTable(Classes.objects.filter(id__in=vl))
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
-    context=get_base_context({'table':table,'classes':table,'Project_id':Project_id})
-    return render(request,'ut/classes.html',context)
+    context = get_base_context({'table': table, 'classes': table, 'Project_id': Project_id})
+    return render(request, 'ut/classes.html', context)
+
 
 class instances_view():
-    def __init__(self,Class_id,filter={}):
+    def __init__(self, Class_id, filter={}):
         super().__init__(self);
-        self.Class_id=Class_id
-        self.filter=filter
-    def get(self,request,Class_id,SaveToExl):
+        self.Class_id = Class_id
+        self.filter = filter
+
+    def get(self, request, Class_id, SaveToExl):
         self.filter = {}
-        for key,value in request.GET.items():
-            if (value!='')&(key not in ['sort','page']):
+        for key, value in request.GET.items():
+            if (value != '') & (key not in ['sort', 'page']):
                 pass
 
-class ReportRun(View):
-    template='ut/showreport.html'
-    def get(self,request,Report_id,*args,**kwargs):
-        r=Reports.objects.get(pk=Report_id)
-        sql=r.QueryAdj
-        rocon=connections['readonly']
-        with rocon.cursor() as cursor:
-            cursor.execute(sql)
-            t=dictfetchall(cursor)
-            extra_columns=[(c[0], tables.Column()) for c in cursor.description]
-        context=get_base_context()
-        context['Report_id']=Report_id
-        context['ReportName']=r.Report
+
+class ReportRun(BaseContext, View):
+    template = 'ut/showreport_light.html'
+
+    def get(self, request, Report_id, *args, **kwargs):
+        context = get_base_context()
+        r = Reports.objects.get(pk=Report_id)
+        Report = get_report_df(Report_id)
+        context['Report'] = Report['df'].to_html()
+        rocon = connections['readonly']
+        context['Report_id'] = Report_id
+        context['ReportName'] = r.Report
+        return render(request, 'ut/showreport_light.html', context)
+
         return render(request, self.template, context)
 
-def instances(request,Class_id,SaveToExl=False,Project_id=0):
+
+def instances(request, Class_id, SaveToExl=False, Project_id=0):
     if Class_id == 0 and Project_id != 0:
         Class_id = Projects.objects.filter(id=Project_id).values_list('Classes_m2m').first()[0]
 
@@ -280,151 +298,163 @@ def instances(request,Class_id,SaveToExl=False,Project_id=0):
 
     if SaveToExl:
         qs = create_rawquery_from_attributes(Class_id, filter)
-        return export_instances_xls(request,qs)
+        return export_instances_xls(request, qs)
     else:
         pass
 
-    context = get_base_context({'tablename':'Instances','Class_id':Class_id, 'table':table,'filterform':filterform})
-    #context['columns']=create_qs_sql(Class_id)['columns']
+    context = get_base_context(
+        {'tablename': 'Instances', 'Class_id': Class_id, 'table': table, 'filterform': filterform})
+    # context['columns']=create_qs_sql(Class_id)['columns']
 
-    if Project_id!=0:
-        context['Project']=Projects.objects.get(pk=Project_id)
-    return render(request, 'ut/showproject.html',  context)
+    if Project_id != 0:
+        context['Project'] = Projects.objects.get(pk=Project_id)
+    return render(request, 'ut/showproject.html', context)
 
-def attributes_view(request,Class_id):
-    attlist=Attributes.objects.filter(Class_id=Class_id)
+
+def attributes_view(request, Class_id):
+    attlist = Attributes.objects.filter(Class_id=Class_id)
     table = AttributeTable(attlist)
     RequestConfig(request, paginate={"per_page": 20}).configure(table)
-    context=get_base_context({'table':table,'Class_id':Class_id})
-    return render(request,'ut/attributes.html',context)
+    context = get_base_context({'table': table, 'Class_id': Class_id})
+    return render(request, 'ut/attributes.html', context)
+
 
 class filters_view(View):
-    template='ut/filters.html'
-    def get(self,request,*args,**kwargs):
-        self.Class_id=kwargs['Class_id']
-        context=get_base_context()
-        context['Class_id']=self.Class_id
+    template = 'ut/filters.html'
+
+    def get(self, request, *args, **kwargs):
+        self.Class_id = kwargs['Class_id']
+        context = get_base_context()
+        context['Class_id'] = self.Class_id
         table = FilterTable(Filters.objects.filter(Class_id=self.Class_id))
-        context['table']=table
-        return render(request,self.template,context)
+        context['table'] = table
+        return render(request, self.template, context)
 
-def edit_attribute(request,Attribute_id):
-    at=Attributes.objects.get(pk=Attribute_id)
+
+def edit_attribute(request, Attribute_id):
+    at = Attributes.objects.get(pk=Attribute_id)
     form = AttributeForm(instance=at)
-    context=get_base_context({'form':form})
-    return render(request,'ut/edit_attribute.html',context)
+    context = get_base_context({'form': form})
+    return render(request, 'ut/edit_attribute.html', context)
 
-class BaseContext():
-    def get_context_data(self, **kwargs):
-        if hasattr(super(BaseContext,self),'get_context_data'):
-            context=super(BaseContext,self).get_context_data(**kwargs)
-        else:
-            context={}
-        context.update(get_base_context())
-        return context
 
-class ProjectEdit(BaseContext,UpdateView):
+class ProjectEdit(BaseContext, UpdateView):
     model = Projects
     template_name = 'ut/edit_attribute.html'
     form_class = ProjectForm
+
     def get_success_url(self):
         return reverse_lazy('ut:projects_view')
 
-class ProjectCreateVeiw(BaseContext,CreateView):
+
+class ProjectCreateVeiw(BaseContext, CreateView):
     model = Projects
     template_name = 'ut/edit_attribute.html'
     form_class = ProjectForm
+
     def get_success_url(self):
         return reverse_lazy('ut:projects_view')
 
-class ReportEdit(BaseContext,UpdateView):
+
+class ReportEdit(BaseContext, UpdateView):
     model = Reports
     template_name = 'ut/edit_attribute.html'
     form_class = ReportForm
+
     def get_success_url(self):
         return reverse_lazy('ut:reports_view')
 
-class ReportCreateVeiw(BaseContext,CreateView):
+
+class ReportCreateVeiw(BaseContext, CreateView):
     model = Reports
     template_name = 'ut/edit_attribute.html'
     form_class = ReportForm
+
     def get_success_url(self):
         return reverse_lazy('ut:reports_view')
 
-#from bootstrap_modal_forms.generic import BSModalCreateView
 
-class FilterCreateView(BaseContext,LoginRequiredMixin,CreateView):
+# from bootstrap_modal_forms.generic import BSModalCreateView
+
+class FilterCreateView(BaseContext, LoginRequiredMixin, CreateView):
     model = Filters
     template_name = 'ut/edit_attribute.html'
     form_class = FilterEditForm
 
     def get_success_url(self):
-        return reverse_lazy('ut:filters_view', args = (self.Class_id,))
+        return reverse_lazy('ut:filters_view', args=(self.Class_id,))
 
     def get_initial(self):
         initial = super().get_initial()
         self.Class_id = self.kwargs['Class_id']
-        initial['Class']=Classes.objects.get(pk=self.Class_id)
+        initial['Class'] = Classes.objects.get(pk=self.Class_id)
         return initial
 
     def get_form_kwargs(self):
-        kw=super(FilterCreateView,self).get_form_kwargs()
-        kw['initial']['Class_id']=self.Class_id
+        kw = super(FilterCreateView, self).get_form_kwargs()
+        kw['initial']['Class_id'] = self.Class_id
         return kw
 
-class FilterUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
+
+class FilterUpdateView(BaseContext, LoginRequiredMixin, UpdateView):
     model = Filters
     template_name = 'ut/edit_attribute.html'
     form_class = FilterEditForm
 
     def get_success_url(self):
-        return reverse_lazy('ut:filters_view',args=(self.object.Class.id,))
+        return reverse_lazy('ut:filters_view', args=(self.object.Class.id,))
 
-class AttributeCreateView(BaseContext,LoginRequiredMixin,CreateView):
+
+class AttributeCreateView(BaseContext, LoginRequiredMixin, CreateView):
     model = Attributes
     template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
 
     def get_success_url(self):
-        return reverse_lazy('ut:attributes_view', args = (self.Class_id,))
+        return reverse_lazy('ut:attributes_view', args=(self.Class_id,))
 
     def get_initial(self):
         initial = super().get_initial()
         self.Class_id = self.kwargs['Class_id']
-        initial['Class']=Classes.objects.get(pk=self.Class_id)
+        initial['Class'] = Classes.objects.get(pk=self.Class_id)
         return initial
 
     def get_form_kwargs(self):
-        kw=super(AttributeCreateView,self).get_form_kwargs()
-        kw['initial']['Class_id']=self.Class_id
+        kw = super(AttributeCreateView, self).get_form_kwargs()
+        kw['initial']['Class_id'] = self.Class_id
         return kw
 
-class AttributeUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
+
+class AttributeUpdateView(BaseContext, LoginRequiredMixin, UpdateView):
     model = Attributes
     template_name = 'ut/edit_attribute.html'
     form_class = AttributeForm
 
     def get_success_url(self):
-        return reverse_lazy('ut:attributes_view',args=(self.object.Class.id,))
+        return reverse_lazy('ut:attributes_view', args=(self.object.Class.id,))
 
-class ClassesUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
+
+class ClassesUpdateView(BaseContext, LoginRequiredMixin, UpdateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
-    def post(self,*args,**kwargs):
+
+    def post(self, *args, **kwargs):
         memory_cache.delete('lo-{}'.format(kwargs['pk']))
         return super().post(*args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy('ut:classes_view')
 
-class ClassesCreateView(BaseContext,LoginRequiredMixin,CreateView):
+
+class ClassesCreateView(BaseContext, LoginRequiredMixin, CreateView):
     model = Classes
     template_name = 'ut/edit_attribute.html'
     form_class = ClassesForm
 
     def get_success_url(self):
         return reverse_lazy('ut:classes_view')
+
 
 import xlwt
 
@@ -432,7 +462,8 @@ from django.http import HttpResponse
 
 import csv
 
-def export_instances_csv(request,raw_qs):
+
+def export_instances_csv(request, raw_qs):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="Instances.csv"'
     writer = csv.writer(response)
@@ -442,24 +473,27 @@ def export_instances_csv(request,raw_qs):
         writer.writerow(row)
     return response
 
+
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-def export_instances_xls(request,raw_qs):
+
+def export_instances_xls(request, raw_qs):
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="instances.xlsx"'
     wb = Workbook()
     ws = wb.active
-    ws.title='Instances'
+    ws.title = 'Instances'
     # Sheet header, first row
     ws.append(raw_qs.columns)
-    rows=raw_queryset_as_values_list(raw_qs)
+    rows = raw_queryset_as_values_list(raw_qs)
     for r in rows:
         ws.append(r)
     wb.save(response)
     return response
 
-def export_instances_xls_2(request,raw_qs):
+
+def export_instances_xls_2(request, raw_qs):
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="instances.xlsx"'
     wb = xlwt.Workbook(encoding='utf-8')
@@ -481,157 +515,182 @@ def export_instances_xls_2(request,raw_qs):
     wb.save(response)
     return response
 
-#from somewhere import handle_uploaded_file
+
+# from somewhere import handle_uploaded_file
 
 from django.db.models import Count, F
 from django.db import transaction
-#@transaction.atomic
-def handle_uploaded_file(f,Class_id,commitevery=0,errors='raise'):
-    ignore_conflicts= (errors=='ignore')
-    totalins=pd.read_excel(f)
-    totallen=len(totalins)
-    ranges=[]
-    if commitevery==0:
-        ranges.append([0,len(totallen)])
+
+
+# @transaction.atomic
+def handle_uploaded_file(f, Class_id, commitevery=0, errors='raise'):
+    ignore_conflicts = (errors == 'ignore')
+    totalins = pd.read_excel(f)
+    totallen = len(totalins)
+    ranges = []
+    if commitevery == 0:
+        ranges.append([0, len(totallen)])
     else:
-        rnum= totallen // commitevery
-        rres= totallen % commitevery
-        for i in range(0,rnum):
-            ranges.append([i*commitevery,(i+1)*commitevery])
+        rnum = totallen // commitevery
+        rres = totallen % commitevery
+        for i in range(0, rnum):
+            ranges.append([i * commitevery, (i + 1) * commitevery])
         if rres > 0:
-            ranges.append([rnum*commitevery,rnum*commitevery+rres])
+            ranges.append([rnum * commitevery, rnum * commitevery + rres])
 
     for irange in ranges:
         with transaction.atomic():
-            ins=totalins[irange[0]:irange[1]]
-            user=get_current_user()
-            ctime=datetime.now()
+            ins = totalins[irange[0]:irange[1]]
+            user = get_current_user()
+            ctime = datetime.now()
             if not ('Code' in ins.columns):
-                ins.loc[:,'Code']=ins.apply(lambda x: get_next_counter(Class_id))
-            newinstances=ins.Code.apply(lambda x: Instances(Class_id=Class_id,Code=x,Updatedby=user,Updated=ctime))
-            Instances.objects.bulk_create(list(newinstances),ignore_conflicts=ignore_conflicts)
-            ids = pd.DataFrame(list(Instances.objects.filter(Class_id=Class_id,Code__in=list(ins.Code)).values()))
-            ins=pd.merge(ins,ids[['id','Code']],on='Code',how='inner')
+                ins.loc[:, 'Code'] = ins.apply(lambda x: get_next_counter(Class_id))
+            newinstances = ins.Code.apply(lambda x: Instances(Class_id=Class_id, Code=x, Updatedby=user, Updated=ctime))
+            Instances.objects.bulk_create(list(newinstances), ignore_conflicts=ignore_conflicts)
+            ids = pd.DataFrame(list(Instances.objects.filter(Class_id=Class_id, Code__in=list(ins.Code)).values()))
+            ins = pd.merge(ins, ids[['id', 'Code']], on='Code', how='inner')
 
-            #print ([r for r in ins.iterrows()])
-            fl=get_editfieldlist(Class_id)
+            # print ([r for r in ins.iterrows()])
+            fl = get_editfieldlist(Class_id)
             for attr in fl:
-                #att=Attributes.objects.get(pk=rec.id).Attribute
-                if attr.Attribute in ins.columns and (attr.Attribute!='Code'):
-                    dt=attr.DataType_id
-                    fieldname=get_fieldname(dt)
-                    ins_name=attr.Attribute
+                # att=Attributes.objects.get(pk=rec.id).Attribute
+                if attr.Attribute in ins.columns and (attr.Attribute != 'Code'):
+                    dt = attr.DataType_id
+                    fieldname = get_fieldname(dt)
+                    ins_name = attr.Attribute
                     if dt in DTG_Instance:
                         if attr.Ref_Attribute_id == Default_Attribute:
-                            attids = pd.DataFrame(list(Instances.objects.filter(Class_id=attr.Ref_Class_id, Code__in=list(ins[attr.Attribute]))).values('id', 'Code'))
+                            attids = pd.DataFrame(list(Instances.objects.filter(Class_id=attr.Ref_Class_id,
+                                                                                Code__in=list(
+                                                                                    ins[attr.Attribute]))).values('id',
+                                                                                                                  'Code'))
                             attids = attids.rename(columns={'Code': attr.Attribute, 'id': attr.Attribute + '_id'})
-                            ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
+                            ins = pd.merge(ins, attids, on=[attr.Attribute], how='left')
                         else:
                             attids = pd.DataFrame(
                                 list(Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
                                                            char_value__in=list(ins[attr.Attribute]))
                                      .values('Instance_id', 'char_value')))
-                            attids = attids.rename(columns={'char_value': attr.Attribute, 'Instance_id': attr.Attribute + '_id'})
-                            ins=pd.merge(ins, attids, on=[attr.Attribute], how='left')
-                        values=list(ins.apply(lambda x: Values(**{'Instance_id':x.id, 'Attribute_id':attr.id, 'instance_value_id': x[attr.Attribute + '_id']}),axis=1))
+                            attids = attids.rename(
+                                columns={'char_value': attr.Attribute, 'Instance_id': attr.Attribute + '_id'})
+                            ins = pd.merge(ins, attids, on=[attr.Attribute], how='left')
+                        values = list(ins.apply(lambda x: Values(**{'Instance_id': x.id, 'Attribute_id': attr.id,
+                                                                    'instance_value_id': x[attr.Attribute + '_id']}),
+                                                axis=1))
                     else:
                         if dt in DTG_Int:
-                            ins[attr.Attribute]=ins[attr.Attribute].apply(lambda x: int(x) if pd.notnull(x) else x)
+                            ins[attr.Attribute] = ins[attr.Attribute].apply(lambda x: int(x) if pd.notnull(x) else x)
                         elif dt in DTG_Date:
-                            ins[attr.Attribute]=ins[attr.Attribute].apply(lambda x: pd.to_datetime(x).replace(tzinfo=pytz.UTC))
+                            ins[attr.Attribute] = ins[attr.Attribute].apply(
+                                lambda x: pd.to_datetime(x).replace(tzinfo=pytz.UTC))
 
-                        values=list(ins.apply(lambda x: Values(**{'Instance_id':x.id,'Attribute_id':attr.id,fieldname.replace('"',''):x[attr.Attribute]}),axis=1))
-                    Values.objects.bulk_create(values,ignore_conflicts=ignore_conflicts)
+                        values = list(ins.apply(lambda x: Values(**{'Instance_id': x.id, 'Attribute_id': attr.id,
+                                                                    fieldname.replace('"', ''): x[attr.Attribute]}),
+                                                axis=1))
+                    Values.objects.bulk_create(values, ignore_conflicts=ignore_conflicts)
 
-def load_instances(request,Class_id=0):
+
+def load_instances(request, Class_id=0):
     if request.method == 'POST':
         form = UploadInstances(request.POST, request.FILES)
         if form.is_valid() and request.FILES['file']:
-            commitevery=request.POST.get('Commit')
+            commitevery = request.POST.get('Commit')
             if commitevery.isnumeric():
                 commitevery = int(commitevery)
             else:
                 commitevery = 0
-            handle_uploaded_file(request.FILES['file'],Class_id,commitevery,errors=request.POST.get('Errors'))
+            handle_uploaded_file(request.FILES['file'], Class_id, commitevery, errors=request.POST.get('Errors'))
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
     else:
         form = UploadInstances()
-    context=get_base_context({'form': form,'Class_id':Class_id})
-    return render(request, 'ut/loadinstances.html',context)
+    context = get_base_context({'form': form, 'Class_id': Class_id})
+    return render(request, 'ut/loadinstances.html', context)
 
-class ProtectView(LoginRequiredMixin, View) :
+
+class ProtectView(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, 'ut/index.html')
 
+
 class FormTemplateView(View):
     template = 'ut/formtemplate.html'
-    def get(self, request,Class_id):
-        table=get_editfieldlist(Class_id)
-        context=get_base_context()
+
+    def get(self, request, Class_id):
+        table = get_editfieldlist(Class_id)
+        context = get_base_context()
         if Layouts.objects.filter(Class=Class_id).exists():
-            context['layout']=Layouts.objects.get(Class=Class_id).FormLayout
-        context['table']=table # .to_dict('records')
-        context['Class_id']=Class_id
+            context['layout'] = Layouts.objects.get(Class=Class_id).FormLayout
+        context['table'] = table  # .to_dict('records')
+        context['Class_id'] = Class_id
         return render(request, self.template, context)
 
-    def post(self, request,Class_id) :
+    def post(self, request, Class_id):
         if request.POST:
-            #layout=json.loads(request.POST['layout'])
-            lo_to_save=request.POST['layout']
+            # layout=json.loads(request.POST['layout'])
+            lo_to_save = request.POST['layout']
             if Layouts.objects.filter(Class=Class_id).exists():
-                rec=Layouts.objects.get(Class=Class_id)
-                rec.FormLayout=lo_to_save
+                rec = Layouts.objects.get(Class=Class_id)
+                rec.FormLayout = lo_to_save
             else:
-                rec=Layouts(FormLayout=lo_to_save,Class_id=Class_id)
+                rec = Layouts(FormLayout=lo_to_save, Class_id=Class_id)
             rec.save()
             memory_cache.delete('lo-{}'.format(Class_id))
 
-        return HttpResponseRedirect(reverse('ut:change_formtemplate',kwargs={'Class_id':Class_id}))
+        return HttpResponseRedirect(reverse('ut:change_formtemplate', kwargs={'Class_id': Class_id}))
+
 
 class TableTemplateView(View):
     template = 'ut/tabletemplate.html'
-    def get(self, request,Style,Class_id):
-        table= get_editfieldlist(Class_id).to_dict('records')
-        context=get_base_context()
+
+    def get(self, request, Style, Class_id):
+        table = get_editfieldlist(Class_id).to_dict('records')
+        context = get_base_context()
         if Layouts.objects.filter(Class=Class_id).exists():
-            context['layout']=getattr(Layouts.objects.get(Class=Class_id),Style)
-        context['table']=table
-        context['Class_id']=Class_id
-        context['Style']=Style
+            context['layout'] = getattr(Layouts.objects.get(Class=Class_id), Style)
+        context['table'] = table
+        context['Class_id'] = Class_id
+        context['Style'] = Style
         return render(request, self.template, context)
 
-    def post(self, request,Style,Class_id) :
+    def post(self, request, Style, Class_id):
         if request.POST:
-            #layout=json.loads(request.POST['layout'])
-            lo_to_save=request.POST['layout']
+            # layout=json.loads(request.POST['layout'])
+            lo_to_save = request.POST['layout']
             if Layouts.objects.filter(Class=Class_id).exists():
-                rec=Layouts.objects.get(Class=Class_id)
+                rec = Layouts.objects.get(Class=Class_id)
             else:
-                rec=Layouts(Class=Class_id)
-            setattr(rec,Style,lo_to_save)
+                rec = Layouts(Class=Class_id)
+            setattr(rec, Style, lo_to_save)
             rec.save()
 
-        return HttpResponseRedirect(reverse('ut:change_tabletemplate',kwargs={'Style':Style,'Class_id':Class_id}))
+        return HttpResponseRedirect(reverse('ut:change_tabletemplate', kwargs={'Style': Style, 'Class_id': Class_id}))
+
 
 from django.forms import formset_factory
 
-class TestForm(forms.Form):
-    id=forms.IntegerField()
-    name=forms.CharField()
 
-from crispy_forms.layout import LayoutObject, Submit, Row, Column, MultiField,Field,Div,Fieldset,TEMPLATE_PACK,HTML
+class TestForm(forms.Form):
+    id = forms.IntegerField()
+    name = forms.CharField()
+
+
+from crispy_forms.layout import LayoutObject, Submit, Row, Column, MultiField, Field, Div, Fieldset, TEMPLATE_PACK, HTML
 from crispy_forms.helper import FormHelper
 
+
 class FormSet1(LayoutObject):
-    template='ut/test.html'
-    def __init__(self,formset_name_in_context,template=None):
+    template = 'ut/test.html'
+
+    def __init__(self, formset_name_in_context, template=None):
         self.formset_name_in_context = formset_name_in_context
-        self.fields=[]
+        self.fields = []
         if template:
-            self.template=template
-        def render (self,form,form_style,context,template_pack=TEMPLATE_PACK):
+            self.template = template
+
+        def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
             formset = context[self.formset_name_in_context]
-            return render_to_string(self.template,{'formset':formset})
+            return render_to_string(self.template, {'formset': formset})
+
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -644,311 +703,339 @@ class NpEncoder(json.JSONEncoder):
         else:
             return super(NpEncoder, self).default(obj)
 
-def ajax_change_master(request,Attribute_id):
+
+def ajax_change_master(request, Attribute_id):
     value = request.GET['value']
     if value.isnumeric():
-        value=int(value)
+        value = int(value)
     else:
         value = 0
-    attr=get_attribute(Attribute_id)
-    Ref_Class_id=attr.Ref_Class_id
-    Class_id=attr.Class_id
-    data={}
-    data['MasterAttribute_id']=Ref_Class_id
-    attrs={}
-    #find all attributes who depends on that Attribute_id
+    attr = get_attribute(Attribute_id)
+    Ref_Class_id = attr.Ref_Class_id
+    Class_id = attr.Class_id
+    data = {}
+    data['MasterAttribute_id'] = Ref_Class_id
+    attrs = {}
+    # find all attributes who depends on that Attribute_id
     for a in Attributes.objects.filter(Class_id=Class_id):
-            #df_attributes[(df_attributes.MasterAttribute_id==Attribute_id)&(df_attributes.Class_id==Class_id)].iterrows()
-        if a.MasterAttribute_id==Attribute_id:
-            instances=get_options(a.id,values={attr.Attribute:value})
-            attrs[a.id]=instances
-    data['attrs']=attrs
+        # df_attributes[(df_attributes.MasterAttribute_id==Attribute_id)&(df_attributes.Class_id==Class_id)].iterrows()
+        if a.MasterAttribute_id == Attribute_id:
+            instances = get_options(a.id, values={attr.Attribute: value})
+            attrs[a.id] = instances
+    data['attrs'] = attrs
 
-    #find lookups
-    lookups={}
-    for a in Attributes.objects.filter(Class_id=Class_id,DataType_id=DT_Lookup,InternalAttribute_id=Attribute_id):
-            #df_attributes[(df_attributes.DataType_id==DT_Lookup)&(df_attributes.InternalAttribute_id==Attribute_id)].iterrows():
-        if value !=0 :
-            lookups[a.id]=Values.objects.filter(Attribute_id=a.Ref_Attribute_id,Instance_id=value).values()[0]['char_value']
+    # find lookups
+    lookups = {}
+    for a in Attributes.objects.filter(Class_id=Class_id, DataType_id=DT_Lookup, InternalAttribute_id=Attribute_id):
+        # df_attributes[(df_attributes.DataType_id==DT_Lookup)&(df_attributes.InternalAttribute_id==Attribute_id)].iterrows():
+        if value != 0:
+            lookups[a.id] = Values.objects.filter(Attribute_id=a.Ref_Attribute_id, Instance_id=value).values()[0][
+                'char_value']
         else:
-            lookups[a.id]='(None)'
-    data['lookups']=lookups
-    return JsonResponse(data,encoder=NpEncoder)
+            lookups[a.id] = '(None)'
+    data['lookups'] = lookups
+    return JsonResponse(data, encoder=NpEncoder)
 
-def ajax_get_class_columns(request,Class_id):
-    columns=create_qs_sql(Class_id=Class_id)['ajax_columns']
-    return JsonResponse({'columns':columns})
+
+def ajax_get_class_columns(request, Class_id):
+    columns = create_qs_sql(Class_id=Class_id)['ajax_columns']
+    return JsonResponse({'columns': columns})
+
 
 from querystring_parser import parser
 
-def ajax_get_report_data (request, Report_id,sample=0, filter={}):
+
+def ajax_get_report_data(request, Report_id, sample=0, filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = r.QueryAdj
-    rocon=connections['readonly']
+    rocon = connections['readonly']
     res = {}
     with rocon.cursor() as cursor:
         cursor.execute(sql)
-        res['data']=dictfetchall(cursor)
-        res['recordsTotal']=len(res['data'])
+        res['data'] = dictfetchall(cursor)
+        res['recordsTotal'] = len(res['data'])
         res['recordsFiltered'] = len(res['data'])
-    #res['columns']=[col[0] for col in cursor.description]
+    # res['columns']=[col[0] for col in cursor.description]
     return JsonResponse(res)
 
-def ajax_get_report_columns (request, Report_id,filter={}):
+
+def ajax_get_report_columns(request, Report_id, filter={}):
     r = Reports.objects.get(pk=Report_id)
     sql = 'select * from (' + r.QueryAdj + ') original limit 0'
-    rocon=connections['readonly']
+    rocon = connections['readonly']
     with rocon.cursor() as cursor:
         cursor.execute(sql)
-        res={}
-        res['columns']=[col[0] for col in cursor.description]
+        res = {}
+        res['columns'] = [col[0] for col in cursor.description]
         return JsonResponse(res)
 
 
-def ajax_get_attribute_options(request,Class_id,Attribute_id,maxrecords=10):
-    validation=False
-    values=request.GET
-    term=values.get('term')
+def ajax_get_attribute_options(request, Class_id, Attribute_id, maxrecords=10):
+    validation = False
+    values = request.GET
+    term = values.get('term')
     if pd.isnull(term):
         term = ''
-    attr=get_attribute(Attribute_id)
-    instances=[]
-    if (attr.MasterAttribute_id>0):
-        m_attr=get_attribute(attr.MasterAttribute_id)
-        tmp=values.get(m_attr.Attribute)
+    attr = get_attribute(Attribute_id)
+    instances = []
+    if (attr.MasterAttribute_id > 0):
+        m_attr = get_attribute(attr.MasterAttribute_id)
+        tmp = values.get(m_attr.Attribute)
         if pd.notnull(tmp):
-            m_value=int(tmp)
+            m_value = int(tmp)
         else:
-            m_value=0
+            m_value = 0
 
         if attr.Ref_Attribute_id == Default_Attribute:
-            for r in Values.objects.filter(instance_value_id=m_value,Instance__Class__id=attr.Ref_Class_id,Instance__Code__icontains=term)[0:maxrecords]:
-                instances.append({'id':r.Instance_id,'text':r.Instance.Code})
+            for r in Values.objects.filter(instance_value_id=m_value, Instance__Class__id=attr.Ref_Class_id,
+                                           Instance__Code__icontains=term)[0:maxrecords]:
+                instances.append({'id': r.Instance_id, 'text': r.Instance.Code})
         else:
-            qs=Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
-                    Instance_id__in=Values.objects.filter(instance_value_id=m_value,Instance__Class_id=attr.Ref_Class_id).values_list('Instance_id',flat=True))
-            con=Q(**{'char_value__icontains':term})
-            field_name='char_value'
-            ref_attribute=attr.Ref_Attribute
-            use_ref=False
+            qs = Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,
+                                       Instance_id__in=Values.objects.filter(instance_value_id=m_value,
+                                                                             Instance__Class_id=attr.Ref_Class_id).values_list(
+                                           'Instance_id', flat=True))
+            con = Q(**{'char_value__icontains': term})
+            field_name = 'char_value'
+            ref_attribute = attr.Ref_Attribute
+            use_ref = False
             while ref_attribute.DataType_id == DT_Instance:
-                use_ref=True
-                con=Q(**{'instance_value__values_ins__char_value__icontains':term,'instance_value__values_ins__Attribute_id':ref_attribute.Ref_Attribute_id})
-                field_name='instance_value__values_ins__char_value'
-                qs=qs.select_related('instance_value').prefetch_related(Prefetch('instance_value__values_ins',to_attr='lookup_field'))
-                ref_attribute=ref_attribute.Ref_Attribute
+                use_ref = True
+                con = Q(**{'instance_value__values_ins__char_value__icontains': term,
+                           'instance_value__values_ins__Attribute_id': ref_attribute.Ref_Attribute_id})
+                field_name = 'instance_value__values_ins__char_value'
+                qs = qs.select_related('instance_value').prefetch_related(
+                    Prefetch('instance_value__values_ins', to_attr='lookup_field'))
+                ref_attribute = ref_attribute.Ref_Attribute
 
-            qs=qs.filter(con)[0:maxrecords]
+            qs = qs.filter(con)[0:maxrecords]
             for r in qs:
                 instances.append({'id': r.Instance_id,
                                   'text': r.instance_value.values_ins.first().char_value if use_ref else r.char_value})
 
-                #Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id) + " and  v2.char_value like '%{}%'".format(term))[0:maxrecords]:
-                #instances.append({'id': r.id, 'text': r.char_value})
+                # Instances.objects.raw(select_options_sql.format(val=m_value,cl=attr.Ref_Class_id,att=attr.Ref_Attribute_id) + " and  v2.char_value like '%{}%'".format(term))[0:maxrecords]:
+                # instances.append({'id': r.id, 'text': r.char_value})
     else:
         if attr.Ref_Attribute_id == Default_Attribute:
-            for r in Instances.objects.filter(Class_id=attr.Ref_Class_id,Code__icontains=term)[0:maxrecords]:
+            for r in Instances.objects.filter(Class_id=attr.Ref_Class_id, Code__icontains=term)[0:maxrecords]:
                 instances.append({'id': r.id, 'text': r.Code})
         else:
-            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id,char_value__icontains=term)[0:maxrecords]:
+            for r in Values.objects.filter(Attribute_id=attr.Ref_Attribute_id, char_value__icontains=term)[
+                     0:maxrecords]:
                 instances.append({'id': r.Instance_id, 'text': r.char_value})
-    return JsonResponse({'success':True,'results': instances,'pagination':{'more':True}})
+    return JsonResponse({'success': True, 'results': instances, 'pagination': {'more': True}})
 
-def ajax_get_class_data(request,Class_id):
-    res={}
-    masterfilter={}
+
+def ajax_get_class_data(request, Class_id):
+    res = {}
+    masterfilter = {}
     if 'filtername' in request.GET:
-        masterfilter = {request.GET['filtername']:request.GET['filtervalue']}
-    filter={}
+        masterfilter = {request.GET['filtername']: request.GET['filtervalue']}
+    filter = {}
     if 'filterform' in request.GET:
-        if len(request.GET['filterform'])>0:
-            filterform=json.loads(request.GET['filterform'])
+        if len(request.GET['filterform']) > 0:
+            filterform = json.loads(request.GET['filterform'])
             for f in filterform:
-                filter[f['name']]=f['value']
-    offset=None
-    limit=None
-    search=''
-    draw=0
+                filter[f['name']] = f['value']
+    offset = None
+    limit = None
+    search = ''
+    draw = 0
     ssargs = parser.parse(request.META['QUERY_STRING'])
-    #print ('META.query_string',request.META['QUERY_STRING'])
+    # print ('META.query_string',request.META['QUERY_STRING'])
     if 'start' in request.GET:
-        offset=int(ssargs.get('start'))
-        limit=int(ssargs.get('length'))
-        draw=int(ssargs.get('draw'))
-        search=ssargs['search']['value']
+        offset = int(ssargs.get('start'))
+        limit = int(ssargs.get('length'))
+        draw = int(ssargs.get('draw'))
+        search = ssargs['search']['value']
 
-    orderby={}
+    orderby = {}
     if ssargs:
-        for key,val in ssargs.get('order').items():
-            orderby[ssargs['columns'][int(val['column'])]['data']]=val['dir']
+        for key, val in ssargs.get('order').items():
+            orderby[ssargs['columns'][int(val['column'])]['data']] = val['dir']
 
-    sql=create_rawquery_sql(Class_id=Class_id,filter=filter,masterclassfilter=masterfilter,orderby=orderby,
-                                       search=search,offset=offset,limit=limit)
+    sql = create_rawquery_sql(Class_id=Class_id, filter=filter, masterclassfilter=masterfilter, orderby=orderby,
+                              search=search, offset=offset, limit=limit)
 
-    count_sql=create_count_sql(Class_id=Class_id
-                               ,filter=filter,masterclassfilter=masterfilter,search=search
-                               )
+    count_sql = create_count_sql(Class_id=Class_id
+                                 , filter=filter, masterclassfilter=masterfilter, search=search
+                                 )
 
-    records=raw_queryset_as_dict(sql)
-    new_records=[]
+    records = raw_queryset_as_dict(sql)
+    new_records = []
     for obj in records:
-        new_rec={}
-        for k,v in obj.items():
-            new_rec[k]= get_json_safe_value(v)
+        new_rec = {}
+        for k, v in obj.items():
+            new_rec[k] = get_json_safe_value(v)
         new_records.append(new_rec)
 
-    #data=pd.read_sql(sql,con=connections['readonly']).applymap(
+    # data=pd.read_sql(sql,con=connections['readonly']).applymap(
     #              lambda x: escape(x) if  type(x)==str  else
     #                #json.dumps(x.to_pydatetime().isoformat()) if type(x)==pd.Timestamp else
     #                            None  if pd.isnull(x) else str(x)
     #              )
 
-    rocon=connections['readonly']
+    rocon = connections['readonly']
     with rocon.cursor() as cursor:
         cursor.execute(count_sql)
-        rec=cursor.fetchone()
-    recordsTotal= rec[1]
+        rec = cursor.fetchone()
+    recordsTotal = rec[1]
 
-    res['data'] = new_records#data.to_dict('records')#raw_queryset_as_dict(sql)
-    res['recordsTotal']=recordsTotal
-    res['recordsFiltered'] = recordsTotal #len(res['data']) #len(res['data'])
-    #recordsFiltered
-    res['draw']=draw+1
+    res['data'] = new_records  # data.to_dict('records')#raw_queryset_as_dict(sql)
+    res['recordsTotal'] = recordsTotal
+    res['recordsFiltered'] = recordsTotal  # len(res['data']) #len(res['data'])
+    # recordsFiltered
+    res['draw'] = draw + 1
     return JsonResponse(res)
 
 
 class send_instance_email(View):
-    def get(self,request,Class_id,MassEmail=0,Modal=True,*args,**kwargs):
+    def get(self, request, Class_id, MassEmail=0, Modal=True, *args, **kwargs):
         Instance_id = request.GET.get('Instance_id')
         if pd.isnull(Instance_id) or Instance_id == 0:
-            instance=request.GET
+            instance = request.GET
         else:
-            instance=get_instance(Class_id,Instance_id)
-        #adjust names for the template
-        instance_adj={}
-        for k,v in instance.items():
-            instance_adj[k.replace(' ','_')]=v
-        form=SendInstanceEmailForm(Class_id=Class_id,instance=instance_adj,MassEmail=MassEmail)
+            instance = get_instance(Class_id, Instance_id)
+        # adjust names for the template
+        instance_adj = {}
+        for k, v in instance.items():
+            instance_adj[k.replace(' ', '_')] = v
+        form = SendInstanceEmailForm(Class_id=Class_id, instance=instance_adj, MassEmail=MassEmail)
         context = get_base_context()
-        context['form']=form
-        context['Class_id']=Class_id
+        context['form'] = form
+        context['Class_id'] = Class_id
         if Modal:
-            data={}
-            data['success']=True
-            data['modalformcontent']=render_to_string('ut/showclassemail.html',context=context,request=request)
+            data = {}
+            data['success'] = True
+            data['modalformcontent'] = render_to_string('ut/showclassemail.html', context=context, request=request)
             return JsonResponse(data)
         else:
-            return render(request, 'ut/showclassemail.html',context)
+            return render(request, 'ut/showclassemail.html', context)
 
-    def post(self,request,Class_id,Instance_id=0, Modal=True,*args,**kwargs):
-        form=SendInstanceEmailForm(request.POST,Class_id=Class_id,instance={ })
+    def post(self, request, Class_id, Instance_id=0, Modal=True, *args, **kwargs):
+        form = SendInstanceEmailForm(request.POST, Class_id=Class_id, instance={})
         if form.is_valid():
-            email_subject= request.POST['subject']
+            email_subject = request.POST['subject']
             html_body = request.POST['text_body']
             plain_body = strip_tags(html_body)
             to_list = [request.POST['to']]
-            send_mail(email_subject,plain_body,settings.EMAIL_HOST_USER,to_list,html_message=html_body)
-            print ('email sent')
+            send_mail(email_subject, plain_body, settings.EMAIL_HOST_USER, to_list, html_message=html_body)
+            print('email sent')
         if Modal:
-            return JsonResponse({'success':True,'data':None})
+            return JsonResponse({'success': True, 'data': None})
         else:
             return HttpResponseRedirect(reverse('ut:instances', args=(Class_id,)))
 
+
 class emailtemplates_view(View):
-    def get(self,request,*args,**kwargs):
-        tlist=EmailTemplates.objects.all()
+    def get(self, request, *args, **kwargs):
+        tlist = EmailTemplates.objects.all()
         table = EmailTemplateTable(tlist)
         RequestConfig(request, paginate={"per_page": 20}).configure(table)
-        context=get_base_context({'table':table})
-        return render(request,'ut/templates.html',context)
+        context = get_base_context({'table': table})
+        return render(request, 'ut/templates.html', context)
 
-class EmailTemplateCreateView(BaseContext,LoginRequiredMixin,CreateView):
+
+class EmailTemplateCreateView(BaseContext, LoginRequiredMixin, CreateView):
     model = EmailTemplates
     template_name = 'ut/edit_attribute.html'
     form_class = EmailTemplateForm
+
     def get_success_url(self):
         return reverse_lazy('ut:templates_view')
 
-class EmailTemplateUpdateView(BaseContext,LoginRequiredMixin,UpdateView):
+
+class EmailTemplateUpdateView(BaseContext, LoginRequiredMixin, UpdateView):
     model = EmailTemplates
     template_name = 'ut/edit_attribute.html'
     form_class = EmailTemplateForm
+
     def get_success_url(self):
         return reverse_lazy('ut:templates_view')
 
-class download_file(LoginRequiredMixin,View):
-    def get(self,request,pk):
-        obj=Values_files.objects.get(pk=pk)
-        filename=obj.file_value.name.split('/')[-1]
+
+class download_file(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        obj = Values_files.objects.get(pk=pk)
+        filename = obj.file_value.name.split('/')[-1]
         response = HttpResponse(obj.file_value.file, content_type="plain/text")
         response['Content-Disposition'] = ('attachment; filename=' + filename).encode('utf-8')
         return response
 
-def ajax_change_email_template(request,EmailTemplate_id):
+
+def ajax_change_email_template(request, EmailTemplate_id):
     pass
 
-class ProjectIndex(BaseContext,View):
-    def get(self,request,Project,**kwargs):
-        project=Projects.objects.get(Project=Project)
-        #context['Project']=project
 
-        return render(request, 'ut/project_index.html',context=self.get_context_data(Project=Project,**kwargs))
-
-    def get_context_data(self,Project,**kwargs):
-        context=super().get_context_data(**kwargs)
+class ProjectIndex(BaseContext, View):
+    def get(self, request, Project, **kwargs):
         project = Projects.objects.get(Project=Project)
-        context['Project']=project
+        # context['Project']=project
+
+        return render(request, 'ut/project_index.html', context=self.get_context_data(Project=Project, **kwargs))
+
+    def get_context_data(self, Project, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = Projects.objects.get(Project=Project)
+        context['Project'] = project
         return context
+
 
 def run_task(request):
     from .tasks import send_report_email
-    send_report_email(Report_id=5,email_field='Email',email_template_id=3,filter={'Email':'pavel.fedoryaka@gmail.com'})
+    send_report_email(Report_id=5, email_field='Email', email_template_id=3,
+                      filter={'Email': 'pavel.fedoryaka@gmail.com'})
     return HttpResponse('task ran')
 
 
-class PlayerAvailability(BaseContext,View):
-    def get(self,request,TeamPlayer_id):
-        context={}
-        df = get_report_df(9,filter={'TeamPlayer_id':TeamPlayer_id})['df']
+class PlayerAvailability(BaseContext, View):
+    def get(self, request, TeamPlayer_id):
+        context = {}
+        df = get_report_df(9, filter={'TeamPlayer_id': TeamPlayer_id})['df']
         records = df.to_dict('records')
-        context['records']=records
-        context['TeamPlayer_id']=TeamPlayer_id
-        context['Player']=records[0]['TeamAndPlayer']
-        return render(request,'ut/oafc_availability.html',context)
+        context['records'] = records
+        context['TeamPlayer_id'] = TeamPlayer_id
+        context['Player'] = records[0]['TeamAndPlayer']
+        return render(request, 'ut/oafc_availability.html', context)
 
-    def post(self,request,Game_id,TeamPlayer_id):
+    def post(self, request, Game_id, TeamPlayer_id):
         availability = request.POST.get('availability')
         async_task(save_availability, availability=availability, Game_id=Game_id, TeamPlayer_id=TeamPlayer_id)
-        return JsonResponse({'success':True})
+        return JsonResponse({'success': True})
+
 
 class GetClassQuery(View):
-    def get(self,request,Class_id=0,ClassName=''):
+    def get(self, request, Class_id=0, ClassName=''):
         if Class_id == 0:
-            Class_id=Classes.objects.get(Class=ClassName ).id
-        sql=create_qs_sql(Class_id)['sql']
-        return HttpResponse(sql,content_type='text/plain')
+            Class_id = Classes.objects.get(Class=ClassName).id
+        sql = create_qs_sql(Class_id)['sql']
+        return HttpResponse(sql, content_type='text/plain')
+
 
 class GetReportQuery(View):
-    def get(self,request,Report_id=0,Report=''):
+    def get(self, request, Report_id=0, Report=''):
         if Report_id == 0:
-            Report_id=Reports.objects.get(Report=Report).id
-        sql=Reports.objects.get(id=Report_id).Query
-        return HttpResponse(sql,content_type='text/plain')
+            Report_id = Reports.objects.get(Report=Report).id
+        sql = Reports.objects.get(id=Report_id).Query
+        return HttpResponse(sql, content_type='text/plain')
 
-class OAFCIndex(BaseContext,View):
-    def get(self,request,*args,**kwargs):
-        context=get_base_context()
-        context['ugames']=get_report_df(10)['df'].to_dict('records')
-        context['arenas']=get_report_df(4)['df'].to_dict('records')
-        avail=get_report_df(9)['df']
-        if len(avail)>0:
-            avail['TypeDateTime'] = avail.apply(lambda x: '{} {} @{}'.format(x.Type,str(x.Date)[0:6].replace(',',''),x.Time),axis=1)
-            pivot=pd.pivot_table(avail[['Player','TypeDateTime','Availability']].fillna(''),index=['Player'],columns=['TypeDateTime'],aggfunc=max).reset_index()
-            pivot.columns=pivot.columns.droplevel(0)
-            pivot.columns.values[0]='Player'
-            context['availability']=list(pivot.itertuples(index=False))
+
+class OAFCIndex(BaseContext, View):
+    def get(self, request, *args, **kwargs):
+        context = get_base_context()
+        context['ugames'] = get_report_df(10)['df'].to_dict('records')
+        context['arenas'] = get_report_df(4)['df'].to_dict('records')
+        avail = get_report_df(9)['df']
+        if len(avail) > 0:
+            avail['TypeDateTime'] = avail.apply(
+                lambda x: '{} {} @{}'.format(x.Type, str(x.Date)[0:6].replace(',', ''), x.Time), axis=1)
+            pivot = pd.pivot_table(avail[['Player', 'TypeDateTime', 'Availability']].fillna(''), index=['Player'],
+                                   columns=['TypeDateTime'], aggfunc=max).reset_index()
+            pivot.columns = pivot.columns.droplevel(0)
+            pivot.columns.values[0] = 'Player'
+            context['availability'] = list(pivot.itertuples(index=False))
             context['availability_columns'] = list(pivot.columns)
         else:
-            context['availability']=None
-            context['availability_columns']=None
-        return render(request,'ut/oafc_index.html',context=context)
+            context['availability'] = None
+            context['availability_columns'] = None
+        return render(request, 'ut/oafc_index.html', context=context)

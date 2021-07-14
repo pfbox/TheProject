@@ -8,9 +8,21 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="async availability 5">
+    <list default="true" id="bf9583b3-7257-4928-aa5c-501e4d40b4a2" name="Default Changelist" comment="async availability No games">
+      <change afterPath="$PROJECT_DIR$/media/In.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/Maybe.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/Out.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/media/Unknown.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/icon_In.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/icon_Maybe.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/icon_Out.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/icon_Unknown.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/oafc_reminder.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ut/templates/ut/showreport_light.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/tasks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/templates/ut/oafc_index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/oafc_index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ut/templates/ut/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/ut/templates/ut/test.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ut/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ut/views.py" afterDir="false" />
     </list>
     <list id="06a0e9ed-95e9-4e25-8ed1-4aa01e858fff" name="Revert &quot;2021-29-03 v2&quot;" comment="Revert &quot;2021-29-03 v2&quot;&#10;&#10;This reverts commit e194a1f4" />
@@ -26,8 +38,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -335,7 +347,7 @@
       <workItem from="1625743390287" duration="5097000" />
       <workItem from="1625748974583" duration="26405000" />
       <workItem from="1625789712411" duration="38717000" />
-      <workItem from="1625863355105" duration="30942000" />
+      <workItem from="1625863355105" duration="47394000" />
     </task>
     <task id="LOCAL-00001" summary="2021-01-17">
       <created>1610902677866</created>
@@ -596,7 +608,14 @@
       <option name="project" value="LOCAL" />
       <updated>1625976444190</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="async availability No games">
+      <created>1626049306097</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1626049306097</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -632,7 +651,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-    <MESSAGE value="2021-04-26" />
     <MESSAGE value="2021-05-09 before social ath" />
     <MESSAGE value="2021-05-19" />
     <MESSAGE value="2021-05-19 v2" />
@@ -657,7 +675,8 @@
     <MESSAGE value="async availability 3" />
     <MESSAGE value="async availability 4" />
     <MESSAGE value="async availability 5" />
-    <option name="LAST_COMMIT_MESSAGE" value="async availability 5" />
+    <MESSAGE value="async availability No games" />
+    <option name="LAST_COMMIT_MESSAGE" value="async availability No games" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -678,7 +697,7 @@
         </line-breakpoint>
         <line-breakpoint suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ut/views.py</url>
-          <line>845</line>
+          <line>917</line>
           <option name="timeStamp" value="252" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -695,6 +714,11 @@
           <url>file://$PROJECT_DIR$/ut/utclasses.py</url>
           <line>111</line>
           <option name="timeStamp" value="350" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ut/views.py</url>
+          <line>984</line>
+          <option name="timeStamp" value="382" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/static/ut/js/ut.js</url>

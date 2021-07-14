@@ -26,13 +26,13 @@ Address :
 <p> Current Availability:
     <b>
 	{% if Availability == 'In' %}
-		<img style="height: 1em;width: auto;" src="https://www.myultimatetracker.com/media/In.png"/>&nbsp;In
+		<img style="height: 1em;width: auto;" src="data:image/png;base64,{% include 'icon_In' %}"/>&nbsp;In
 	{% elif Availability == 'Out' %}
-		<img style="height: 1em;width: auto;" src="https://www.myultimatetracker.com/media/Out.png"/></i>&nbsp;Out
+		<img style="height: 1em;width: auto;" src="data:image/png;base64,{% include 'ut/icon_Out' %}"/></i>&nbsp;Out
 	{% elif Availability == 'Maybe' %}
-		<img style="height: 1em;width: auto;" src="https://www.myultimatetracker.com/media/Maybe.png"/>&nbsp;Maybe
+		<img style="height: 1em;width: auto;" src="data:image/png;base64,{% include 'ut/icon_Maybe' %}"/>&nbsp;Maybe
 	{% else %}
-		<img style="height: 1em;width: auto;" src="https://www.myultimatetracker.com/media/Unknown.png"/>&nbsp;Unknown
+		<img style="height: 1em;width: auto;" src="data:image/png;base64,{% include 'ut/icon_Unknow' %}"/>&nbsp;Unknown
 	{% endif %}
     </b>
 	<a href="https://www.myultimatetracker.com/oafc/availability/{{ TeamPlayer_id }}">
