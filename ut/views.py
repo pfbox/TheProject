@@ -990,17 +990,25 @@ def run_task(request):
 
 class PlayerAvailability(BaseContext, View):
     def get(self, request, TeamPlayer_id):
+        try:
+            tid=int(TeamPlayer_id)
+        except:
+            tid=int(float(TeamPlayer_id))
         context = {}
-        df = get_report_df(9, filter={'TeamPlayer_id': int(float(TeamPlayer_id))})['df']
+        df = get_report_df(9, filter={'TeamPlayer_id': tid})['df']
         records = df.to_dict('records')
         context['records'] = records
-        context['TeamPlayer_id'] = TeamPlayer_id
+        context['TeamPlayer_id'] = tid
         context['Player'] = records[0]['TeamAndPlayer']
         return render(request, 'ut/oafc_availability.html', context)
 
     def post(self, request, Game_id, TeamPlayer_id):
+        try:
+            tid=int(TeamPlayer_id)
+        except:
+            tid=int(float(TeamPlayer_id))
         availability = request.POST.get('availability')
-        async_task(save_availability, availability=availability, Game_id=Game_id, TeamPlayer_id=TeamPlayer_id)
+        async_task(save_availability, availability=availability, Game_id=Game_id, TeamPlayer_id=tid)
         return JsonResponse({'success': True})
 
 
