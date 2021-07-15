@@ -991,7 +991,7 @@ def run_task(request):
 class PlayerAvailability(BaseContext, View):
     def get(self, request, TeamPlayer_id):
         context = {}
-        df = get_report_df(9, filter={'TeamPlayer_id': TeamPlayer_id})['df']
+        df = get_report_df(9, filter={'TeamPlayer_id': int(float(TeamPlayer_id))})['df']
         records = df.to_dict('records')
         context['records'] = records
         context['TeamPlayer_id'] = TeamPlayer_id
