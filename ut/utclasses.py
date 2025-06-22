@@ -23,9 +23,13 @@ from django.apps import apps
 app_models = apps.get_app_config('ut').get_models()
 am=pd.DataFrame()
 for a in app_models:
-    am = am.append({'TableName': a._meta.verbose_name, 'Table': a},ignore_index=True)  # .to_dict()
+    am = pd.concat(
+        [am,
+        pd.DataFrame({'TableName': [a._meta.verbose_name], 'Table': [a]})],
+        ignore_index=True)  # .to_dict()
 
 from django.db import connection
+
 con=connection
 df_classes=pd.DataFrame()#pd.read_sql('select * from ut_classes',con) #.set_index('id')
 #df_attributes=pd.DataFrame()#pd.read_sql('select * from ut_attributes',con)#.set_index('id')

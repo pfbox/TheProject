@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'bootstrap3',
     'bootstrap4',
     'crispy_forms',
+    'crispy_bootstrap4',
 #    'mptt',
     'bootstrap_modal_forms',
     'bootstrap_datepicker_plus',

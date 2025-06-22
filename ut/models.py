@@ -1,6 +1,5 @@
 from django.db import models
 from django.db import models
-from mptt.models import MPTTModel, TreeForeignKey
 import pandas as pd
 from django.db.models import Q, Max, Min
 from django.conf import settings
